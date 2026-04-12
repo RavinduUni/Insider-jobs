@@ -165,7 +165,7 @@ const ProjectDetail = () => {
 
                                 <h3 className='font-semibold text-2xl mb-3 mt-7'>Deliverables</h3>
                                 <ul className='space-y-2'>
-                                    {project.requirements.map((deliverable, index) => (
+                                    {project.deliverables.map((deliverable, index) => (
                                         <li key={index} className='flex items-start gap-2 text-text-secondary'>
                                             <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                                             <span>{deliverable}</span>

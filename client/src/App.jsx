@@ -29,6 +29,7 @@ import ResumeBuilder from './pages/StudentDashboard/ResumeBuilder'
 import { Toaster } from 'react-hot-toast'
 import StudentRoutesProtector from './RouteProtector/StudentRoutesProtector'
 import RecruiterRouterProtector from './RouteProtector/RecruiterRouterProtector'
+import Companies from './pages/Companies'
 
 const App = () => {
 
@@ -48,6 +49,7 @@ const App = () => {
         <Route path='/auth' element={<AuthPage />} />
         <Route path='/apply-project/:id' element={<ProjectDetail />} />
         <Route path='/projects' element={<AllProjects />} />
+        <Route path='/companies' element={<Companies />} />
 
         <Route element={<StudentRoutesProtector />}>
           <Route path="/student-dashboard" element={<StudentDashBoard />}>

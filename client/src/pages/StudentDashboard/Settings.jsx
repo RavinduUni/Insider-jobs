@@ -1,5 +1,7 @@
 import { Bell, CreditCard, Edit, SaveIcon, Shield, UploadIcon, User, X } from 'lucide-react'
-import React, { useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
+import { AppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 // ── Shared primitives (outside parent to avoid remount) ───────────────────────
 const InputField = ({ label, value, onChange, disabled, type = 'text', placeholder = '' }) => (
@@ -37,7 +39,7 @@ const SectionTitle = ({ title, subtitle }) => (
 
 const Divider = () => <div className="border-t border-slate-800 my-6" />
 
-const FooterActions = ({ isEditing, onEdit, onCancel, onSave, editLabel = 'Edit' }) => (
+const FooterActions = ({ isEditing, isLoading, onEdit, onCancel, onSave, editLabel = 'Edit' }) => (
   <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-800">
     {!isEditing ? (
       <button onClick={onEdit}
@@ -51,8 +53,9 @@ const FooterActions = ({ isEditing, onEdit, onCancel, onSave, editLabel = 'Edit'
           <X className="w-4 h-4" /> Cancel
         </button>
         <button onClick={onSave}
-          className="flex items-center gap-2 text-sm text-white bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl transition-colors cursor-pointer">
-          <SaveIcon className="w-4 h-4" /> Save Changes
+          className={`flex items-center gap-2 text-sm text-white bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl transition-colors cursor-pointer ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading}>
+          <SaveIcon className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Changes'}
         </button>
       </>
     )}
@@ -69,19 +72,27 @@ const Settings = () => {
     { id: 'security', label: 'Security', icon: Shield },
   ]
 
+  const {token, user, setUser} = useContext(AppContext);
+
   const [activeTab, setActiveTab] = useState('profile')
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isEditingNotifications, setIsEditingNotifications] = useState(false)
-  const [profilePhoto, setProfilePhoto] = useState(null)
+  const [profilePicture, setProfilePicture] = useState(null)
+  const [loading, setLoading] = useState(false)
   const fileInputRef = useRef(null)
 
   const [profileData, setProfileData] = useState({
-    fullName: 'Alex Johnson', email: 'alex.johnson@university.edu',
-    phone: '+1 (555) 123-4567', university: 'Tech University',
-    major: 'Computer Science', graduationYear: '2025',
-    bio: 'Full-stack developer with experience in React, Node.js, and cloud technologies. Passionate about building innovative solutions.',
-    skills: ['React', 'Node.js', 'Python', 'UI/UX Design', 'Cloud Computing'],
-    portfolio: 'https://alexjohnson.dev', linkedin: 'https://linkedin.com/in/alexjohnson', github: 'https://github.com/alexjohnson',
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    university: user?.university || '',
+    major: user?.major || '',
+    graduationYear: user?.graduationYear || '',
+    bio: user?.bio || '',
+    skills: user?.skills || [],
+    portfolio: user?.portfolio || '',
+    linkedin: user?.linkedin || '',
+    github: user?.github || '',
   })
 
   const [notifications, setNotifications] = useState({
@@ -90,29 +101,103 @@ const Settings = () => {
   })
 
   const [tempProfileData, setTempProfileData] = useState(profileData)
-  const [tempProfilePhoto, setTempProfilePhoto] = useState(profilePhoto)
+  const [tempProfilePicture, setTempProfilePicture] = useState(profilePicture)
   const [tempNotificationData, setTempNotificationData] = useState(notifications)
 
-  // ── Handlers (all original logic preserved) ──────────────────────────────
+  const [selectedFile, setSelectedFile] = useState(null)
+
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) { alert('File size must be less than 2MB'); return }
     if (!file.type.match(/image\/(jpeg|jpg|png|gif)/)) { alert('Only JPG, PNG, or GIF files are allowed'); return }
+    setSelectedFile(file)
+
     const reader = new FileReader()
-    reader.onloadend = () => setTempProfilePhoto(reader.result)
+    reader.onloadend = () => setTempProfilePicture(reader.result)
     reader.readAsDataURL(file)
   }
 
-  const handleUpdateProfile = () => { setTempProfileData(profileData); setIsEditingProfile(true) }
-  const handleSaveChanges = () => { setProfileData(tempProfileData); setProfilePhoto(tempProfilePhoto); setIsEditingProfile(false) }
-  const handleCancelEdit = () => { setTempProfileData(profileData); setIsEditingProfile(false); setTempProfilePhoto(profilePhoto) }
+  // For profile editing
+  const handleUpdateProfile = () => { setTempProfileData(profileData); setTempProfilePicture(profilePicture); setSelectedFile(null); setIsEditingProfile(true) }
+  const handleCancelEdit = () => { setTempProfileData(profileData); setIsEditingProfile(false); setSelectedFile(null); setTempProfilePicture(profilePicture) }
+
+  const handleSaveChanges = async () => {
+    try {
+
+      setLoading(true)
+
+      const formData = new FormData();
+      formData.append('name', tempProfileData.name);
+      formData.append('email', tempProfileData.email);
+      formData.append('phone', tempProfileData.phone);
+      formData.append('university', tempProfileData.university);
+      formData.append('major', tempProfileData.major);
+      formData.append('graduationYear', tempProfileData.graduationYear);
+      formData.append('bio', tempProfileData.bio);
+      formData.append('skills', JSON.stringify(tempProfileData.skills));
+      formData.append('portfolio', tempProfileData.portfolio);
+      formData.append('linkedin', tempProfileData.linkedin);
+      formData.append('github', tempProfileData.github);
+
+      if (selectedFile) {
+        formData.append('profilePicture', selectedFile);
+      }
+
+      const res = await fetch('http://localhost:5000/api/student/update-profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error(data.message || 'Failed to update profile');
+        return;
+      }
+
+      const updatedProfile = data.student;
+
+      const mappedProfile = {
+        name: updatedProfile.name || '',
+        email: updatedProfile.email || '',
+        phone: updatedProfile.phone || '',
+        university: updatedProfile.university || '',
+        major: updatedProfile.major || '',
+        graduationYear: updatedProfile.graduationYear || '',
+        bio: updatedProfile.bio || '',
+        skills: updatedProfile.skills || [],
+        portfolio: updatedProfile.portfolio || '',
+        linkedin: updatedProfile.linkedin || '',
+        github: updatedProfile.github || '',
+      }
+
+      setProfileData(mappedProfile);
+      setTempProfileData(mappedProfile);
+      setProfilePicture(updatedProfile.profilePicture || null);
+      setTempProfilePicture(updatedProfile.profilePicture || null);
+      setSelectedFile(null);
+      setIsEditingProfile(false);
+      setUser(prev => ({ ...prev, ...mappedProfile }));
+
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // For notifications
   const handleUpdateNotifications = () => setIsEditingNotifications(true)
   const handleSaveNotifications = () => { setNotifications(tempNotificationData); setIsEditingNotifications(false) }
   const handleCancelNotifications = () => { setTempNotificationData(notifications); setIsEditingNotifications(false) }
 
   const currentProfile = isEditingProfile ? tempProfileData : profileData
-  const currentPhoto = isEditingProfile ? tempProfilePhoto : profilePhoto
+  const currentPhoto = isEditingProfile ? tempProfilePicture : profilePicture
 
   // ── Notification row data ─────────────────────────────────────────────────
   const emailRows = [
@@ -128,6 +213,30 @@ const Settings = () => {
     { key: 'pushNDA', label: 'NDA Requests', desc: 'Browser notifications for NDA requests' },
   ]
 
+  useEffect(() => {
+    if (!user) return;
+
+    const mappedProfile = {
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      university: user.university || '',
+      major: user.major || '',
+      graduationYear: user.graduationYear || '',
+      bio: user.bio || '',
+      skills: user.skills || [],
+      portfolio: user.portfolio || '',
+      linkedin: user.linkedin || '',
+      github: user.github || '',
+    }
+
+    setProfileData(mappedProfile);
+    setTempProfileData(mappedProfile);
+    setProfilePicture(user.profilePicture || null);
+    setTempProfilePicture(user.profilePicture || null);
+
+  }, [user])
+
   // ── Tab renderers ─────────────────────────────────────────────────────────
   const renderProfileTab = () => (
     <div>
@@ -136,7 +245,7 @@ const Settings = () => {
         {currentPhoto
           ? <img src={currentPhoto} alt="Profile" className="rounded-2xl object-cover border-2 border-slate-700 w-20 h-20" />
           : <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
-            {currentProfile.fullName.slice(0, 2).toUpperCase()}
+            {currentProfile.name?.slice(0, 2).toUpperCase() || <User className="w-8 h-8" />}
           </div>
         }
         <div>
@@ -159,7 +268,7 @@ const Settings = () => {
       <SectionTitle title="Personal Information" subtitle="Your basic profile details" />
 
       <div className="grid grid-cols-2 gap-4 mb-2">
-        <InputField label="Full Name" value={currentProfile.fullName} onChange={e => setTempProfileData(p => ({ ...p, fullName: e.target.value }))} disabled={!isEditingProfile} />
+        <InputField label="Full Name" value={currentProfile.name} onChange={e => setTempProfileData(p => ({ ...p, name: e.target.value }))} disabled={!isEditingProfile} />
         <InputField label="Email" value={currentProfile.email} onChange={e => setTempProfileData(p => ({ ...p, email: e.target.value }))} disabled={!isEditingProfile} type="email" />
         <InputField label="Phone Number" value={currentProfile.phone} onChange={e => setTempProfileData(p => ({ ...p, phone: e.target.value }))} disabled={!isEditingProfile} />
         <InputField label="University" value={currentProfile.university} onChange={e => setTempProfileData(p => ({ ...p, university: e.target.value }))} disabled={!isEditingProfile} />
@@ -202,9 +311,13 @@ const Settings = () => {
           placeholder="Add a new skill (press Enter)"
           className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           onKeyDown={e => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-              setTempProfileData(p => ({ ...p, skills: [...p.skills, e.target.value.trim()] }))
-              e.target.value = ''
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const newSkill = e.target.value.trim();
+              if (newSkill) {
+                setTempProfileData(p => ({ ...p, skills: [...p.skills, newSkill] }));
+                e.target.value = '';
+              }
             }
           }}
         />
@@ -221,6 +334,7 @@ const Settings = () => {
 
       <FooterActions
         isEditing={isEditingProfile}
+        isLoading={loading}
         onEdit={handleUpdateProfile}
         onCancel={handleCancelEdit}
         onSave={handleSaveChanges}

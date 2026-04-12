@@ -3,7 +3,7 @@ import {
     FileText, GraduationCap, Lock, Mail, Star,
     Upload, User, X
 } from 'lucide-react'
-import React, { useContext, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { AppContext } from '../context/AppContext'
@@ -68,6 +68,17 @@ const AuthPage = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
+    const [otp, setOtp] = useState('')
+    const [serverOtp, setServerOtp] = useState('')
+    const [showOtpStep, setShowOtpStep] = useState(false)
+
+    useEffect(() => {
+        setOtp('')
+        setServerOtp('')
+        setShowOtpStep(false)
+        setError('')
+        setSuccess('')
+    }, [type, mode])
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -75,6 +86,7 @@ const AuthPage = () => {
     }
 
     const BASE_URL = isStudent ? 'http://localhost:5000/api/student' : 'http://localhost:5000/api/recruiter'
+    const shouldUseOtpVerification = isRegister && isStudent
 
 
     const handleSubmit = async (e) => {
@@ -87,6 +99,40 @@ const AuthPage = () => {
             let response;
 
             if (isRegister) {
+                if (shouldUseOtpVerification && !showOtpStep) {
+                    response = await fetch(`${BASE_URL}/send-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: formData.name,
+                            email: formData.email,
+                        }),
+                    })
+
+                    const otpResult = await response.json()
+
+                    if (!response.ok) {
+                        toast.error(otpResult.message || 'Failed to send OTP')
+                        setError(otpResult.message || 'Failed to send OTP')
+                        return
+                    }
+
+                    setServerOtp(String(otpResult.otp || ''))
+                    setShowOtpStep(true)
+                    setSuccess(otpResult.message || 'OTP sent to your email')
+                    toast.success(otpResult.message || 'OTP sent to your email')
+                    return
+                }
+
+                if (shouldUseOtpVerification && showOtpStep) {
+                    if (!otp.trim() || otp.trim() !== serverOtp) {
+                        toast.error('Invalid OTP. Registration failed.')
+                        setError('OTP does not match. Registration failed.')
+                        navigate('/')
+                        return
+                    }
+                }
+
                 // Registration uses FormData (supports file upload)
                 const data = new FormData()
                 data.append('name', formData.name)
@@ -100,7 +146,6 @@ const AuthPage = () => {
                     data.append('companyName', formData.companyName)
                 }
 
-                // Attach file: resume for student, logo for recruiter
                 if (file) {
                     const fileFieldName = isStudent ? 'resume' : 'companyLogo'
                     data.append(fileFieldName, file)
@@ -126,7 +171,7 @@ const AuthPage = () => {
             const result = await response.json();
 
             if (response.ok) {
-                toast.success(result.message || 'Login successful!')
+                toast.success(result.message || (isRegister ? 'Account created successfully!' : 'Login successful!'))
                 setSuccess(isRegister ? 'Account created successfully!' : 'Login successful!')
                 localStorage.setItem('token', result.token);
                 setToken(result.token);
@@ -139,6 +184,7 @@ const AuthPage = () => {
 
         } catch (err) {
             setError(err.message)
+            toast.error(err.message || 'Something went wrong')
         } finally {
             setLoading(false)
         }
@@ -353,6 +399,24 @@ const AuthPage = () => {
                                 </div>
                             )}
 
+                            {shouldUseOtpVerification && showOtpStep && (
+                                <>
+                                    <AuthInput
+                                        label="Enter OTP"
+                                        placeholder="6-digit OTP"
+                                        name="otp"
+                                        value={otp}
+                                        onChange={(e) => {
+                                            setOtp(e.target.value)
+                                            setError('')
+                                        }}
+                                    />
+                                    <p className="text-xs text-slate-500 -mt-2">
+                                        We sent a verification code to your email. Enter it to complete registration.
+                                    </p>
+                                </>
+                            )}
+
                             {/* Error message */}
                             {error && (
                                 <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-3 rounded-xl">
@@ -378,10 +442,18 @@ const AuthPage = () => {
                                 {loading ? (
                                     <>
                                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        {isRegister ? 'Creating Account...' : 'Logging in...'}
+                                        {isRegister
+                                            ? shouldUseOtpVerification && !showOtpStep
+                                                ? 'Sending OTP...'
+                                                : 'Creating Account...'
+                                            : 'Logging in...'}
                                     </>
                                 ) : (
-                                    isRegister ? 'Create Account' : 'Login'
+                                    isRegister
+                                        ? shouldUseOtpVerification && !showOtpStep
+                                            ? 'Send OTP'
+                                            : 'Verify OTP & Create Account'
+                                        : 'Login'
                                 )}
                             </button>
 

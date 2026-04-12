@@ -5,12 +5,37 @@ import {
 import React, { useRef, useState } from 'react';
 import { Document, Packer, Paragraph, TextRun, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 8);
 
-const enhanceWithAI = async (fieldLabel, currentValue) => {
+const enhanceWithAI = async (currentValue) => {
     
+    if (!currentValue?.trim()) {
+        return currentValue;
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/api/student/enhance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ currentValue: currentValue.trim() })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            toast.error(data.error || 'Failed to enhance the field. Please try again.');
+            return currentValue;
+        }
+
+        return data.enhancedValue;
+    } catch (error) {
+        console.error('Error enhancing field:', error);
+        return currentValue;
+    }
 };
 
 // ── Sub-components (defined OUTSIDE to avoid re-mount on re-render) ───────────
@@ -79,7 +104,7 @@ const ResumeBuilder = () => {
     const enhanceField = async (key, value, setter) => {
         if (!value.trim()) return;
         setLoading(key, true);
-        try { setter(await enhanceWithAI(key, value)); }
+        try { setter(await enhanceWithAI(value)); }
         finally { setLoading(key, false); }
     };
 
@@ -87,7 +112,7 @@ const ResumeBuilder = () => {
         if (!value.trim()) return;
         setLoading(`exp-${id}`, true);
         try {
-            const enhanced = await enhanceWithAI('job description', value);
+            const enhanced = await enhanceWithAI(value);
             setExperiences(prev => prev.map(e => e.id === id ? { ...e, description: enhanced } : e));
         } finally { setLoading(`exp-${id}`, false); }
     };

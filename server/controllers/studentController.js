@@ -2,6 +2,27 @@ import Student from "../models/Student.js";
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from 'cloudinary';
 import generateToken from "../utils/generateToken.js";
+import ai from "../configs/ai.js";
+import e from "express";
+import { sendOtpEmail } from "../utils/sendOtpEmail.js";
+import { generateOtp } from "../utils/generateOtp.js";
+
+export const sendEmailVerificationOtp = async (req, res) => {
+    try {
+        const {name, email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const otp = generateOtp();
+
+        await sendOtpEmail(email, otp, name);
+        return res.status(200).json({ success: true, message: 'OTP sent to email', otp });
+    } catch (error) {
+        console.error('Error sending OTP email:', error);
+        return res.status(500).json({ success: false, message: 'Error sending OTP email' });
+    }
+}
 
 export const registerStudent = async (req, res) => {
     try {
@@ -49,7 +70,7 @@ export const registerStudent = async (req, res) => {
         return res.status(201).json({ success: true, message: 'Student registered successfully', student: newStudent, token });
 
     } catch (error) {
-        return res.status(500).json({success: false, message: 'Error registering student' });
+        return res.status(500).json({ success: false, message: error.message || 'Error registering student' });
     }
 }
 
@@ -77,8 +98,108 @@ export const loginStudent = async (req, res) => {
         const token = generateToken(student._id, 'student');
 
         return res.status(200).json({ success: true, message: 'Student logged in successfully', student, token });
-        
+
     } catch (error) {
-        return res.status(500).json({success: false, message: 'Error logging in student' });
+        return res.status(500).json({ success: false, message: error.message || 'Error logging in student' });
     }
 }
+
+export const getStudent = async (req, res) => {
+    try {
+        return res.status(200).json({ success: true, student: req.user });
+    } catch (error) {
+        console.log('Error fetching student:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error fetching student' });
+    }
+};
+
+export const updateStudent = async (req, res) => {
+    try {
+        const student = req.user;
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        const {
+            name,
+            email,
+            phone,
+            university,
+            major,
+            graduationYear,
+            bio,
+            skills,
+            github,
+            linkedin,
+            portfolio
+        } = req.body;
+
+        student.name = name ?? student.name;
+        student.email = email ?? student.email;
+        student.phone = phone ?? student.phone;
+        student.university = university ?? student.university;
+        student.major = major ?? student.major;
+        student.graduationYear = graduationYear ?? student.graduationYear;
+        student.bio = bio ?? student.bio;
+        student.github = github ?? student.github;
+        student.linkedin = linkedin ?? student.linkedin;
+        student.portfolio = portfolio ?? student.portfolio;
+
+        if (skills) {
+            const parsedSkills = JSON.parse(skills);
+
+            student.skills = Array.isArray(parsedSkills)
+                ? parsedSkills.map(skill => String(skill).trim()).filter(skill => skill.length > 0)
+                : student.skills;
+        }
+
+        if (req.file) {
+            const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'students/profile_pictures',
+                resource_type: 'image',
+                allowed_formats: ['jpg', 'jpeg', 'png']
+            });
+            student.profilePicture = uploadResult.secure_url;
+        }
+
+        await student.save();
+
+        return res.status(200).json({ success: true, message: 'Student updated successfully', student });
+    } catch (error) {
+        console.error('Error updating student:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error updating student' });
+    }
+}
+
+export const enhanceResumeText = async (req, res) => {
+    try {
+
+        const { currentValue } = req.body;
+
+        if (!currentValue) {
+            return res.status(400).json({ success: false, message: 'Current value is required' });
+        }
+
+        const response = await ai.chat.completions.create({
+            model: process.env.GEMINI_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences also highlighting key skills, experience, and career objectives. Make it compelling and ATS-friendly and only return text, no options or anything else."
+                },
+                {
+                    role: "user",
+                    content: currentValue,
+                },
+            ],
+        });
+
+
+        return res.status(200).json({ success: true, enhancedValue: response.choices[0].message.content });
+
+    } catch (error) {
+        console.error('Error enhancing resume text:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error enhancing resume text' });
+    }
+} 

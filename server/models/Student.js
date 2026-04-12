@@ -15,6 +15,9 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    phone: {
+        type: String,
+    },
     university: {
         type: String,
     },
@@ -53,7 +56,10 @@ const studentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Submission'
     }],
-
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true });
 
 const Student = mongoose.model('Student', studentSchema);

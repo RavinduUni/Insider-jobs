@@ -1,6 +1,9 @@
 import { Calendar, CheckCircle, DollarSign, Plus, Tag, X, Briefcase, FileText, Package } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useContext } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { AppContext } from '../../context/AppContext'
+import { toast } from 'react-hot-toast'
 
 // ── Static data (unchanged) ───────────────────────────────────────────────────
 const categories = [
@@ -40,9 +43,19 @@ const CreateProject = () => {
   const { projectId } = useParams()
   const isEditMode = !!projectId
 
+  const navigate = useNavigate();
+  const { token } = useContext(AppContext);
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    title: '', description: '', budget: '', deadline: '',
-    technologies: [], category: '', requirements: [], deliverables: []
+    title: '',
+    category: '',
+    description: '',
+    budget: '',
+    deadline: '',
+    technologies: [],
+    requirements: [],
+    deliverables: []
   })
 
   const [techInput, setTechInput] = useState('')
@@ -98,6 +111,71 @@ const CreateProject = () => {
     setFormData(p => ({ ...p, technologies: techArray }))
   }
 
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const cleanTechnologies = techInput.split(',').map(t => t.trim()).filter(Boolean);
+
+    const payload = {
+      title: formData.title.trim(),
+      category: formData.category.trim(),
+      description: formData.description.trim(),
+      budget: Number(formData.budget),
+      deadline: formData.deadline,
+      technologies: cleanTechnologies,
+      requirements: formData.requirements.map(r => r.trim()).filter(Boolean),
+      deliverables: formData.deliverables.map(d => d.trim()).filter(Boolean)
+    }
+
+    if (!payload.title || !payload.category || !payload.description || !payload.budget || !payload.deadline || payload.technologies.length === 0) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (payload.requirements.length === 0) {
+      toast.error('Please add at least one requirement.');
+      return;
+    }
+
+    if (payload.deliverables.length === 0) {
+      toast.error('Please add at least one deliverable.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const endpoint = isEditMode ? `http://localhost:5000/api/recruiter/update-project/${projectId}` : 'http://localhost:5000/api/recruiter/create-project';
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        toast.error(data.message || 'An error occurred while saving the project.');
+        return;
+      }
+
+      toast.success(isEditMode ? 'Project updated successfully!' : 'Project created successfully!');
+      navigate('/owner-dashboard/projects');
+
+    } catch (error) {
+      toast.error('An error occurred while saving the project.');
+    } finally {
+      setLoading(false);
+    }
+
+  }
+
   return (
     <div className="min-h-screen">
 
@@ -114,7 +192,7 @@ const CreateProject = () => {
         </p>
       </div>
 
-      <form className="flex flex-col gap-5" onSubmit={e => e.preventDefault()}>
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 
         {/* ── Project Details ── */}
         <SectionCard icon={Briefcase} title="Project Details">
@@ -236,8 +314,8 @@ const CreateProject = () => {
                     type="button"
                     onClick={() => handleTechSuggestion(tech)}
                     className={`text-xs px-3 py-1 rounded-full border transition-all cursor-pointer ${formData.technologies.includes(tech)
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-slate-700 text-slate-400 hover:border-blue-500/40 hover:text-blue-400 hover:bg-blue-500/5'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-slate-700 text-slate-400 hover:border-blue-500/40 hover:text-blue-400 hover:bg-blue-500/5'
                       }`}
                   >
                     {formData.technologies.includes(tech) ? `✓ ${tech}` : `+ ${tech}`}
@@ -364,9 +442,10 @@ const CreateProject = () => {
             Cancel
           </button>
           <button type="submit"
-            className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors cursor-pointer"
+            disabled={loading}
+            className={`flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors cursor-pointer ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isEditMode ? 'Update Project' : 'Post Project'}
+            {loading ? (isEditMode ? 'Updating Project...' : 'Posting Project...') : (isEditMode ? 'Update Project' : 'Post Project')}
           </button>
         </div>
       </form>

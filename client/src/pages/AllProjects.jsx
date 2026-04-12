@@ -1,459 +1,538 @@
-import React, { useState } from 'react'
-import ProjectCard from '../components/ProjectCard';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Clock, DollarSign, Tag, } from 'lucide-react';
-import HeroBanner from '../components/HeroBanner';
-import Footer from '../components/Footer';
+import React, { useState } from 'react';
+import {
+    ArrowLeft, ArrowRight, ChevronDown, ChevronUp, ChevronRight,
+    Clock, DollarSign, Tag, SlidersHorizontal, X,
+    Globe, Zap, LayoutGrid, Rocket, TrendingUp, MessageSquare,
+    Star, Users, MapPin, Briefcase, Search
+} from 'lucide-react';
 import Navbar2 from '../components/Navbar2';
+import Footer from '../components/Footer';
+import ProjectCard from '../components/ProjectCard';
 
-const AllProjects = () => {
-    const categories = [
-        { label: 'All Categories', value: 'all' },
-        { label: 'Web Development', value: 'web development' },
-        { label: 'Machine Learning', value: 'machine learning' },
-        { label: 'UI/UX Designing', value: 'ui/ux designing' },
-        { label: 'Mobile Development', value: 'mobile development' },
-        { label: 'Data Analysis', value: 'data analysis' },
-        { label: 'API Development', value: 'api development' }
-    ];
+// ── Data ───────────────────────────────────────────────────────────────────
+const categories = [
+    { label: 'All Categories', value: 'all', icon: LayoutGrid },
+    { label: 'Web Development', value: 'web development', icon: Globe, count: 345 },
+    { label: 'Machine Learning', value: 'machine learning', icon: Zap, count: 128 },
+    { label: 'UI/UX Designing', value: 'ui/ux designing', icon: LayoutGrid, count: 198 },
+    { label: 'Mobile Development', value: 'mobile development', icon: Rocket, count: 106 },
+    { label: 'Data Analysis', value: 'data analysis', icon: TrendingUp, count: 92 },
+    { label: 'API Development', value: 'api development', icon: MessageSquare, count: 134 },
+];
 
-    const budgetOptions = [
-        { label: '$0 - $500', value: '0-500', min: 0, max: 500 },
-        { label: '$500 - $1000', value: '500-1000', min: 500, max: 1000 },
-        { label: '$1000 - $2000', value: '1000-2000', min: 1000, max: 2000 },
-        { label: '$2000+', value: '2000-999999', min: 2000, max: 999999 }
-    ];
+const budgetOptions = [
+    { label: '$0 – $500', value: '0-500' },
+    { label: '$500 – $1,000', value: '500-1000' },
+    { label: '$1,000 – $2,000', value: '1000-2000' },
+    { label: '$2,000+', value: '2000-999999' },
+];
 
-    const deadlineOptions = [
-        { label: 'Under 1 week', value: '1-7', min: 1, max: 7 },
-        { label: '1-2 weeks', value: '8-14', min: 8, max: 14 },
-        { label: '2-4 weeks', value: '15-30', min: 15, max: 30 },
-        { label: '1+ month', value: '31-999', min: 31, max: 999 }
-    ];
+const deadlineOptions = [
+    { label: 'Under 1 week', value: '1-7' },
+    { label: '1 – 2 weeks', value: '8-14' },
+    { label: '2 – 4 weeks', value: '15-30' },
+    { label: '1+ month', value: '31-999' },
+];
 
-    const allSkills = [
-        'React', 'Vue.js', 'Angular', 'Next.js', 'Node.js', 'Express', 'MongoDB', 'PostgreSQL',
-        'TensorFlow', 'PyTorch', 'Scikit-learn', 'Keras', 'Neural Networks', 'Deep Learning',
-        'Figma', 'Adobe XD', 'Sketch', 'Wireframing', 'Prototyping', 'User Research',
-        'React Native', 'Flutter', 'Swift', 'Kotlin', 'iOS', 'Android',
-        'Python', 'Pandas', 'NumPy', 'Data Visualization', 'SQL', 'Excel',
-        'REST API', 'GraphQL', 'FastAPI', 'Django', 'Flask', 'Microservices'
-    ];
+const allSkills = [
+    'React', 'Vue.js', 'Angular', 'Next.js', 'Node.js', 'Express', 'MongoDB', 'PostgreSQL',
+    'TensorFlow', 'PyTorch', 'Scikit-learn', 'Keras', 'Neural Networks', 'Deep Learning',
+    'Figma', 'Adobe XD', 'Sketch', 'Wireframing', 'Prototyping', 'User Research',
+    'React Native', 'Flutter', 'Swift', 'Kotlin', 'iOS', 'Android',
+    'Python', 'Pandas', 'NumPy', 'Data Visualization', 'SQL', 'Excel',
+    'REST API', 'GraphQL', 'FastAPI', 'Django', 'Flask', 'Microservices',
+];
 
-    const projects = [
-        {
-            id: 1,
-            title: 'E-commerce Website with React & Node.js',
-            budget: 1500,
-            deadline: '3 weeks',
-            category: 'Web Development',
-            skills: ['React', 'Node.js', 'MongoDB', 'Express'],
-            ownerRating: 4.8,
-            description: 'Build a full-stack e-commerce platform with product catalog, shopping cart, payment integration, and admin dashboard.',
-            postedDate: '2024-11-25'
-        },
-        {
-            id: 2,
-            title: 'Image Classification ML Model',
-            budget: 2200,
-            deadline: '4 weeks',
-            category: 'Machine Learning',
-            skills: ['TensorFlow', 'PyTorch', 'Python', 'Deep Learning'],
-            ownerRating: 4.9,
-            description: 'Develop a CNN-based image classification model to categorize product images with 90%+ accuracy. Dataset will be provided.',
-            postedDate: '2024-11-28'
-        },
-        {
-            id: 3,
-            title: 'Mobile App UI/UX Design - Fitness Tracker',
-            budget: 800,
-            deadline: '2 weeks',
-            category: 'UI/UX Designing',
-            skills: ['Figma', 'Wireframing', 'Prototyping', 'User Research'],
-            ownerRating: 4.7,
-            description: 'Create a modern, intuitive UI/UX design for a fitness tracking mobile app. Include wireframes, high-fidelity mockups, and interactive prototype.',
-            postedDate: '2024-11-27'
-        },
-        {
-            id: 4,
-            title: 'Cross-Platform Food Delivery App',
-            budget: 2500,
-            deadline: '5 weeks',
-            category: 'Mobile Development',
-            skills: ['React Native', 'Flutter', 'iOS', 'Android'],
-            ownerRating: 4.6,
-            description: 'Develop a cross-platform mobile app for food delivery with real-time tracking, payment integration, and user authentication.',
-            postedDate: '2024-11-26'
-        },
-        {
-            id: 5,
-            title: 'Sales Data Analysis & Visualization',
-            budget: 600,
-            deadline: '10 days',
-            category: 'Data Analysis',
-            skills: ['Python', 'Pandas', 'SQL', 'Data Visualization'],
-            ownerRating: 4.8,
-            description: 'Analyze 2 years of sales data, identify trends, create interactive dashboards, and provide actionable insights for business growth.',
-            postedDate: '2024-11-29'
-        },
-        {
-            id: 6,
-            title: 'RESTful API for Social Media Platform',
-            budget: 1800,
-            deadline: '3 weeks',
-            category: 'API Development',
-            skills: ['Node.js', 'Express', 'REST API', 'PostgreSQL'],
-            ownerRating: 4.9,
-            description: 'Build a scalable RESTful API for a social media platform with user authentication, posts, comments, and real-time notifications.',
-            postedDate: '2024-11-24'
-        },
-        {
-            id: 7,
-            title: 'SaaS Dashboard with Vue.js',
-            budget: 1200,
-            deadline: '2 weeks',
-            category: 'Web Development',
-            skills: ['Vue.js', 'TypeScript', 'Tailwind'],
-            ownerRating: 4.7,
-            description: 'Develop a responsive SaaS dashboard with data visualization, user management, and subscription handling using Vue.js 3.',
-            postedDate: '2024-11-23'
-        },
-        {
-            id: 8,
-            title: 'Sentiment Analysis NLP Model',
-            budget: 1900,
-            deadline: '3 weeks',
-            category: 'Machine Learning',
-            skills: ['Python', 'Scikit-learn', 'Neural Networks', 'NLP'],
-            ownerRating: 4.8,
-            description: 'Create an NLP model for sentiment analysis of customer reviews. Model should classify reviews as positive, negative, or neutral.',
-            postedDate: '2024-11-22'
-        },
-        {
-            id: 9,
-            title: 'Dashboard UI Design for Analytics Platform',
-            budget: 650,
-            deadline: '1 week',
-            category: 'UI/UX Designing',
-            skills: ['Adobe XD', 'Sketch', 'Prototyping'],
-            ownerRating: 4.6,
-            description: 'Design a clean, professional dashboard UI for an analytics platform with charts, graphs, and data tables. Dark mode included.',
-            postedDate: '2024-11-21'
-        },
-        {
-            id: 10,
-            title: 'iOS Expense Tracker App',
-            budget: 1400,
-            deadline: '4 weeks',
-            category: 'Mobile Development',
-            skills: ['Swift', 'iOS', 'CoreData'],
-            ownerRating: 4.9,
-            description: 'Build a native iOS app for expense tracking with categories, budgets, charts, and iCloud sync functionality.',
-            postedDate: '2024-11-20'
-        },
-        {
-            id: 11,
-            title: 'Customer Behavior Analysis Dashboard',
-            budget: 850,
-            deadline: '2 weeks',
-            category: 'Data Analysis',
-            skills: ['Excel', 'SQL', 'Data Visualization', 'Python'],
-            ownerRating: 4.5,
-            description: 'Analyze customer behavior patterns from e-commerce data and create an interactive dashboard with key metrics and insights.',
-            postedDate: '2024-11-19'
-        },
-        {
-            id: 12,
-            title: 'GraphQL API for E-learning Platform',
-            budget: 2100,
-            deadline: '4 weeks',
-            category: 'API Development',
-            skills: ['GraphQL', 'Node.js', 'MongoDB', 'Apollo'],
-            ownerRating: 4.8,
-            description: 'Develop a GraphQL API for an e-learning platform with courses, lessons, quizzes, and student progress tracking.',
-            postedDate: '2024-11-18'
-        }
-    ];
+const projects = [
+    { id: 1, title: 'E-commerce Website with React & Node.js', budget: 1500, deadline: '3 weeks', category: 'Web Development', skills: ['React', 'Node.js', 'MongoDB', 'Express'], ownerRating: 4.8, description: 'Build a full-stack e-commerce platform with product catalog, shopping cart, payment integration, and admin dashboard.', applicants: 12 },
+    { id: 2, title: 'Image Classification ML Model', budget: 2200, deadline: '4 weeks', category: 'Machine Learning', skills: ['TensorFlow', 'PyTorch', 'Python', 'Deep Learning'], ownerRating: 4.9, description: 'Develop a CNN-based image classification model to categorize product images with 90%+ accuracy. Dataset will be provided.', applicants: 9 },
+    { id: 3, title: 'Mobile App UI/UX Design – Fitness Tracker', budget: 800, deadline: '2 weeks', category: 'UI/UX Designing', skills: ['Figma', 'Wireframing', 'Prototyping', 'User Research'], ownerRating: 4.7, description: 'Create a modern, intuitive UI/UX design for a fitness tracking mobile app. Include wireframes, high-fidelity mockups, and interactive prototype.', applicants: 7 },
+    { id: 4, title: 'Cross-Platform Food Delivery App', budget: 2500, deadline: '5 weeks', category: 'Mobile Development', skills: ['React Native', 'Flutter', 'iOS', 'Android'], ownerRating: 4.6, description: 'Develop a cross-platform mobile app for food delivery with real-time tracking, payment integration, and user authentication.', applicants: 14 },
+    { id: 5, title: 'Sales Data Analysis & Visualization', budget: 600, deadline: '10 days', category: 'Data Analysis', skills: ['Python', 'Pandas', 'SQL', 'Data Visualization'], ownerRating: 4.8, description: 'Analyze 2 years of sales data, identify trends, create interactive dashboards, and provide actionable insights for business growth.', applicants: 11 },
+    { id: 6, title: 'RESTful API for Social Media Platform', budget: 1800, deadline: '3 weeks', category: 'API Development', skills: ['Node.js', 'Express', 'REST API', 'PostgreSQL'], ownerRating: 4.9, description: 'Build a scalable RESTful API for a social media platform with user authentication, posts, comments, and real-time notifications.', applicants: 6 },
+    { id: 7, title: 'SaaS Dashboard with Vue.js', budget: 1200, deadline: '2 weeks', category: 'Web Development', skills: ['Vue.js', 'TypeScript', 'Tailwind'], ownerRating: 4.7, description: 'Develop a responsive SaaS dashboard with data visualization, user management, and subscription handling using Vue.js 3.', applicants: 18 },
+    { id: 8, title: 'Sentiment Analysis NLP Model', budget: 1900, deadline: '3 weeks', category: 'Machine Learning', skills: ['Python', 'Scikit-learn', 'Neural Networks'], ownerRating: 4.8, description: 'Create an NLP model for sentiment analysis of customer reviews. Model should classify reviews as positive, negative, or neutral.', applicants: 10 },
+    { id: 9, title: 'Dashboard UI Design for Analytics Platform', budget: 650, deadline: '1 week', category: 'UI/UX Designing', skills: ['Adobe XD', 'Sketch', 'Prototyping'], ownerRating: 4.6, description: 'Design a clean, professional dashboard UI for an analytics platform with charts, graphs, and data tables. Dark mode included.', applicants: 20 },
+    { id: 10, title: 'iOS Expense Tracker App', budget: 1400, deadline: '4 weeks', category: 'Mobile Development', skills: ['Swift', 'iOS', 'CoreData'], ownerRating: 4.9, description: 'Build a native iOS app for expense tracking with categories, budgets, charts, and iCloud sync functionality.', applicants: 5 },
+    { id: 11, title: 'Customer Behavior Analysis Dashboard', budget: 850, deadline: '2 weeks', category: 'Data Analysis', skills: ['Excel', 'SQL', 'Data Visualization', 'Python'], ownerRating: 4.5, description: 'Analyze customer behavior patterns from e-commerce data and create an interactive dashboard with key metrics and insights.', applicants: 13 },
+    { id: 12, title: 'GraphQL API for E-learning Platform', budget: 2100, deadline: '4 weeks', category: 'API Development', skills: ['GraphQL', 'Node.js', 'MongoDB'], ownerRating: 4.8, description: 'Develop a GraphQL API for an e-learning platform with courses, lessons, quizzes, and student progress tracking.', applicants: 8 },
+];
 
-    // Collapse states for filter sections
+const ITEMS_PER_PAGE = 8;
+
+// ── FilterSection sub-component ────────────────────────────────────────────
+function FilterSection({ title, icon: Icon, expanded, onToggle, children }) {
+    return (
+        <div className="border-b border-gray-100 pb-5">
+            <button
+                onClick={onToggle}
+                className="flex items-center justify-between w-full mb-4 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer group"
+            >
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                    {Icon && <Icon className="w-4 h-4" />}
+                    {title}
+                </span>
+                {expanded
+                    ? <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                    : <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />}
+            </button>
+            {expanded && <div className="space-y-2.5">{children}</div>}
+        </div>
+    );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
+export default function AllProjects() {
     const [categoryExpanded, setCategoryExpanded] = useState(true);
     const [budgetExpanded, setBudgetExpanded] = useState(true);
     const [deadlineExpanded, setDeadlineExpanded] = useState(true);
     const [skillsExpanded, setSkillsExpanded] = useState(true);
 
-    // Filter states
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [budgetRanges, setBudgetRanges] = useState([]);
     const [deadlineRanges, setDeadlineRanges] = useState([]);
     const [selectedSkills, setSelectedSkills] = useState([]);
-
+    const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-    const handleBudgetToggle = (value) => {
-        setBudgetRanges(prev => (
-            prev.includes(value) ? prev.filter(b => b != value) : [...prev, value]
-        ));
-    };
+    const toggle = (setter) => (value) =>
+        setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
 
-    const handleDeadlineToggle = (value) => {
-        setDeadlineRanges(prev => (
-            prev.includes(value) ? prev.filter(b => b !== value) : [...prev, value]
-        ))
-    };
-
-    const handleSelectedSkills = (value) => {
-        setSelectedSkills(prev => (
-            prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
-        ));
-    };
-
-    const convertDeadlineToDays = (deadlineString) => {
-        if (!deadlineString) return null;
-
-        const [num, unit] = deadlineString.toLowerCase().split(" ");
-
-        const value = Number(num);
-
-        if (unit.startsWith('week')) {
-            return value * 7;
-        }
-
-        if (unit.startsWith('day')) {
-            return value;
-        }
-
+    const convertDeadlineToDays = (str) => {
+        if (!str) return null;
+        const [num, unit] = str.toLowerCase().split(' ');
+        const v = Number(num);
+        if (unit?.startsWith('week')) return v * 7;
+        if (unit?.startsWith('day')) return v;
         return null;
-    }
+    };
 
-    const filteredProjects = projects.filter(project => {
-        if (selectedCategory.toLowerCase() !== 'all' && project.category.toLowerCase() !== selectedCategory.toLowerCase()) {
-            return false;
+    const activeFilterCount =
+        (selectedCategory !== 'all' ? 1 : 0) +
+        budgetRanges.length +
+        deadlineRanges.length +
+        selectedSkills.length;
+
+    const normalize = (value) =>
+        value
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    const filteredProjects = projects.filter(p => {
+        if (selectedCategory !== 'all' && p.category.toLowerCase() !== selectedCategory) return false;
+
+        if (searchQuery.trim()) {
+            const terms = normalize(searchQuery).split(' ').filter(Boolean);
+            const searchableContent = normalize([
+                p.title,
+                p.description,
+                p.category,
+                p.deadline,
+                ...p.skills,
+            ].join(' '));
+
+            const matchesAllTerms = terms.every(term => searchableContent.includes(term));
+            if (!matchesAllTerms) return false;
         }
 
-        if (budgetRanges.length > 0) {
-            const projectBudget = project.budget;
-            const inBudget = budgetRanges.some(range => {
-                const [min, max] = range.split("-").map(Number);
-                return projectBudget >= min && projectBudget <= max;
+        if (budgetRanges.length) {
+            const inBudget = budgetRanges.some(r => {
+                const [min, max] = r.split('-').map(Number);
+                return p.budget >= min && p.budget <= max;
             });
-
-            if (!inBudget) {
-                return false;
-            }
+            if (!inBudget) return false;
         }
-
-        if (deadlineRanges.length > 0) {
-            const projectDeadline = convertDeadlineToDays(project.deadline);
-            const withinDeadline = deadlineRanges.some(range => {
-                const [min, max] = range.split("-").map(Number);
-                return projectDeadline >= min && projectDeadline <= max;
-            })
-
-            if (!withinDeadline) {
-                return false;
-            }
+        if (deadlineRanges.length) {
+            const days = convertDeadlineToDays(p.deadline);
+            const ok = deadlineRanges.some(r => {
+                const [min, max] = r.split('-').map(Number);
+                return days >= min && days <= max;
+            });
+            if (!ok) return false;
         }
-
-        if (selectedSkills.length > 0) {
-            const hasSkill = selectedSkills.some(skill => (
-                project.skills.includes(skill)
-            ));
-
-            if (!hasSkill) {
-                return false;
-            }
-        }
-
-
+        if (selectedSkills.length && !selectedSkills.some(s => p.skills.includes(s))) return false;
         return true;
     });
 
-    const ITEMS_PER_PAGE = 8;
-
     const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
+    const currentProjects = filteredProjects.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const currentProjects = filteredProjects.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const clearAll = () => {
+        setSelectedCategory('all');
+        setBudgetRanges([]);
+        setDeadlineRanges([]);
+        setSelectedSkills([]);
+        setSearchQuery('');
+        setCurrentPage(1);
+    };
 
-    const goNext = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(prev => prev + 1);
-        }
-    }
+    // ── Sidebar filter panel (shared between desktop and mobile) ───────────
+    const FilterPanel = () => (
+        <div className="space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                        <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {activeFilterCount}
+                        </span>
+                    )}
+                </h2>
+                {activeFilterCount > 0 && (
+                    <button
+                        onClick={clearAll}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
+                    >
+                        <X className="w-3 h-3" /> Clear all
+                    </button>
+                )}
+            </div>
 
-    const goPrev = () => {
-        if (currentPage > 1) {
-            setCurrentPage(prev => prev - 1);
-        }
-    }
+            <hr className="border-gray-100" />
+
+            {/* Category */}
+            <FilterSection
+                title="Category"
+                icon={Tag}
+                expanded={categoryExpanded}
+                onToggle={() => setCategoryExpanded(p => !p)}
+            >
+                {categories.map(cat => (
+                    <label key={cat.value} className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                            type="radio"
+                            name="category"
+                            value={cat.value}
+                            checked={selectedCategory === cat.value}
+                            onChange={e => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 accent-blue-600"
+                        />
+                        <span className={`text-sm flex-1 transition-colors ${selectedCategory === cat.value ? 'text-blue-600 font-medium' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                            {cat.label}
+                        </span>
+                        {cat.count && (
+                            <span className="text-xs text-gray-300">{cat.count}</span>
+                        )}
+                    </label>
+                ))}
+            </FilterSection>
+
+            {/* Budget */}
+            <FilterSection
+                title="Budget Range"
+                icon={DollarSign}
+                expanded={budgetExpanded}
+                onToggle={() => setBudgetExpanded(p => !p)}
+            >
+                {budgetOptions.map(opt => (
+                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={budgetRanges.includes(opt.value)}
+                            onChange={() => { toggle(setBudgetRanges)(opt.value); setCurrentPage(1); }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 accent-blue-600"
+                        />
+                        <span className={`text-sm transition-colors ${budgetRanges.includes(opt.value) ? 'text-blue-600 font-medium' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                            {opt.label}
+                        </span>
+                    </label>
+                ))}
+            </FilterSection>
+
+            {/* Deadline */}
+            <FilterSection
+                title="Deadline"
+                icon={Clock}
+                expanded={deadlineExpanded}
+                onToggle={() => setDeadlineExpanded(p => !p)}
+            >
+                {deadlineOptions.map(opt => (
+                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={deadlineRanges.includes(opt.value)}
+                            onChange={() => { toggle(setDeadlineRanges)(opt.value); setCurrentPage(1); }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 accent-blue-600"
+                        />
+                        <span className={`text-sm transition-colors ${deadlineRanges.includes(opt.value) ? 'text-blue-600 font-medium' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                            {opt.label}
+                        </span>
+                    </label>
+                ))}
+            </FilterSection>
+
+            {/* Skills */}
+            <FilterSection
+                title="Required Skills"
+                expanded={skillsExpanded}
+                onToggle={() => setSkillsExpanded(p => !p)}
+            >
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin">
+                    {allSkills.map(skill => (
+                        <label key={skill} className="flex items-center gap-3 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={selectedSkills.includes(skill)}
+                                onChange={() => { toggle(setSelectedSkills)(skill); setCurrentPage(1); }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 accent-blue-600"
+                            />
+                            <span className={`text-sm transition-colors ${selectedSkills.includes(skill) ? 'text-blue-600 font-medium' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                                {skill}
+                            </span>
+                        </label>
+                    ))}
+                </div>
+            </FilterSection>
+        </div>
+    );
 
     return (
-        <>
+        <div className="bg-white text-gray-900 font-sans min-h-screen">
             <Navbar2 />
-            <HeroBanner />
-            <div className="container mx-auto px-20 py-8 bg-background">
-                <div className='grid grid-cols-4 gap-5'>
-                    <div className='col-span-1 bg-white shadow-lg rounded-2xl p-4'>
-                        <h2 className='text-xl font-semibold'>Filter Projects</h2>
 
-                        <hr className='border-border mt-2' />
+            {/* ── HERO BANNER ── */}
+            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 py-20">
+                {/* Glow blobs */}
+                <div className="absolute top-10 left-1/4 w-96 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 right-1/4 w-72 h-56 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
-                        <div className='space-y-6 mt-8'>
-                            <div className='border-border border-b pb-4'>
-                                <button className='flex items-center justify-between w-full mb-3 text-secondary hover:text-primary transition-colors cursor-pointer'
-                                    onClick={() => setCategoryExpanded(!categoryExpanded)}
-                                >
-                                    <span className='flex items-center gap-2 font-semibold'>
-                                        <Tag className='w-4 h-4' />
-                                        Category
-                                    </span>
-                                    {categoryExpanded ? <ChevronDown className='w-4 h-4' /> : <ChevronUp className='w-4 h-4' />}
-                                </button>
-                                {categoryExpanded && (
-                                    <div className='space-y-2'>
-                                        {categories.map((category) => (
-                                            <label key={category.value} className='flex items-center gap-3'>
-                                                <input
-                                                    type="radio"
-                                                    name='category'
-                                                    value={category.value}
-                                                    checked={selectedCategory == category.value}
-                                                    className='w-4 h-4 text-primary border-border focus:ring-primary cursor-pointer'
-                                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                                />
-                                                <span className='text-text-secondary text-sm'>{category.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className='space-y-6 mt-8'>
-                            <div className='border-border border-b pb-4'>
-                                <button className='flex items-center justify-between w-full mb-3 text-secondary hover:text-primary transition-colors cursor-pointer'
-                                    onClick={() => setBudgetExpanded(!budgetExpanded)}
-                                >
-                                    <span className='flex items-center gap-2 font-semibold'>
-                                        <DollarSign className='w-4 h-4' />
-                                        Budget Range
-                                    </span>
-                                    {budgetExpanded ? <ChevronDown className='w-4 h-4' /> : <ChevronUp className='w-4 h-4' />}
-                                </button>
-                                {budgetExpanded && (
-                                    <div className='space-y-2'>
-                                        {budgetOptions.map((option) => (
-                                            <label key={option.value} className='flex items-center gap-3'>
-                                                <input
-                                                    type="checkbox"
-                                                    value={option.value}
-                                                    checked={budgetRanges.includes(option.value)}
-                                                    onChange={() => handleBudgetToggle(option.value)}
-                                                    className='w-4 h-4 text-primary border-border focus:ring-primary cursor-pointer'
-                                                />
-                                                <span className='text-text-secondary text-sm'>{option.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className='space-y-6 mt-8'>
-                            <div className='border-border border-b pb-4'>
-                                <button className='flex items-center justify-between w-full mb-3 text-secondary hover:text-primary transition-colors cursor-pointer'
-                                    onClick={() => setDeadlineExpanded(!deadlineExpanded)}
-                                >
-                                    <span className='flex items-center gap-2 font-semibold'>
-                                        <Clock className='w-4 h-4' />
-                                        Deadline
-                                    </span>
-                                    {deadlineExpanded ? <ChevronDown className='w-4 h-4' /> : <ChevronUp className='w-4 h-4' />}
-                                </button>
-                                {deadlineExpanded && (
-                                    <div className='space-y-2'>
-                                        {deadlineOptions.map((option) => (
-                                            <label key={option.value} className='flex items-center gap-3'>
-                                                <input
-                                                    type="checkbox"
-                                                    value={option.value}
-                                                    checked={deadlineRanges.includes(option.value)}
-                                                    onChange={() => handleDeadlineToggle(option.value)}
-                                                    className='w-4 h-4 text-primary border-border focus:ring-primary cursor-pointer'
-                                                />
-                                                <span className='text-text-secondary text-sm'>{option.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className='space-y-6 mt-8'>
-                            <div className='border-border pb-4'>
-                                <button className='flex items-center justify-between w-full mb-3 text-secondary hover:text-primary transition-colors cursor-pointer'
-                                    onClick={() => setDeadlineExpanded(!deadlineExpanded)}
-                                >
-                                    <span className='flex items-center gap-2 font-semibold'>
-                                        Required Skills
-                                    </span>
-                                    {skillsExpanded ? <ChevronDown className='w-4 h-4' /> : <ChevronUp className='w-4 h-4' />}
-                                </button>
-                                {skillsExpanded && (
-                                    <div className='space-y-2 max-h-80 overflow-scroll'>
-                                        {allSkills.map((skill) => (
-                                            <label key={skill} className='flex items-center gap-3'>
-                                                <input
-                                                    type="checkbox"
-                                                    value={skill}
-                                                    checked={selectedSkills.includes(skill)}
-                                                    onChange={() => handleSelectedSkills(skill)}
-                                                    className='w-4 h-4 text-primary border-border focus:ring-primary cursor-pointer'
-                                                />
-                                                <span className='text-text-secondary text-sm'>{skill}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+                    <div className="inline-flex items-center gap-2 bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-medium px-4 py-2 rounded-full mb-6">
+                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                        {projects.length} projects open right now
                     </div>
+                    <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight">
+                        Browse{' '}
+                        <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-cyan-400">
+                            All Projects
+                        </span>
+                    </h1>
+                    <p className="text-slate-400 text-base max-w-lg mx-auto mb-8">
+                        Find the perfect project matching your skills and earn while gaining real-world experience.
+                    </p>
 
-                    <div className='col-span-3'>
-                        <div className='grid grid-cols-2 gap-4'>
-                            {currentProjects.map((project) => (
-                                <ProjectCard project={project} />
-                            ))}
-                        </div>
+                    {/* Search bar */}
+                    <div className="max-w-xl mx-auto relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search projects by title or keyword…"
+                            value={searchQuery}
+                            onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                            className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-slate-400 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                        />
                     </div>
                 </div>
-                <div className='grid grid-cols-4'>
-                    <div className='flex items-center justify-center mt-4 gap-1 col-span-3 col-start-2'>
+            </section>
+
+            {/* ── CATEGORY QUICK PILLS ── */}
+            <section className="border-b border-gray-100 bg-white sticky top-0 z-20 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
+                    {categories.map(cat => (
                         <button
-                            onClick={goPrev}
-                            disabled={currentPage === 1}
-                            className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === 1 && 'opacity-40 cursor-not-allowed'}`}>
-                            <ArrowLeft className='w-4 h-4' />
+                            key={cat.value}
+                            onClick={() => { setSelectedCategory(cat.value); setCurrentPage(1); }}
+                            className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                                selectedCategory === cat.value
+                                    ? 'bg-blue-600 border-blue-600 text-white'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                            }`}
+                        >
+                            {cat.icon && <cat.icon className="w-3.5 h-3.5" />}
+                            {cat.label}
                         </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                            <button
-                                onClick={() => setCurrentPage(page)}
-                                className={`border text-primary w-8 h-8 rounded cursor-pointer ${currentPage === page && 'bg-primary border-primary text-white'}`}>
-                                {page}
-                            </button>
-                        ))}
+                    ))}
+
+                    {/* Mobile filter toggle */}
+                    <button
+                        onClick={() => setMobileFilterOpen(true)}
+                        className="ml-auto shrink-0 lg:hidden flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-all"
+                    >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <span className="bg-blue-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </section>
+
+            {/* ── MOBILE FILTER DRAWER ── */}
+            {mobileFilterOpen && (
+                <div className="fixed inset-0 z-50 lg:hidden">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFilterOpen(false)} />
+                    <div className="absolute right-0 top-0 bottom-0 w-80 bg-white p-6 overflow-y-auto shadow-2xl">
                         <button
-                            onClick={goNext}
-                            disabled={currentPage === totalPages}
-                            className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === totalPages && 'opacity-40 cursor-not-allowed'}`}>
-                            <ArrowRight className='w-4 h-4' />
+                            onClick={() => setMobileFilterOpen(false)}
+                            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                            <X className="w-4 h-4 text-gray-500" />
                         </button>
+                        <FilterPanel />
                     </div>
+                </div>
+            )}
+
+            {/* ── MAIN CONTENT ── */}
+            <div className="max-w-7xl mx-auto px-6 py-10">
+                <div className="flex gap-8">
+
+                    {/* ── SIDEBAR (desktop) ── */}
+                    <aside className="hidden lg:block w-64 shrink-0">
+                        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-20">
+                            <FilterPanel />
+                        </div>
+                    </aside>
+
+                    {/* ── PROJECT GRID ── */}
+                    <main className="flex-1 min-w-0">
+                        {/* Results bar */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <p className="text-gray-900 font-semibold">
+                                    {filteredProjects.length}{' '}
+                                    <span className="text-gray-400 font-normal">
+                                        project{filteredProjects.length !== 1 ? 's' : ''} found
+                                    </span>
+                                </p>
+                                {activeFilterCount > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {selectedCategory !== 'all' && (
+                                            <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100">
+                                                {categories.find(c => c.value === selectedCategory)?.label}
+                                                <button onClick={() => { setSelectedCategory('all'); setCurrentPage(1); }}>
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        )}
+                                        {budgetRanges.map(r => (
+                                            <span key={r} className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100">
+                                                {budgetOptions.find(o => o.value === r)?.label}
+                                                <button onClick={() => toggle(setBudgetRanges)(r)}>
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                        {deadlineRanges.map(r => (
+                                            <span key={r} className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100">
+                                                {deadlineOptions.find(o => o.value === r)?.label}
+                                                <button onClick={() => toggle(setDeadlineRanges)(r)}>
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                        {selectedSkills.map(s => (
+                                            <span key={s} className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full border border-blue-100">
+                                                {s}
+                                                <button onClick={() => toggle(setSelectedSkills)(s)}>
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Cards */}
+                        {currentProjects.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {currentProjects.map(project => (
+                                    <ProjectCard key={project.id} project={project} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-24 text-center">
+                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <Search className="w-7 h-7 text-blue-400" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
+                                <p className="text-gray-500 text-sm mb-6 max-w-xs">
+                                    Try adjusting your filters or search query to find more projects.
+                                </p>
+                                <button
+                                    onClick={clearAll}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-sm transition-colors"
+                                >
+                                    Clear all filters
+                                </button>
+                            </div>
+                        )}
+
+                        {/* ── PAGINATION ── */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-1.5 mt-10">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${
+                                        currentPage === 1
+                                            ? 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                            : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                                    }`}
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                </button>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`w-9 h-9 rounded-xl border text-sm font-medium transition-all ${
+                                            currentPage === page
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-200'
+                                                : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${
+                                        currentPage === totalPages
+                                            ? 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                            : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                                    }`}
+                                >
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                    </main>
                 </div>
             </div>
 
-            <Footer />
-        </>
-    )
-}
+            {/* ── CTA BANNER ── */}
+            <section className="py-16 bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 relative overflow-hidden mt-12">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-48 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-extrabold text-white mb-3">Can't find the right project?</h2>
+                    <p className="text-slate-400 mb-6 text-sm">Set up job alerts and we'll notify you the moment a matching project is posted.</p>
+                    <div className="flex gap-3 justify-center flex-wrap">
+                        <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm transition-all">
+                            Set Up Job Alert <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <button className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-medium text-sm transition-all">
+                            Browse by Category
+                        </button>
+                    </div>
+                </div>
+            </section>
 
-export default AllProjects
+            <Footer />
+        </div>
+    );
+}
