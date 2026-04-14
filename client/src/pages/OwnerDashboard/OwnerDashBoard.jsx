@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Briefcase, LayoutDashboard, PlusCircle, Settings, Shield, Users, Wallet } from 'lucide-react';
 import Navbar2 from '../../components/Navbar2';
+import { AppContext } from '../../context/AppContext';
 
 const navItems = [
     { to: '', end: true, icon: LayoutDashboard, label: 'Dashboard' },
@@ -14,6 +15,9 @@ const navItems = [
 ];
 
 const OwnerDashBoard = () => {
+
+    const {user} = useContext(AppContext);
+
     return (
         <div className='min-h-screen bg-slate-950'>
             <Navbar2 />
@@ -25,10 +29,10 @@ const OwnerDashBoard = () => {
                     {/* Owner mini profile */}
                     <div className='flex items-center gap-3 px-3 mb-8'>
                         <div className='w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0'>
-                            TI
+                            {user?.name?.charAt(0) || 'TI'}
                         </div>
                         <div className='min-w-0'>
-                            <p className='text-sm font-semibold text-white truncate'>TechStart Inc.</p>
+                            <p className='text-sm font-semibold text-white truncate'>{user?.name || 'TechStart Inc.'}</p>
                             <p className='text-xs text-slate-500 truncate'>Project Owner</p>
                         </div>
                     </div>

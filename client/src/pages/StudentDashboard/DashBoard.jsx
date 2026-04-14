@@ -3,8 +3,9 @@ import {
   DollarSign, FileText, Shield, Star,
   TrendingUp, Upload, Wallet, Zap
 } from 'lucide-react'
-import React from 'react'
+import React, { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AppContext } from '../../context/AppContext'
 
 // ── Static data ─────────────────────────────────────────────────────────────
 const stats = [
@@ -55,7 +56,9 @@ const SectionHeader = ({ title, action, onAction }) => (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const Dashboard = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  const { user } = useContext(AppContext);
 
   return (
     <div className='space-y-6'>
@@ -71,18 +74,10 @@ const Dashboard = () => {
         <div className='relative z-10 flex items-center justify-between'>
           <div>
             <p className='text-blue-200 text-sm mb-1'>Good morning 👋</p>
-            <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, Alex!</h1>
+            <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, {user?.name || 'Alex'}!</h1>
             <p className='text-blue-200 text-sm'>Here's what's happening with your projects today.</p>
           </div>
-          <div className='hidden md:flex items-center gap-3'>
-            <div className='text-right'>
-              <p className='text-blue-200 text-xs'>Profile strength</p>
-              <p className='text-white font-bold text-lg'>78%</p>
-            </div>
-            <div className='w-14 h-14 rounded-full border-4 border-blue-400/40 flex items-center justify-center bg-blue-500/20'>
-              <span className='text-white font-bold text-sm'>AJ</span>
-            </div>
-          </div>
+          
         </div>
       </div>
 

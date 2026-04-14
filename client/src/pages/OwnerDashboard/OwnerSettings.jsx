@@ -71,18 +71,19 @@ const OwnerSettings = () => {
   const fileInputRef = useRef(null)
 
   const [profileData, setProfileData] = useState({
-    name: '',
-    companyName: '',
-    email: '',
-    contactNumber: '',
-    industry: '',
-    companySize: '',
-    location: '',
-    bio: '',
-    companyWebsite: '',
-    companyLinkedin: '',
-    companyTwitter: '',
-    companyLogo: '',
+    name: user?.name || '',
+    companyName: user?.companyName || '',
+    email: user?.email || '',
+    contactNumber: user?.contactNumber || '',
+    industry: user?.industry || '',
+    companySize: user?.companySize || '',
+    location: user?.location || '',
+    bio: user?.bio || '',
+    hiringFor: user?.hiringFor || user?.hiringfor || [],
+    companyWebsite: user?.companyWebsite || '',
+    companyLinkedin: user?.companyLinkedin || '',
+    companyTwitter: user?.companyTwitter || '',
+    companyLogo: user?.companyLogo || '',
   });
 
   const [tempProfileData, setTempProfileData] = useState(profileData)
@@ -119,6 +120,7 @@ const OwnerSettings = () => {
       formData.append('companySize', tempProfileData.companySize);
       formData.append('location', tempProfileData.location);
       formData.append('bio', tempProfileData.bio);
+      formData.append('hiringFor', JSON.stringify(tempProfileData.hiringFor));
       formData.append('companyWebsite', tempProfileData.companyWebsite);
       formData.append('companyLinkedin', tempProfileData.companyLinkedin);
       formData.append('companyTwitter', tempProfileData.companyTwitter);
@@ -152,6 +154,7 @@ const OwnerSettings = () => {
           companySize: updatedUser.companySize || '',
           location: updatedUser.location || '',
           bio: updatedUser.bio || '',
+          hiringFor: updatedUser.hiringFor || updatedUser.hiringfor || [],
           companyWebsite: updatedUser.companyWebsite || '',
           companyLinkedin: updatedUser.companyLinkedin || '',
           companyTwitter: updatedUser.companyTwitter || '',
@@ -195,6 +198,7 @@ const OwnerSettings = () => {
       companyLinkedin: user.companyLinkedin || '',
       companyTwitter: user.companyTwitter || '',
       companyLogo: user.companyLogo || '',
+      hiringFor: user.hiringFor || user.hiringfor || [],
     };
     setProfileData(mappedProfile);
     setTempProfileData(mappedProfile);
@@ -241,6 +245,38 @@ const OwnerSettings = () => {
         <InputField label="Company Size" value={currentProfile.companySize} onChange={e => setTempProfileData(p => ({ ...p, companySize: e.target.value }))} disabled={!isEditingProfile} />
         <div className="col-span-2">
           <InputField label="Location" value={currentProfile.location} onChange={e => setTempProfileData(p => ({ ...p, location: e.target.value }))} disabled={!isEditingProfile} />
+        </div>
+
+        <div className="col-span-2">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {currentProfile.hiringFor.map((hiring, i) => (
+              <span key={i} className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-xl text-xs font-medium">
+                {hiring}
+                {isEditingProfile && (
+                  <button onClick={() => setTempProfileData(p => ({ ...p, hiringFor: p.hiringFor.filter((_, idx) => idx !== i) }))} className="hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+          <input
+            disabled={!isEditingProfile}
+            type="text"
+            placeholder="Add a new hiring focus (press Enter)"
+            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const newHiring = e.target.value.trim();
+                if (newHiring) {
+                  setTempProfileData(p => ({ ...p, hiringFor: [...p.hiringFor, newHiring] }));
+                  e.target.value = '';
+                }
+              }
+            }}
+          />
+
         </div>
         <div className="col-span-2 flex flex-col gap-1.5">
           <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Company Bio</label>

@@ -47,12 +47,13 @@ const AuthPage = () => {
     const type = searchParams.get('type') || 'student'
     const mode = searchParams.get('mode') || 'register'
 
-    const {setToken} = useContext(AppContext);
+    const { setToken } = useContext(AppContext);
 
     const navigate = useNavigate()
     const inputRef = useRef(null)
 
     const isStudent = type === 'student'
+    const isRecruiter = type === 'recruiter'
     const isRegister = mode === 'register'
 
     // ── Form state ────────────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ const AuthPage = () => {
     }
 
     const BASE_URL = isStudent ? 'http://localhost:5000/api/student' : 'http://localhost:5000/api/recruiter'
-    const shouldUseOtpVerification = isRegister && isStudent
+    const shouldUseOtpVerification = isRegister && isStudent 
 
 
     const handleSubmit = async (e) => {

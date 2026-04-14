@@ -7,6 +7,25 @@ import e from "express";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { generateOtp } from "../utils/generateOtp.js";
 
+const ALLOWED_RESUME_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+const ALLOWED_RESUME_EXTENSIONS = ['pdf', 'doc', 'docx'];
+
+const getFileExtension = (filename = '') => {
+    const parts = filename.toLowerCase().split('.');
+    return parts.length > 1 ? parts.pop() : '';
+};
+
+const isValidResumeFile = (file) => {
+    if (!file) return false;
+    const ext = getFileExtension(file.originalname || '');
+    return ALLOWED_RESUME_MIME_TYPES.includes(file.mimetype) && ALLOWED_RESUME_EXTENSIONS.includes(ext);
+};
+
 export const sendEmailVerificationOtp = async (req, res) => {
     try {
         const {name, email } = req.body;
@@ -43,12 +62,17 @@ export const registerStudent = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        if (req.file && !isValidResumeFile(req.file)) {
+            return res.status(400).json({ success: false, message: 'Only PDF, DOC, or DOCX resume files are allowed' });
+        }
+
         let resumeUrl = '';
         if (resume) {
             const uploadResult = await cloudinary.uploader.upload(resume, {
                 folder: 'students/resumes',
                 resource_type: 'raw',
-                allowed_formats: ['pdf', 'doc', 'docx']
+                use_filename: true,
+                unique_filename: true,
             });
             resumeUrl = uploadResult.secure_url;
         }
@@ -116,6 +140,8 @@ export const getStudent = async (req, res) => {
 export const updateStudent = async (req, res) => {
     try {
         const student = req.user;
+        const profilePictureFile = req.files?.profilePicture?.[0];
+        const resumeFile = req.files?.resume?.[0];
 
         if (!student) {
             return res.status(404).json({ success: false, message: 'Student not found' });
@@ -154,13 +180,27 @@ export const updateStudent = async (req, res) => {
                 : student.skills;
         }
 
-        if (req.file) {
-            const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        if (profilePictureFile) {
+            const uploadResult = await cloudinary.uploader.upload(profilePictureFile.path, {
                 folder: 'students/profile_pictures',
                 resource_type: 'image',
                 allowed_formats: ['jpg', 'jpeg', 'png']
             });
             student.profilePicture = uploadResult.secure_url;
+        }
+
+        if (resumeFile) {
+            if (!isValidResumeFile(resumeFile)) {
+                return res.status(400).json({ success: false, message: 'Only PDF, DOC, or DOCX resume files are allowed' });
+            }
+
+            const uploadResult = await cloudinary.uploader.upload(resumeFile.path, {
+                folder: 'students/resumes',
+                resource_type: 'raw',
+                use_filename: true,
+                unique_filename: true,
+            });
+            student.resume = uploadResult.secure_url;
         }
 
         await student.save();

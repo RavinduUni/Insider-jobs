@@ -30,6 +30,7 @@ import { Toaster } from 'react-hot-toast'
 import StudentRoutesProtector from './RouteProtector/StudentRoutesProtector'
 import RecruiterRouterProtector from './RouteProtector/RecruiterRouterProtector'
 import Companies from './pages/Companies'
+import AboutPage from './pages/AboutPage'
 
 const App = () => {
 
@@ -50,6 +51,7 @@ const App = () => {
         <Route path='/apply-project/:id' element={<ProjectDetail />} />
         <Route path='/projects' element={<AllProjects />} />
         <Route path='/companies' element={<Companies />} />
+        <Route path='/about' element={<AboutPage />} />
 
         <Route element={<StudentRoutesProtector />}>
           <Route path="/student-dashboard" element={<StudentDashBoard />}>

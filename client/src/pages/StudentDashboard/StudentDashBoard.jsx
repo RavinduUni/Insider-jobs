@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
   Briefcase, File, FileText, LayoutDashboard,
   Settings, Shield, UploadIcon, Wallet
 } from 'lucide-react'
 import Navbar2 from '../../components/Navbar2'
+import { AppContext } from '../../context/AppContext'
 
 const navItems = [
   { to: '', end: true, icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,6 +19,9 @@ const navItems = [
 ]
 
 const StudentDashBoard = () => {
+
+  const {user } = useContext(AppContext);
+
   return (
     <div className='min-h-screen bg-slate-950'>
       <Navbar2 />
@@ -29,11 +33,15 @@ const StudentDashBoard = () => {
           {/* User mini profile */}
           <div className='flex items-center gap-3 px-3 mb-8'>
             <div className='w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0'>
-              AJ
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover rounded-xl" />
+              ) : (
+                user?.name ? user.name.charAt(0).toUpperCase() : 'U'
+              )}
             </div>
             <div className='min-w-0'>
-              <p className='text-sm font-semibold text-white truncate'>Alex Johnson</p>
-              <p className='text-xs text-slate-500 truncate'>CS Student · MIT</p>
+              <p className='text-sm font-semibold text-white truncate'>{user?.name || 'Alex Johnson'}</p>
+              <p className='text-xs text-slate-500 truncate'>{user?.university || 'CS Student · MIT'}</p>
             </div>
           </div>
 

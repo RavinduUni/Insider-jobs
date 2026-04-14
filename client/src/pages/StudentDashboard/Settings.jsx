@@ -1,7 +1,33 @@
-import { Bell, CreditCard, Edit, SaveIcon, Shield, UploadIcon, User, X } from 'lucide-react'
+import { Bell, CreditCard, Edit, FileText, SaveIcon, Shield, UploadIcon, User, X } from 'lucide-react'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { AppContext } from '../../context/AppContext'
 import toast from 'react-hot-toast'
+
+const MAX_RESUME_SIZE = 5 * 1024 * 1024
+const RESUME_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
+const getResumeNameFromUrl = (url = '') => {
+  if (!url) return ''
+  const cleanUrl = url.split('?')[0]
+  return decodeURIComponent(cleanUrl.split('/').pop() || 'resume')
+}
+
+const MIME_TO_EXTENSION = {
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+}
+
+const ensureFileNameWithExtension = (name = 'resume', mimeType = '') => {
+  const cleaned = name || 'resume'
+  if (cleaned.includes('.')) return cleaned
+  const ext = MIME_TO_EXTENSION[mimeType]
+  return ext ? `${cleaned}.${ext}` : cleaned
+}
 
 // ── Shared primitives (outside parent to avoid remount) ───────────────────────
 const InputField = ({ label, value, onChange, disabled, type = 'text', placeholder = '' }) => (
@@ -78,8 +104,10 @@ const Settings = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isEditingNotifications, setIsEditingNotifications] = useState(false)
   const [profilePicture, setProfilePicture] = useState(null)
+  const [resumeUrl, setResumeUrl] = useState(user?.resume || '')
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef(null)
+  const resumeInputRef = useRef(null)
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -93,6 +121,7 @@ const Settings = () => {
     portfolio: user?.portfolio || '',
     linkedin: user?.linkedin || '',
     github: user?.github || '',
+    resume: user?.resume || '',
   })
 
   const [notifications, setNotifications] = useState({
@@ -102,9 +131,12 @@ const Settings = () => {
 
   const [tempProfileData, setTempProfileData] = useState(profileData)
   const [tempProfilePicture, setTempProfilePicture] = useState(profilePicture)
+  const [tempResumeUrl, setTempResumeUrl] = useState(resumeUrl)
   const [tempNotificationData, setTempNotificationData] = useState(notifications)
 
   const [selectedFile, setSelectedFile] = useState(null)
+  const [selectedResumeFile, setSelectedResumeFile] = useState(null)
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false)
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
@@ -118,9 +150,70 @@ const Settings = () => {
     reader.readAsDataURL(file)
   }
 
+  const handleResumeUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!RESUME_MIME_TYPES.includes(file.type)) {
+      toast.error('Only PDF, DOC, or DOCX files are allowed')
+      return
+    }
+
+    if (file.size > MAX_RESUME_SIZE) {
+      toast.error('Resume size must be less than 5MB')
+      return
+    }
+
+    setSelectedResumeFile(file)
+    setTempResumeUrl(file.name)
+  }
+
+  const handleViewResume = async () => {
+    if (!tempResumeUrl || selectedResumeFile) return
+
+    try {
+      setIsDownloadingResume(true)
+      const response = await fetch(tempResumeUrl)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch resume')
+      }
+
+      const blob = await response.blob()
+      const safeName = ensureFileNameWithExtension(getResumeNameFromUrl(tempResumeUrl), blob.type)
+      const objectUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = safeName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(objectUrl)
+    } catch (error) {
+      window.open(tempResumeUrl, '_blank', 'noopener,noreferrer')
+      toast.error('Could not prepare file download. Opened resume in a new tab instead.')
+    } finally {
+      setIsDownloadingResume(false)
+    }
+  }
+
   // For profile editing
-  const handleUpdateProfile = () => { setTempProfileData(profileData); setTempProfilePicture(profilePicture); setSelectedFile(null); setIsEditingProfile(true) }
-  const handleCancelEdit = () => { setTempProfileData(profileData); setIsEditingProfile(false); setSelectedFile(null); setTempProfilePicture(profilePicture) }
+  const handleUpdateProfile = () => {
+    setTempProfileData(profileData)
+    setTempProfilePicture(profilePicture)
+    setTempResumeUrl(resumeUrl)
+    setSelectedFile(null)
+    setSelectedResumeFile(null)
+    setIsEditingProfile(true)
+  }
+  const handleCancelEdit = () => {
+    setTempProfileData(profileData)
+    setIsEditingProfile(false)
+    setSelectedFile(null)
+    setSelectedResumeFile(null)
+    setTempProfilePicture(profilePicture)
+    setTempResumeUrl(resumeUrl)
+  }
 
   const handleSaveChanges = async () => {
     try {
@@ -142,6 +235,10 @@ const Settings = () => {
 
       if (selectedFile) {
         formData.append('profilePicture', selectedFile);
+      }
+
+      if (selectedResumeFile) {
+        formData.append('resume', selectedResumeFile);
       }
 
       const res = await fetch('http://localhost:5000/api/student/update-profile', {
@@ -173,13 +270,17 @@ const Settings = () => {
         portfolio: updatedProfile.portfolio || '',
         linkedin: updatedProfile.linkedin || '',
         github: updatedProfile.github || '',
+        resume: updatedProfile.resume || '',
       }
 
       setProfileData(mappedProfile);
       setTempProfileData(mappedProfile);
       setProfilePicture(updatedProfile.profilePicture || null);
       setTempProfilePicture(updatedProfile.profilePicture || null);
+      setResumeUrl(updatedProfile.resume || '');
+      setTempResumeUrl(updatedProfile.resume || '');
       setSelectedFile(null);
+      setSelectedResumeFile(null);
       setIsEditingProfile(false);
       setUser(prev => ({ ...prev, ...mappedProfile }));
 
@@ -228,12 +329,15 @@ const Settings = () => {
       portfolio: user.portfolio || '',
       linkedin: user.linkedin || '',
       github: user.github || '',
+      resume: user.resume || '',
     }
 
     setProfileData(mappedProfile);
     setTempProfileData(mappedProfile);
     setProfilePicture(user.profilePicture || null);
     setTempProfilePicture(user.profilePicture || null);
+    setResumeUrl(user.resume || '');
+    setTempResumeUrl(user.resume || '');
 
   }, [user])
 
@@ -330,6 +434,59 @@ const Settings = () => {
         <InputField label="Portfolio Website" value={currentProfile.portfolio} onChange={e => setTempProfileData(p => ({ ...p, portfolio: e.target.value }))} disabled={!isEditingProfile} />
         <InputField label="LinkedIn Profile" value={currentProfile.linkedin} onChange={e => setTempProfileData(p => ({ ...p, linkedin: e.target.value }))} disabled={!isEditingProfile} />
         <InputField label="GitHub Profile" value={currentProfile.github} onChange={e => setTempProfileData(p => ({ ...p, github: e.target.value }))} disabled={!isEditingProfile} />
+      </div>
+
+      <Divider />
+      <SectionTitle title="Resume" subtitle="Upload your latest resume (PDF, DOC, DOCX)" />
+
+      <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-4 mb-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-sm text-white font-medium">Current Resume</p>
+              <p className="text-xs text-slate-500 mt-0.5 break-all">
+                {tempResumeUrl ? getResumeNameFromUrl(tempResumeUrl) : 'No resume uploaded yet'}
+              </p>
+            </div>
+          </div>
+
+          {tempResumeUrl && (
+            <button
+              type="button"
+              disabled={selectedResumeFile || isDownloadingResume}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${selectedResumeFile || isDownloadingResume
+                ? 'border-slate-700 text-slate-500 cursor-default'
+                : 'border-blue-500/30 text-blue-400 hover:bg-blue-500/10 cursor-pointer'}`}
+              onClick={handleViewResume}
+            >
+              {selectedResumeFile ? 'Selected from device' : isDownloadingResume ? 'Preparing...' : 'View'}
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <input
+            type="file"
+            ref={resumeInputRef}
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={handleResumeUpload}
+            className="hidden"
+          />
+          <button
+            disabled={!isEditingProfile}
+            onClick={() => resumeInputRef.current?.click()}
+            className={`flex items-center gap-2 text-xs px-4 py-2 rounded-xl border transition-all
+              ${isEditingProfile
+                ? 'border-blue-500/30 text-blue-400 hover:bg-blue-500/10 cursor-pointer'
+                : 'border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+          >
+            <UploadIcon className="w-3.5 h-3.5" /> Upload New Resume
+          </button>
+          <p className="text-xs text-slate-600 mt-2">Accepted: PDF, DOC, DOCX · Max 5MB</p>
+        </div>
       </div>
 
       <FooterActions

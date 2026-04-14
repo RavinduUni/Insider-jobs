@@ -36,6 +36,9 @@ const recruiterSchema = new mongoose.Schema({
     bio: {
         type: String,
     },
+    hiringFor: [{
+        type: String,
+    }],
     companyWebsite: {
         type: String,
     },
@@ -44,7 +47,8 @@ const recruiterSchema = new mongoose.Schema({
     },
     companyTwitter: {
         type: String,
-    }
+    },
+
 }, { timestamps: true });
 
 const Recruiter = mongoose.model('Recruiter', recruiterSchema);

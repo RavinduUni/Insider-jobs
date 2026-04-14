@@ -8,7 +8,7 @@ import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 
 export const sendEmailVerificationOtp = async (req, res) => {
     try {
-        const {name, email } = req.body;
+        const { name, email } = req.body;
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
@@ -127,6 +127,8 @@ export const updateRecruiter = async (req, res) => {
             companySize,
             location,
             bio,
+            hiringFor,
+            hiringfor,
             companyWebsite,
             companyLinkedin,
             companyTwitter
@@ -143,6 +145,15 @@ export const updateRecruiter = async (req, res) => {
         recruiter.companyWebsite = companyWebsite ?? recruiter.companyWebsite;
         recruiter.companyLinkedin = companyLinkedin ?? recruiter.companyLinkedin;
         recruiter.companyTwitter = companyTwitter ?? recruiter.companyTwitter;
+
+        const hiringForPayload = hiringFor ?? hiringfor;
+        if (hiringForPayload) {
+            const parsedHiringFor = JSON.parse(hiringForPayload);
+
+            recruiter.hiringFor = Array.isArray(parsedHiringFor)
+                ? parsedHiringFor.map(role => String(role).trim()).filter(Boolean)
+                : [String(parsedHiringFor).trim()].filter(Boolean);
+        }
 
         if (req.file) {
             const result = await cloudinary.uploader.upload(req.file.path, {

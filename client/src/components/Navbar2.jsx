@@ -2,10 +2,11 @@ import { Briefcase } from 'lucide-react'
 import React, { useContext, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext';
+import { assets } from '../assets/assets';
 
 const Navbar2 = () => {
 
-    const { token, role, setToken } = useContext(AppContext);
+    const { token, role, setToken, user } = useContext(AppContext);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const navigate = useNavigate();
@@ -21,20 +22,21 @@ const Navbar2 = () => {
         <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 <NavLink to="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <Briefcase className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="font-bold text-lg tracking-tight">Insider<span className="text-blue-600">jobs</span></span>
+                    <img src={assets.logo} alt="" />
                 </NavLink>
                 <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
                     <NavLink to="/projects">Projects</NavLink>
                     <NavLink to="/companies">Companies</NavLink>
-                    <NavLink to="/">Pricing</NavLink>
-                    <NavLink to="/">About</NavLink>
+                    <NavLink to="/about">About</NavLink>
+                    <NavLink to="/pricing">Pricing</NavLink>
                 </div>
                 {token ? (
                     <div className='w-10 h-10 relative bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer' onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                        AJ
+                        {user?.profilePicture || user?.companyLogo ? (
+                            <img src={user.profilePicture || user.companyLogo} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            user?.name ? user.name.charAt(0).toUpperCase() : 'U'
+                        )}
                         {isDropdownOpen && (
                             <div className="absolute top-full mt-2 right-0 bg-white shadow-lg rounded-md py-2 min-w-max z-50">
                                 <button onClick={() => { navigate(role === 'student' ? '/student-dashboard' : '/owner-dashboard'); setIsDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Dashboard</button>

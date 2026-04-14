@@ -9,7 +9,10 @@ studentRouter.post('/send-otp', sendEmailVerificationOtp);
 studentRouter.post('/register', upload.single('resume'), registerStudent);
 studentRouter.post('/login', loginStudent);
 studentRouter.get('/profile', verifyToken, getStudent);
-studentRouter.put('/update-profile', verifyToken, upload.single('profilePicture'), updateStudent);
+studentRouter.put('/update-profile', verifyToken, upload.fields([
+	{ name: 'profilePicture', maxCount: 1 },
+	{ name: 'resume', maxCount: 1 },
+]), updateStudent);
 studentRouter.post('/enhance', enhanceResumeText);
 
 export default studentRouter;

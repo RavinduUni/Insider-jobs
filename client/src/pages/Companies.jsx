@@ -377,7 +377,7 @@ export default function Companies() {
                 {filteredCompanies.map((company) => (
                   <article
                     key={company.id}
-                    className="bg-white border border-gray-100 rounded-2xl p-5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all"
+                    className="bg-white border border-blue-200 rounded-2xl p-5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all"
                   >
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3 min-w-0">

@@ -7,9 +7,7 @@ import { toast } from 'react-hot-toast'
 
 // ── Static data (unchanged) ───────────────────────────────────────────────────
 const categories = [
-  'Frontend Development', 'Backend Development', 'Full Stack Development',
-  'Mobile App Development', 'API Development', 'Database Development',
-  'Desktop Application', 'Game Development',
+  'Web Development', 'Machine Learning', 'UI/UX Design', 'Mobile Development', 'Data Science', 'API Development', 'Game Development', 'DevOps', 'Cybersecurity', 'Cloud Computing', 'Blockchain', 'Other'
 ]
 
 const suggestedTechnologies = [
@@ -87,7 +85,7 @@ const CreateProject = () => {
       description: 'Build a modern admin dashboard using React and Tailwind CSS.',
       budget: '750', deadline: '2025-10-15',
       technologies: ['React', 'TypeScript', 'Tailwind CSS'],
-      category: 'Frontend Development',
+      category: 'Web Development',
       requirements: ['Strong React fundamentals', 'Experience with REST APIs'],
       deliverables: ['Fully responsive dashboard', 'Clean, reusable components']
     }

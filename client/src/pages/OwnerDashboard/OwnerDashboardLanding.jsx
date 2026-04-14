@@ -4,8 +4,9 @@ import {
   Users, FileText, ArrowRight, Plus,
   ArrowLeft
 } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { AppContext } from '../../context/AppContext';
 
 // ── Inline StatusBadge ──────────────────────────────────────────
 const statusConfig = {
@@ -77,6 +78,8 @@ const SectionHeader = ({ title, action, onAction }) => (
 const OwnerDashboardLanding = () => {
   const navigate = useNavigate();
 
+  const {user} = useContext(AppContext);
+
   const [currentPage, setCurrentPage] = useState(1);
 
   const ITEMS_PER_PAGE = 3;
@@ -109,7 +112,7 @@ const OwnerDashboardLanding = () => {
         <div className='relative z-10 flex items-center justify-between'>
           <div>
             <p className='text-blue-200 text-sm mb-1'>Project Owner Dashboard</p>
-            <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, TechStart Inc!</h1>
+            <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, {user?.name || 'User'}!</h1>
             <p className='text-blue-200 text-sm'>Here's an overview of your projects and applicants.</p>
           </div>
           <button
