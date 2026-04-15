@@ -1,9 +1,10 @@
 import { ArrowLeft, Briefcase, CheckCircle, Clock, DollarSign, MapPin } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import ApplyModal from '../components/ApplyModel';
 import ApplyModel from '../components/ApplyModel';
 import Navbar2 from '../components/Navbar2';
+import { AppContext } from '../context/AppContext';
 
 const ProjectDetail = () => {
 
@@ -11,100 +12,13 @@ const ProjectDetail = () => {
 
     const navigate = useNavigate();
 
-    const projectData = [
-        {
-            id: 1,
-            title: 'E-commerce Website Development',
-            description: 'We need a modern, responsive e-commerce website built with React and Node.js. The platform should include product catalog, shopping cart, payment integration, and admin dashboard. Clean code and documentation required.',
-            budget: 850,
-            deadline: '2 weeks',
-            category: 'Web Development',
-            skills: ['React', 'Node.js', 'MongoDB', 'Stripe API'],
-            ownerName: 'Sarah Smith',
-            ownerCompany: 'TechStartup Inc.',
-            ownerRating: 4.8,
-            projectsCompleted: 15,
-            location: 'Remote',
-            applicants: 12,
-            postedDate: '3 days ago',
-            requirements: [
-                'Strong experience with React and modern JavaScript',
-                'Backend development with Node.js and Express',
-                'Database design and MongoDB experience',
-                'Payment gateway integration experience',
-                'Good communication skills'
-            ],
-            deliverables: [
-                'Fully functional e-commerce website',
-                'Admin panel for product management',
-                'Payment integration with Stripe',
-                'Responsive design for all devices',
-                'Source code and documentation'
-            ]
-        },
-        {
-            id: 2,
-            title: 'Mobile App UI/UX Design',
-            description: 'Looking for a talented UI/UX designer to create modern, user-friendly designs for a fitness tracking mobile app. Need complete wireframes, mockups, and interactive prototypes.',
-            budget: 600,
-            deadline: '10 days',
-            category: 'UI/UX Design',
-            skills: ['Figma', 'Adobe XD', 'UI Design', 'UX Research'],
-            ownerName: 'Mike Johnson',
-            ownerCompany: 'FitLife Apps',
-            ownerRating: 4.9,
-            projectsCompleted: 23,
-            location: 'Remote',
-            applicants: 8,
-            postedDate: '1 day ago',
-            requirements: [
-                'Portfolio showcasing mobile app designs',
-                'Proficiency in Figma or Adobe XD',
-                'Understanding of mobile UI/UX best practices',
-                'Experience with design systems',
-                'Ability to create interactive prototypes'
-            ],
-            deliverables: [
-                'Complete wireframes for all screens',
-                'High-fidelity mockups',
-                'Interactive prototype',
-                'Design system documentation',
-                'All design files (Figma/XD)'
-            ]
-        },
-        {
-            id: 3,
-            title: 'Machine Learning Model for Price Prediction',
-            description: 'Develop a machine learning model to predict real estate prices based on various features. Need data preprocessing, model training, and deployment with API endpoint.',
-            budget: 950,
-            deadline: '3 weeks',
-            category: 'Machine Learning',
-            skills: ['Python', 'TensorFlow', 'scikit-learn', 'Data Analysis'],
-            ownerName: 'Emma Davis',
-            ownerCompany: 'RealEstate Analytics',
-            ownerRating: 4.7,
-            projectsCompleted: 18,
-            location: 'Remote',
-            applicants: 15,
-            postedDate: '5 days ago',
-            requirements: [
-                'Strong Python programming skills',
-                'Experience with ML frameworks (TensorFlow/PyTorch)',
-                'Data preprocessing and feature engineering',
-                'Model evaluation and optimization',
-                'API development with Flask or FastAPI'
-            ],
-            deliverables: [
-                'Cleaned and preprocessed dataset',
-                'Trained ML model with evaluation metrics',
-                'API endpoint for predictions',
-                'Model documentation and code',
-                'Jupyter notebooks with analysis'
-            ]
-        }
-    ];
+    const { projects } = useContext(AppContext);
 
-    const project = projectData.find(item => item.id === Number(id));
+    const project = projects.find(item => item._id === id);
+
+    const recruiterId = project?.recruiter?._id;
+
+    const totalProjectsByRecruiter = projects.filter(proj => proj.recruiter._id === recruiterId).length;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -131,11 +45,11 @@ const ProjectDetail = () => {
                                     </div>
                                     <div className='flex items-center gap-2'>
                                         <Clock className='w-4 h-4 text-text-secondary' />
-                                        <span className='text-text-secondary text-sm'>{project.deadline}</span>
+                                        <span className='text-text-secondary text-sm'>{new Date(project.deadline).toLocaleDateString()}</span>
                                     </div>
                                     <div className='flex items-center gap-2'>
                                         <MapPin className='w-4 h-4 text-text-secondary' />
-                                        <span className='text-text-secondary text-sm'>{project.location}</span>
+                                        <span className='text-text-secondary text-sm'>{project.category}</span>
                                     </div>
                                     <div className='flex items-center gap-2'>
                                         <Briefcase className='w-4 h-4 text-text-secondary' />
@@ -148,8 +62,8 @@ const ProjectDetail = () => {
 
                                 <h3 className='font-semibold text-2xl mb-3 mt-7'>Required Skills</h3>
                                 <div className='flex gap-2'>
-                                    {project.skills.map((skill, index) => (
-                                        <span key={index} className='text-primary text-sm bg-blue-50 py-1 px-3 rounded-4xl inline-block'>{skill}</span>
+                                    {project.technologies.map((technology, index) => (
+                                        <span key={index} className='text-primary text-sm bg-blue-50 py-1 px-3 rounded-4xl inline-block'>{technology}</span>
                                     ))}
                                 </div>
 
@@ -186,17 +100,17 @@ const ProjectDetail = () => {
                                     <h3 className='text-xl font-semibold my-5'>Project Owner</h3>
                                     <div className='flex items-start gap-3 mb-4'>
                                         <div className='w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shrink-0'>
-                                            {project.ownerName.charAt(0)}
+                                            {project.recruiter.name.charAt(0)}
                                         </div>
                                         <div>
-                                            <h5 className='font-semibold'>{project.ownerName}</h5>
-                                            <p className='text-text-secondary text-sm'>{project.ownerCompany}</p>
+                                            <h5 className='font-semibold'>{project.recruiter.name}</h5>
+                                            <p className='text-text-secondary text-sm'>{project.recruiter.companyName}</p>
                                         </div>
                                     </div>
 
                                     <div className='flex items-center justify-between'>
                                         <span className='text-text-secondary text-sm'>Projects Posted</span>
-                                        <span className='text-text-secondary text-sm'>{project.projectsCompleted}</span>
+                                        <span className='text-text-secondary text-sm'>{totalProjectsByRecruiter}</span>
                                     </div>
 
                                     <div className='flex justify-center'>
@@ -207,7 +121,7 @@ const ProjectDetail = () => {
                                     <div className='flex flex-col gap-4 mt-3'>
                                         <div className='flex items-center justify-between'>
                                             <span className='text-text-secondary text-sm'>Posted</span>
-                                            <span className='text-text-secondary text-sm'>{project.postedDate}</span>
+                                            <span className='text-text-secondary text-sm'>{new Date(project.createdAt).toLocaleDateString()}</span>
                                         </div>
 
                                         <div className='flex items-center justify-between'>
@@ -217,7 +131,7 @@ const ProjectDetail = () => {
 
                                         <div className='flex items-center justify-between'>
                                             <span className='text-text-secondary text-sm'>Deadline</span>
-                                            <span className='text-text-secondary text-sm'>{project.deadline}</span>
+                                            <span className='text-text-secondary text-sm'>{new Date(project.deadline).toLocaleDateString()}</span>
                                         </div>
 
                                         <div className='flex items-center justify-between'>
@@ -234,11 +148,13 @@ const ProjectDetail = () => {
                     )}
                 </div>
             </div>
-            <ApplyModel
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                projecTitle={project.title}
-            />
+            {project && (
+                <ApplyModel
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    projecTitle={project.title}
+                />
+            )}
         </>
     )
 }

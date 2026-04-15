@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     ArrowLeft, ArrowRight, ChevronDown, ChevronUp, ChevronRight,
     Clock, DollarSign, Tag, SlidersHorizontal, X,
@@ -8,6 +8,7 @@ import {
 import Navbar2 from '../components/Navbar2';
 import Footer from '../components/Footer';
 import ProjectCard from '../components/ProjectCard';
+import { AppContext } from '../context/AppContext';
 
 // ── Data ───────────────────────────────────────────────────────────────────
 const categories = [
@@ -43,20 +44,6 @@ const allSkills = [
     'REST API', 'GraphQL', 'FastAPI', 'Django', 'Flask', 'Microservices',
 ];
 
-const projects = [
-    { id: 1, title: 'E-commerce Website with React & Node.js', budget: 1500, deadline: '3 weeks', category: 'Web Development', skills: ['React', 'Node.js', 'MongoDB', 'Express'], ownerRating: 4.8, description: 'Build a full-stack e-commerce platform with product catalog, shopping cart, payment integration, and admin dashboard.', applicants: 12 },
-    { id: 2, title: 'Image Classification ML Model', budget: 2200, deadline: '4 weeks', category: 'Machine Learning', skills: ['TensorFlow', 'PyTorch', 'Python', 'Deep Learning'], ownerRating: 4.9, description: 'Develop a CNN-based image classification model to categorize product images with 90%+ accuracy. Dataset will be provided.', applicants: 9 },
-    { id: 3, title: 'Mobile App UI/UX Design – Fitness Tracker', budget: 800, deadline: '2 weeks', category: 'UI/UX Designing', skills: ['Figma', 'Wireframing', 'Prototyping', 'User Research'], ownerRating: 4.7, description: 'Create a modern, intuitive UI/UX design for a fitness tracking mobile app. Include wireframes, high-fidelity mockups, and interactive prototype.', applicants: 7 },
-    { id: 4, title: 'Cross-Platform Food Delivery App', budget: 2500, deadline: '5 weeks', category: 'Mobile Development', skills: ['React Native', 'Flutter', 'iOS', 'Android'], ownerRating: 4.6, description: 'Develop a cross-platform mobile app for food delivery with real-time tracking, payment integration, and user authentication.', applicants: 14 },
-    { id: 5, title: 'Sales Data Analysis & Visualization', budget: 600, deadline: '10 days', category: 'Data Analysis', skills: ['Python', 'Pandas', 'SQL', 'Data Visualization'], ownerRating: 4.8, description: 'Analyze 2 years of sales data, identify trends, create interactive dashboards, and provide actionable insights for business growth.', applicants: 11 },
-    { id: 6, title: 'RESTful API for Social Media Platform', budget: 1800, deadline: '3 weeks', category: 'API Development', skills: ['Node.js', 'Express', 'REST API', 'PostgreSQL'], ownerRating: 4.9, description: 'Build a scalable RESTful API for a social media platform with user authentication, posts, comments, and real-time notifications.', applicants: 6 },
-    { id: 7, title: 'SaaS Dashboard with Vue.js', budget: 1200, deadline: '2 weeks', category: 'Web Development', skills: ['Vue.js', 'TypeScript', 'Tailwind'], ownerRating: 4.7, description: 'Develop a responsive SaaS dashboard with data visualization, user management, and subscription handling using Vue.js 3.', applicants: 18 },
-    { id: 8, title: 'Sentiment Analysis NLP Model', budget: 1900, deadline: '3 weeks', category: 'Machine Learning', skills: ['Python', 'Scikit-learn', 'Neural Networks'], ownerRating: 4.8, description: 'Create an NLP model for sentiment analysis of customer reviews. Model should classify reviews as positive, negative, or neutral.', applicants: 10 },
-    { id: 9, title: 'Dashboard UI Design for Analytics Platform', budget: 650, deadline: '1 week', category: 'UI/UX Designing', skills: ['Adobe XD', 'Sketch', 'Prototyping'], ownerRating: 4.6, description: 'Design a clean, professional dashboard UI for an analytics platform with charts, graphs, and data tables. Dark mode included.', applicants: 20 },
-    { id: 10, title: 'iOS Expense Tracker App', budget: 1400, deadline: '4 weeks', category: 'Mobile Development', skills: ['Swift', 'iOS', 'CoreData'], ownerRating: 4.9, description: 'Build a native iOS app for expense tracking with categories, budgets, charts, and iCloud sync functionality.', applicants: 5 },
-    { id: 11, title: 'Customer Behavior Analysis Dashboard', budget: 850, deadline: '2 weeks', category: 'Data Analysis', skills: ['Excel', 'SQL', 'Data Visualization', 'Python'], ownerRating: 4.5, description: 'Analyze customer behavior patterns from e-commerce data and create an interactive dashboard with key metrics and insights.', applicants: 13 },
-    { id: 12, title: 'GraphQL API for E-learning Platform', budget: 2100, deadline: '4 weeks', category: 'API Development', skills: ['GraphQL', 'Node.js', 'MongoDB'], ownerRating: 4.8, description: 'Develop a GraphQL API for an e-learning platform with courses, lessons, quizzes, and student progress tracking.', applicants: 8 },
-];
 
 const ITEMS_PER_PAGE = 8;
 
@@ -83,6 +70,9 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children }) {
 
 // ── Main component ─────────────────────────────────────────────────────────
 export default function AllProjects() {
+
+    const { projects, setProjects } = useContext(AppContext);
+
     const [categoryExpanded, setCategoryExpanded] = useState(true);
     const [budgetExpanded, setBudgetExpanded] = useState(true);
     const [deadlineExpanded, setDeadlineExpanded] = useState(true);

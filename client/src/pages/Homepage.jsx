@@ -7,6 +7,8 @@ import {
 import { NavLink, useNavigate } from 'react-router-dom';
 import ProjectCard from '../components/ProjectCard';
 import Navbar2 from '../components/Navbar2';
+import { AppContext } from '../context/AppContext';
+import { useContext } from 'react';
 
 // ── Unsplash images (free to use) ──────────────────────────────────────────
 const HERO_IMG_1 = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80'; // students collaborating
@@ -42,74 +44,6 @@ const categories = [
     { icon: MessageSquare, label: 'Content Writing', count: 134, color: 'bg-pink-50 text-pink-600' },
 ];
 
-const latestProjects = [
-    {
-        id: 1,
-        title: 'E-commerce Website Development',
-        description: 'Build a modern, responsive e-commerce platform with React and Node.js. Includes product catalog, shopping cart, and payment integration.',
-        budget: 850,
-        deadline: '2 weeks',
-        category: 'Web Development',
-        skills: ['React', 'Node.js', 'MongoDB', 'Stripe'],
-        ownerRating: 4.8,
-        applicants: 12
-    },
-    {
-        id: 2,
-        title: 'Mobile App UI/UX Design',
-        description: 'Design modern, user-friendly interfaces for a fitness tracking mobile app. Need wireframes, mockups, and interactive prototypes.',
-        budget: 600,
-        deadline: '10 days',
-        category: 'UI/UX Design',
-        skills: ['Figma', 'Adobe XD', 'UI Design', 'Prototyping'],
-        ownerRating: 4.9,
-        applicants: 8
-    },
-    {
-        id: 3,
-        title: 'Machine Learning Model for Price Prediction',
-        description: 'Develop an ML model to predict real estate prices. Need data preprocessing, model training, and API deployment.',
-        budget: 950,
-        deadline: '3 weeks',
-        category: 'Machine Learning',
-        skills: ['Python', 'TensorFlow', 'scikit-learn', 'Flask'],
-        ownerRating: 4.7,
-        applicants: 15
-    },
-    {
-        id: 4,
-        title: 'iOS App Development',
-        description: 'Create a social networking iOS app with real-time messaging, user profiles, and media sharing capabilities.',
-        budget: 1200,
-        deadline: '4 weeks',
-        category: 'Mobile Development',
-        skills: ['Swift', 'SwiftUI', 'Firebase', 'REST API'],
-        ownerRating: 4.9,
-        applicants: 10
-    },
-    {
-        id: 5,
-        title: 'Business Dashboard with Data Visualization',
-        description: 'Build an interactive analytics dashboard with charts, graphs, and real-time data updates for business metrics.',
-        budget: 700,
-        deadline: '2 weeks',
-        category: 'Data Analysis',
-        skills: ['React', 'D3.js', 'Python', 'SQL'],
-        ownerRating: 4.6,
-        applicants: 14
-    },
-    {
-        id: 6,
-        title: 'Brand Identity & Logo Design',
-        description: 'Create a complete brand identity package including logo, color palette, typography, and brand guidelines.',
-        budget: 450,
-        deadline: '1 week',
-        category: 'UI/UX Design',
-        skills: ['Illustrator', 'Photoshop', 'Brand Design'],
-        ownerRating: 4.8,
-        applicants: 20
-    }
-];
 
 const testimonials = [
     { name: 'Sarah Chen', role: 'CS Student, MIT', avatar: HERO_IMG_5, color: 'bg-blue-600', rating: 5, text: '"I earned $3,500 last semester on real projects. The experience helped me land a full-time offer at a top tech company. InsiderJobs is a game changer for students."' },
@@ -130,6 +64,8 @@ const logos = ['Google', 'Microsoft', 'Amazon', 'Stripe', 'Figma', 'Notion', 'Ve
 export default function HomePage() {
 
     const navigate = useNavigate();
+
+    const {projects} = useContext(AppContext);
 
     return (
         <div className="bg-white text-gray-900 font-sans">
@@ -321,8 +257,8 @@ export default function HomePage() {
                         </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {latestProjects.map((project, id) => (
-                            <ProjectCard key={id} project={project} />
+                        {projects.slice(0, 6).map((project) => (
+                            <ProjectCard key={project._id} project={project} />
                         ))}
                     </div>
                 </div>

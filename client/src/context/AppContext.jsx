@@ -8,6 +8,7 @@ const AppContextProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [role, setRole] = useState(null);
     const [user, setUser] = useState(null);
+    const [projects, setProjects] = useState([]);
 
     const fetchUserProfile = async () => {
         if (!token) return;
@@ -67,12 +68,30 @@ const AppContextProvider = ({ children }) => {
         }
     }, [token, role]);
 
+
+    //Get All projects
+    const fetchAllProjects = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/projects');
+            const data = await response.json();
+            setProjects(data.projects);
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+        }
+    }
+
+    useEffect(() => {
+        fetchAllProjects();
+    }, []);
+
     const value = {
         token,
         setToken,
         role,
         user,
-        setUser
+        setUser,
+        projects,
+        setProjects
     };
 
     return (

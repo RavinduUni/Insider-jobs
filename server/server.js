@@ -5,6 +5,7 @@ import connectDB from './configs/db.js';
 import studentRouter from './routes/studentRoute.js';
 import connectCloudinary from './configs/cloudinary.js';
 import recruiterRouter from './routes/recruiterRoutes.js';
+import projectRouter from './routes/projectRoutes.js';
 
 
 const app = express();
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/student', studentRouter);
 app.use('/api/recruiter', recruiterRouter);
+app.use('/api/projects', projectRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
