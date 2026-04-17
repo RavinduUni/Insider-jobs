@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import {
   Briefcase, CheckCircle, Clock, DollarSign,
-  Edit, Eye, Trash2, Users, ArrowRight, Tag,
+  Edit, Eye, Trash2, Users, ArrowRight,
   ArrowLeft
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { AppContext } from '../../context/AppContext'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -41,17 +42,6 @@ const catColor = {
   'Marketing': 'bg-pink-500/10 text-pink-400',
 }
 
-// ── Static data  ───────────────────────────────────────────────────
-const projects = [
-  { id: 1, title: 'React Dashboard Development', category: 'Web Development', budget: 800, applicants: 8, status: 'in-progress', deadline: '2024-12-31', createdDate: '2024-11-01', assignedTo: 'Alex Johnson', submittedDate: null },
-  { id: 2, title: 'Mobile App UI Design', category: 'UI/UX Design', budget: 500, applicants: 12, status: 'nda-sent', deadline: '2024-12-20', createdDate: '2024-11-05', assignedTo: null, submittedDate: null },
-  { id: 3, title: 'Content Writing - Tech Blog', category: 'Content Writing', budget: 200, applicants: 5, status: 'applied', deadline: '2024-12-15', createdDate: '2024-11-10', assignedTo: null, submittedDate: null },
-  { id: 4, title: 'Python Data Analysis Script', category: 'Data Analysis', budget: 400, applicants: 3, status: 'open', deadline: '2024-12-25', createdDate: '2024-11-12', assignedTo: null, submittedDate: null },
-  { id: 5, title: 'E-commerce Website Landing Page', category: 'Web Development', budget: 600, applicants: 0, status: 'open', deadline: '2025-01-10', createdDate: '2024-11-15', assignedTo: null, submittedDate: null },
-  { id: 6, title: 'Social Media Marketing Campaign', category: 'Marketing', budget: 350, applicants: 7, status: 'completed', deadline: '2024-11-20', createdDate: '2024-10-15', assignedTo: 'Sarah Chen', submittedDate: null },
-  { id: 7, title: 'Node.js API Development', category: 'Web Development', budget: 950, applicants: 4, status: 'submitted', deadline: '2024-12-28', createdDate: '2024-10-20', assignedTo: 'Mike Wilson', submittedDate: '2024-12-27' },
-  { id: 8, title: 'Database Optimization Project', category: 'Data Analysis', budget: 700, applicants: 2, status: 'submitted', deadline: '2024-12-30', createdDate: '2024-10-25', assignedTo: 'Emily Davis', submittedDate: '2024-12-26' },
-]
 
 const statusFilters = [
   { value: 'all', label: 'All Projects' },
@@ -62,15 +52,88 @@ const statusFilters = [
   { value: 'completed', label: 'Completed' },
 ]
 
+const ProjectCardSkeleton = () => (
+  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 animate-pulse">
+    <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex items-start gap-3 flex-1">
+        <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0 mt-0.5" />
+        <div className="w-full max-w-md">
+          <div className="h-4 bg-slate-800 rounded w-3/4 mb-2" />
+          <div className="h-5 bg-slate-800 rounded-full w-24" />
+        </div>
+      </div>
+      <div className="h-6 w-20 bg-slate-800 rounded-full" />
+    </div>
+
+    <div className="flex flex-wrap items-center gap-4 mb-3 ml-12">
+      <div className="h-3 w-24 bg-slate-800 rounded" />
+      <div className="h-3 w-28 bg-slate-800 rounded" />
+      <div className="h-3 w-32 bg-slate-800 rounded" />
+      <div className="h-3 w-24 bg-slate-800 rounded" />
+    </div>
+
+    <div className="border-t border-slate-800 pt-4 flex items-center gap-2 ml-12">
+      <div className="h-9 w-20 bg-slate-800 rounded-xl" />
+      <div className="h-9 w-28 bg-slate-800 rounded-xl" />
+      <div className="h-9 w-20 bg-slate-800 rounded-xl" />
+      <div className="h-9 w-20 bg-slate-800 rounded-xl ml-auto" />
+    </div>
+  </div>
+)
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const Projects = () => {
+  const { token, user } = useContext(AppContext);
+
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate()
   const [projectFilter, setProjectFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1);
 
+  const fetchProjectsById = async () => {
+
+    if (!token) return;
+
+    try {
+
+      setLoading(true);
+
+      const response = await fetch(`http://localhost:5000/api/projects/${user?._id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        console.error('Error fetching project by ID:', data.message);
+        return;
+      }
+
+      setProjects(data.projects);
+
+    } catch (error) {
+      console.error('Error fetching project by ID:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (token && user) {
+      fetchProjectsById();
+    }
+  }, [token, user]);
+
   const filteredProjects = projectFilter === 'all'
     ? projects
     : projects.filter(p => p.status === projectFilter)
+
+  const isUserLoading = Boolean(token) && !user;
+  const isPageLoading = isUserLoading || loading;
 
   const fmt = d => new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -86,44 +149,65 @@ const Projects = () => {
 
       {/* ── Page header ── */}
       <div className="mb-6">
-        <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">Owner</p>
-        <h1 className="text-3xl font-bold text-white mb-1">Manage Projects</h1>
-        <p className="text-slate-500 text-sm">View, edit, and manage all your posted projects.</p>
+        {isPageLoading ? (
+          <div className="animate-pulse">
+            <div className="h-3 w-16 bg-slate-800 rounded mb-2" />
+            <div className="h-8 w-56 bg-slate-800 rounded mb-2" />
+            <div className="h-4 w-80 bg-slate-800 rounded" />
+          </div>
+        ) : (
+          <>
+            <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">Owner</p>
+            <h1 className="text-3xl font-bold text-white mb-1">Manage Projects</h1>
+            <p className="text-slate-500 text-sm">View, edit, and manage all your posted projects.</p>
+          </>
+        )}
       </div>
 
       {/* ── Filter tabs ── */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {statusFilters.map(f => {
-          const count = f.value === 'all' ? projects.length : projects.filter(p => p.status === f.value).length
-          const active = projectFilter === f.value
-          return (
-            <button
-              key={f.value}
-              onClick={() => setProjectFilter(f.value)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border cursor-pointer ${active
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
-                }`}
-            >
-              {f.value !== 'all' && (
-                <span className={`w-1.5 h-1.5 rounded-full ${dotColor[f.value] || 'bg-slate-400'}`} />
-              )}
-              {f.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${active ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-500'}`}>
-                {count}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+      {isPageLoading ? (
+        <div className="flex flex-wrap gap-2 mb-6 animate-pulse">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="h-9 w-28 rounded-xl bg-slate-800" />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {statusFilters.map(f => {
+            const count = f.value === 'all' ? projects.length : projects.filter(p => p.status === f.value).length
+            const active = projectFilter === f.value
+            return (
+              <button
+                key={f.value}
+                onClick={() => setProjectFilter(f.value)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border cursor-pointer ${active
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
+                  }`}
+              >
+                {f.value !== 'all' && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${dotColor[f.value] || 'bg-slate-400'}`} />
+                )}
+                {f.label}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${active ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* ── Project list ── */}
       <div className="flex flex-col gap-4">
-        {currentProjects.map(project => (
-          <div
-            key={project.id}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group"
-          >
+        {isPageLoading ? (
+          Array.from({ length: 5 }).map((_, idx) => <ProjectCardSkeleton key={idx} />)
+        ) : (
+          currentProjects.map(project => (
+            <div
+              key={project.id}
+              className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group"
+            >
             {/* Top row */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-start gap-3">
@@ -199,11 +283,12 @@ const Projects = () => {
                 <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
             </div>
-          </div>
-        ))}
+            </div>
+          ))
+        )}
 
         {/* Empty state */}
-        {filteredProjects.length === 0 && (
+        {!isPageLoading && filteredProjects.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center mb-4">
               <Briefcase className="w-6 h-6 text-slate-600" />
@@ -220,29 +305,32 @@ const Projects = () => {
         )}
       </div>
 
-      <div className='mt-6'>
-        <div className='flex items-center justify-center mt-4 gap-1 col-span-3 col-start-2'>
-          <button
-            onClick={goPrev}
-            disabled={currentPage === 1}
-            className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === 1 && 'opacity-40 cursor-not-allowed'}`}>
-            <ArrowLeft className='w-4 h-4' />
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+      {!isPageLoading && totalPages > 0 && (
+        <div className='mt-6'>
+          <div className='flex items-center justify-center mt-4 gap-1 col-span-3 col-start-2'>
             <button
-              onClick={() => setCurrentPage(page)}
-              className={`border text-primary w-8 h-8 rounded cursor-pointer ${currentPage === page && 'bg-primary border-primary text-white'}`}>
-              {page}
+              onClick={goPrev}
+              disabled={currentPage === 1}
+              className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === 1 && 'opacity-40 cursor-not-allowed'}`}>
+              <ArrowLeft className='w-4 h-4' />
             </button>
-          ))}
-          <button
-            onClick={goNext}
-            disabled={currentPage === totalPages}
-            className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === totalPages && 'opacity-40 cursor-not-allowed'}`}>
-            <ArrowRight className='w-4 h-4' />
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`border text-primary w-8 h-8 rounded cursor-pointer ${currentPage === page && 'bg-primary border-primary text-white'}`}>
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={goNext}
+              disabled={currentPage === totalPages}
+              className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${currentPage === totalPages && 'opacity-40 cursor-not-allowed'}`}>
+              <ArrowRight className='w-4 h-4' />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

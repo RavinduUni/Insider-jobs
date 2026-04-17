@@ -7,7 +7,7 @@ const ProjectCard = ({ project }) => {
   const navigate = useNavigate();
 
   return (
-    <div onClick={() => navigate(`/apply-project/${project._id}`)} className='bg-white shadow-lg p-5 rounded-xl hover:shadow-lg transition-all duration-300 group cursor-pointer'>
+    <div onClick={() => navigate(`/apply-project/${project._id}`)} className='bg-white border border-blue-200 rounded-2xl p-5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all group cursor-pointer'>
       <div className='flex items-center justify-between'>
         <h3 className='text-primary text-sm bg-blue-50 py-1 px-2 rounded-4xl'>{project.category}</h3>
         <div className='flex items-center gap-1'>
@@ -17,7 +17,7 @@ const ProjectCard = ({ project }) => {
       </div>
 
       <div>
-        <h1 className='text-2xl font-semibold my-3 transition-colors duration-300 group-hover:text-primary'>{project.title}</h1>
+        <h1 className='text-lg font-semibold my-3 transition-colors duration-300 group-hover:text-primary'>{project.title}</h1>
         <p className='text-sm text-gray-500 line-clamp-2'>{project.description}</p>
         <div className='flex items-center gap-2 my-4'>
           {project.technologies.slice(0, 3).map((technology, index) => (

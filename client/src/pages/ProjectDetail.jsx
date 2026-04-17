@@ -5,10 +5,12 @@ import ApplyModal from '../components/ApplyModel';
 import ApplyModel from '../components/ApplyModel';
 import Navbar2 from '../components/Navbar2';
 import { AppContext } from '../context/AppContext';
+import toast from 'react-hot-toast';
 
 const ProjectDetail = () => {
 
     const { id } = useParams();
+    const { user, token } = useContext(AppContext);
 
     const navigate = useNavigate();
 
@@ -22,6 +24,19 @@ const ProjectDetail = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const handleApplyClick = () => {
+        if (!user) {
+            toast.error('You must login before applying for the project');
+            setTimeout(() => {
+                navigate('/auth?type=student&mode=login');
+            }, 2000);
+            return;
+        }
+
+        setIsModalOpen(true);
+    };
+
+
     return (
         <>
             <Navbar2 />
@@ -34,7 +49,7 @@ const ProjectDetail = () => {
                 <div className='grid grid-cols-3 gap-5'>
                     {project ? (
                         <>
-                            <div className='col-span-2 bg-white p-8 shadow-lg rounded-2xl'>
+                            <div className='col-span-2 bg-white border p-8 border-blue-200 rounded-2xl hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300'>
                                 <h3 className='text-primary text-sm bg-blue-50 py-1 px-3 rounded-4xl inline-block'>{project.category}</h3>
                                 <h1 className='text-4xl font-bold my-5'>{project.title}</h1>
 
@@ -45,15 +60,15 @@ const ProjectDetail = () => {
                                     </div>
                                     <div className='flex items-center gap-2'>
                                         <Clock className='w-4 h-4 text-text-secondary' />
-                                        <span className='text-text-secondary text-sm'>{new Date(project.deadline).toLocaleDateString()}</span>
+                                        <span className='text-secondary text-sm'>{new Date(project.deadline).toLocaleDateString()}</span>
                                     </div>
                                     <div className='flex items-center gap-2'>
                                         <MapPin className='w-4 h-4 text-text-secondary' />
-                                        <span className='text-text-secondary text-sm'>{project.category}</span>
+                                        <span className='text-secondary text-sm'>{project.category}</span>
                                     </div>
                                     <div className='flex items-center gap-2'>
-                                        <Briefcase className='w-4 h-4 text-text-secondary' />
-                                        <span className='text-text-secondary text-sm'>{project.applicants} applicants</span>
+                                        <Briefcase className='w-4 h-4 text-secondary' />
+                                        <span className='text-secondary text-sm'>{project.applicants} applicants</span>
                                     </div>
                                 </div>
 
@@ -90,10 +105,10 @@ const ProjectDetail = () => {
                             </div>
 
                             <div className='col-span-1 '>
-                                <div className='sticky top-34 bg-white rounded-2xl shadow p-8'>
+                                <div className='sticky top-34 bg-white border-2 border-blue-200 rounded-2xl p-8 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all'>
                                     <button
-                                        onClick={() => setIsModalOpen(true)}
-                                        className='bg-primary text-white py-4 w-full rounded-xl'>
+                                        onClick={handleApplyClick}
+                                        className='bg-primary text-white py-4 w-full rounded-xl cursor-pointer'>
                                         Apply for this Project
                                     </button>
 
@@ -148,11 +163,14 @@ const ProjectDetail = () => {
                     )}
                 </div>
             </div>
-            {project && (
+            {project && token && (
                 <ApplyModel
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     projecTitle={project.title}
+                    projectId={project._id}
+                    studentId={user?._id}
+                    token={token}
                 />
             )}
         </>

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { enhanceResumeText, getStudent, loginStudent, registerStudent, sendEmailVerificationOtp, updateStudent } from "../controllers/studentController.js";
+import { applyProject, enhanceResumeText, getStudent, loginStudent, registerStudent, sendEmailVerificationOtp, updateStudent } from "../controllers/studentController.js";
 import upload from "../configs/multer.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -14,5 +14,9 @@ studentRouter.put('/update-profile', verifyToken, upload.fields([
 	{ name: 'resume', maxCount: 1 },
 ]), updateStudent);
 studentRouter.post('/enhance', enhanceResumeText);
+studentRouter.post('/apply-project', verifyToken, upload.fields([
+	{ name: 'cvFile', maxCount: 1 },
+	{ name: 'planFile', maxCount: 1 }
+]), applyProject);
 
 export default studentRouter;

@@ -5,6 +5,7 @@ import generateToken from "../utils/generateToken.js";
 import Project from "../models/Project.js";
 import { generateOtp } from "../utils/generateOtp.js";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
+import Application from "../models/Application.js";
 
 export const sendEmailVerificationOtp = async (req, res) => {
     try {
@@ -217,5 +218,27 @@ export const createProject = async (req, res) => {
     } catch (error) {
         console.error('Error creating project:', error);
         return res.status(500).json({ success: false, message: error.message || 'Error creating project' });
+    }
+}
+
+
+export const getAllApplicationsForProject = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        const projectIds = await Project.find({ recruiter: recruiter._id }).select('_id');
+
+        const applications = await Application.find({ projectId: { $in: projectIds } })
+            .populate('studentId', 'name email skills university major graduationYear profilePicture')
+            .populate('projectId', 'title description budget deadline technologies createdAt');
+
+        return res.status(200).json({ success: true, applications });
+    } catch (error) {
+        console.error('Error fetching applications for project:', error);
+        return res.status(500).json({ success: false, message: 'Server error while fetching applications' });
     }
 }

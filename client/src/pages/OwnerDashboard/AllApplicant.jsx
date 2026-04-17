@@ -5,6 +5,9 @@ import {
 } from 'lucide-react'
 import React, { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AppContext } from '../../context/AppContext'
+import { useContext } from 'react'
+import { useEffect } from 'react'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -18,22 +21,8 @@ const StatusBadge = ({ status }) => {
   return <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.color}`}>{cfg.label}</span>
 }
 
-// ── Static data (unchanged) ───────────────────────────────────────────────────
-const projects = [
-  { id: 1, title: 'React Dashboard Development', budget: 800, deadline: '2 weeks' },
-  { id: 2, title: 'Mobile App UI Design', budget: 500, deadline: '10 days' },
-  { id: 3, title: 'Content Writing - Tech Blog', budget: 200, deadline: '1 week' },
-]
 
-const allApplicants = [
-  { id: 1, name: 'Alex Johnson', projectId: 1, university: 'MIT', degree: 'Computer Science', rating: 4.9, completedProjects: 12, appliedDate: '2025-11-18T20:00:00Z', skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'nda-accepted', ndaAcceptedDate: '2025-12-19T10:15:00Z' },
-  { id: 2, name: 'Sarah Chen', projectId: 1, university: 'Stanford University', degree: 'Software Engineering', rating: 4.8, completedProjects: 15, appliedDate: '2025-12-11T10:15:00Z', skills: ['React', 'Vue.js', 'UI/UX', 'Figma'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'nda-sent', ndaSentDate: '2025-12-11T10:15:00Z' },
-  { id: 3, name: 'Mike Wilson', projectId: 1, university: 'UCLA', degree: 'Information Technology', rating: 4.7, completedProjects: 8, appliedDate: '2025-12-19T10:15:00Z', skills: ['JavaScript', 'React', 'CSS', 'HTML'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'not-sent' },
-  { id: 4, name: 'Emma Davis', projectId: 2, university: 'UC Berkeley', degree: 'Computer Science', rating: 4.9, completedProjects: 18, appliedDate: '2025-12-19T10:15:00Z', skills: ['React Native', 'Flutter', 'UI/UX', 'Figma'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'nda-accepted', ndaAcceptedDate: '2025-12-19T10:15:00Z' },
-  { id: 5, name: 'James Brown', projectId: 2, university: 'Harvard University', degree: 'Design', rating: 4.6, completedProjects: 10, appliedDate: '2025-12-19T10:15:00Z', skills: ['Figma', 'Adobe XD', 'Sketch', 'UI/UX'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'pending', ndaSentDate: '2025-12-19T10:15:00Z' },
-  { id: 6, name: 'Sophia Martinez', projectId: 3, university: 'Columbia University', degree: 'English Literature', rating: 4.8, completedProjects: 14, appliedDate: '2025-12-19T10:15:00Z', skills: ['Content Writing', 'SEO', 'Copywriting', 'Technical Writing'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'not-sent' },
-  { id: 7, name: 'David Lee', projectId: 3, university: 'NYU', degree: 'Journalism', rating: 4.7, completedProjects: 11, appliedDate: '2025-12-19T06:15:00Z', skills: ['Content Writing', 'Blogging', 'Research', 'Editing'], projectPlan: 'Available', cv: 'Available', ndaStatus: 'not-sent' },
-]
+
 
 // ── timeAgo (unchanged logic) ─────────────────────────────────────────────────
 const timeAgo = (dateString) => {
@@ -66,6 +55,9 @@ const Backdrop = ({ onClick }) => (
 const AllApplicant = () => {
   const navigate = useNavigate()
 
+  const { user, token, projects } = useContext(AppContext);
+
+  const [allApplicants, setAllApplicants] = useState([])
   const [showNDAModel, setShowNDAModel] = useState(false)
   const [showAssignProjectModel, setShowAssignProjectModel] = useState(false)
   const [showSendNDAModel, setShowSendNDAModel] = useState(false)
@@ -88,6 +80,42 @@ const AllApplicant = () => {
     setShowSendNDAModel(false)
   }
 
+  const fetchApplications = async () => {
+
+    if (!token) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/recruiter/project-applicants', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        console.error('Error fetching applications:', data.message || 'Unknown error');
+        return;
+      }
+
+      setAllApplicants(data.applications);
+
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
+  }
+
+  const recruiterProjects = projects.filter(project =>
+    allApplicants.some(applicant => applicant.projectId._id === project._id)
+  );
+
+  useEffect(() => {
+    if (token && user) {
+      fetchApplications();
+    }
+  }, [token, user]);
+
   return (
     <div className="min-h-screen">
 
@@ -100,11 +128,11 @@ const AllApplicant = () => {
 
       {/* ── Projects + applicants ── */}
       <div className="flex flex-col gap-5">
-        {projects.map(project => {
-          const projectApplicants = allApplicants.filter(a => a.projectId === project.id)
+        {recruiterProjects.map(project => {
+          const projectApplicants = allApplicants.filter(a => a.projectId._id === project._id)
 
           return (
-            <div key={project.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div key={project._id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               {/* Project header */}
               <div className="flex items-start justify-between mb-5 pb-4 border-b border-slate-800">
                 <div className="flex items-start gap-3">
@@ -127,7 +155,7 @@ const AllApplicant = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate(`${project.id}`)}
+                  onClick={() => navigate(`${project._id}`)}
                   className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-xl hover:bg-blue-500/10 transition-colors cursor-pointer"
                 >
                   View All →
@@ -137,48 +165,50 @@ const AllApplicant = () => {
               {/* Applicant cards grid */}
               <div className="grid grid-cols-2 gap-3">
                 {projectApplicants.slice(0, 4).map(applicant => (
-                  <div key={applicant.id} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group">
+                  <div key={applicant._id} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group">
 
                     {/* Top: avatar + name + rating */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                          {applicant.name.slice(0, 2).toUpperCase()}
+                          {applicant.studentId.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{applicant.name}</p>
-                          <p className="text-xs text-slate-500">{applicant.university}</p>
-                          <p className="text-xs text-slate-600">{applicant.degree}</p>
+                          <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{applicant.studentId.name}</p>
+                          <p className="text-xs text-slate-500">{applicant.studentId.university}</p>
+                          <p className="text-xs text-slate-600">{applicant.studentId.major}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-yellow-400 shrink-0">
-                        <Star className="w-3 h-3 fill-current" />
-                        <span className="text-xs font-medium">{applicant.rating}</span>
-                      </div>
+                      {applicant.rating && (
+                        <div className="flex items-center gap-1 text-yellow-400 shrink-0">
+                          <Star className="w-3 h-3 fill-current" />
+                          <span className="text-xs font-medium">{applicant.rating}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Skills */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {applicant.skills.slice(0, 3).map(skill => (
+                      {applicant.studentId.skills.slice(0, 3).map(skill => (
                         <span key={skill} className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-400 rounded-md">{skill}</span>
                       ))}
-                      {applicant.skills.length > 3 && (
-                        <span className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-500 rounded-md">+{applicant.skills.length - 3}</span>
+                      {applicant.studentId.skills.length > 3 && (
+                        <span className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-500 rounded-md">+{applicant.studentId.skills.length - 3}</span>
                       )}
                     </div>
 
                     {/* Status + meta */}
                     <div className="flex items-center justify-between mb-3">
                       <StatusBadge status={applicant.ndaStatus} />
-                      <span className="text-xs text-slate-600">{timeAgo(applicant.appliedDate)}</span>
+                      <span className="text-xs text-slate-600">{timeAgo(applicant.createdAt)}</span>
                     </div>
 
-                    <p className="text-xs text-slate-600 mb-3">{applicant.completedProjects} projects completed</p>
+                    <p className="text-xs text-slate-600 mb-3">{applicant.studentId.completedProjects} projects completed</p>
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-2 pt-3 border-t border-slate-700/50">
                       <button
-                        onClick={() => navigate(`/owner-dashboard/view-details/${applicant.id}`)}
+                        onClick={() => navigate(`/owner-dashboard/view-details/${applicant._id}`)}
                         className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all cursor-pointer"
                       >
                         <Eye className="w-3 h-3" /> View
@@ -263,12 +293,12 @@ const AllApplicant = () => {
                   {selectedApplicant.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{selectedApplicant.name}</p>
-                  <p className="text-xs text-slate-500">{selectedApplicant.university}</p>
+                  <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
+                  <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1 text-yellow-400">
                   <Star className="w-3.5 h-3.5 fill-current" />
-                  <span className="text-sm font-medium">{selectedApplicant.rating}</span>
+                  <span className="text-sm font-medium">{selectedApplicant.studentId.rating}</span>
                 </div>
               </div>
             </div>
@@ -308,8 +338,8 @@ const AllApplicant = () => {
                   {selectedApplicant.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{selectedApplicant.name}</p>
-                  <p className="text-xs text-slate-500">{selectedApplicant.university}</p>
+                  <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
+                  <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>
                 </div>
               </div>
             </div>
@@ -371,11 +401,11 @@ const AllApplicant = () => {
               <p className="text-xs text-slate-500 mb-2">Sending NDA to</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {selectedApplicant.name.slice(0, 2).toUpperCase()}
+                  {selectedApplicant.studentId.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{selectedApplicant.name}</p>
-                  <p className="text-xs text-slate-500">{selectedApplicant.university}</p>
+                  <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
+                  <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>
                 </div>
               </div>
             </div>

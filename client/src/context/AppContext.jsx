@@ -9,6 +9,7 @@ const AppContextProvider = ({ children }) => {
     const [role, setRole] = useState(null);
     const [user, setUser] = useState(null);
     const [projects, setProjects] = useState([]);
+    const [companies, setCompanies] = useState([]);
 
     const fetchUserProfile = async () => {
         if (!token) return;
@@ -80,9 +81,25 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
+    //Get All companies
+    const fetchAllCompanies = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/companies');
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Companies:', data.companies);
+                setCompanies(data.companies);
+            }
+        } catch (error) {
+            console.error('Error fetching companies:', error);
+        }
+    }
+
     useEffect(() => {
         fetchAllProjects();
-    }, []);
+        fetchAllCompanies();
+    }, [token]);
 
     const value = {
         token,
@@ -91,7 +108,9 @@ const AppContextProvider = ({ children }) => {
         user,
         setUser,
         projects,
-        setProjects
+        setProjects,
+        companies,
+        setCompanies
     };
 
     return (

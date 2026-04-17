@@ -33,6 +33,11 @@ const projectSchema = new mongoose.Schema({
         type: [String],
         required: true,
     },
+    status: {
+        type: String,
+        enum: ['open','has applicants','in progress', 'completed'],
+        default: 'open',
+    },
     recruiter: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Recruiter',

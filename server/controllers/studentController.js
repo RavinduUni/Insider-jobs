@@ -6,6 +6,8 @@ import ai from "../configs/ai.js";
 import e from "express";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { generateOtp } from "../utils/generateOtp.js";
+import mongoose from "mongoose";
+import Application from "../models/Application.js";
 
 const ALLOWED_RESUME_MIME_TYPES = [
     'application/pdf',
@@ -28,7 +30,7 @@ const isValidResumeFile = (file) => {
 
 export const sendEmailVerificationOtp = async (req, res) => {
     try {
-        const {name, email } = req.body;
+        const { name, email } = req.body;
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
@@ -242,4 +244,98 @@ export const enhanceResumeText = async (req, res) => {
         console.error('Error enhancing resume text:', error);
         return res.status(500).json({ success: false, message: error.message || 'Error enhancing resume text' });
     }
-} 
+}
+
+export const applyProject = async (req, res) => {
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let cvPublicId = null;
+    let planPublicId = null;
+
+    try {
+        const studentId = req.user._id;
+
+        if (!studentId) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const cvFile = req.files?.cvFile?.[0];
+        const planFile = req.files?.planFile?.[0];
+
+        const { projectId, notes, status } = req.body;
+
+        if (!projectId || !cvFile || !planFile) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: 'Project ID, CV file, and project plan file are required' });
+        }
+
+        const existingApplication = await Application.findOne({ studentId, projectId }).session(session);
+
+        if (existingApplication) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: 'You have already applied for this project' });
+        }
+
+        const cvUploadResult = await cloudinary.uploader.upload(cvFile.path, {
+            folder: 'applications/cvs',
+            resource_type: 'raw',
+            use_filename: true,
+            unique_filename: true,
+        });
+        cvPublicId = cvUploadResult.public_id;
+
+        const planUploadResult = await cloudinary.uploader.upload(planFile.path, {
+            folder: 'applications/plans',
+            resource_type: 'raw',
+            use_filename: true,
+            unique_filename: true,
+        });
+        planPublicId = planUploadResult.public_id;
+
+
+        const newApplication = new Application({
+            studentId,
+            projectId,
+            cvUrl: cvUploadResult.secure_url,
+            projectPlanUrl: planUploadResult.secure_url,
+            notes: notes || '',
+            status: status || 'applied'
+        });
+
+        await newApplication.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(200).json({ success: true, message: 'Application submitted successfully', application: newApplication });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+
+        // If files were uploaded before the error, attempt to delete them from Cloudinary
+        try {
+            if (cvPublicId) {
+                await cloudinary.uploader.destroy(cvPublicId, {
+                    resource_type: 'raw'
+                });
+            }
+            if (planPublicId) {
+                await cloudinary.uploader.destroy(planPublicId, {
+                    resource_type: 'raw'
+                });
+            }
+
+        } catch (cleanupError) {
+            console.error('Error during cleanup of uploaded files:', cleanupError);
+        }
+
+        console.error('Error applying for project:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error applying for project' });
+    }
+}

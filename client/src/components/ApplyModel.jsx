@@ -1,7 +1,15 @@
 import { CheckCircle, Upload, X } from 'lucide-react';
 import React, { useRef, useState } from 'react'
+import toast from 'react-hot-toast';
 
-const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword'
+];
+
+const ApplyModel = ({ isOpen, onClose, projectTitle, projectId, studentId, token }) => {
 
     const [currentStep, setCurrentStep] = useState(1);
     const [cvFile, setCvFile] = useState(null);
@@ -10,34 +18,141 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
     const [cvDragging, setCvDragging] = useState(false);
     const [planDragging, setPlanDragging] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const cvInputRef = useRef(null);
     const planInputRef = useRef(null);
 
     if (!isOpen) return null;
 
+    const resetForm = () => {
+        setCurrentStep(1);
+        setCvFile(null);
+        setPlanFile(null);
+        setNotes('');
+        setCvDragging(false);
+        setPlanDragging(false);
+        setSubmitted(false);
+        setLoading(false);
+    };
+
+    const validateFiles = (file) => {
+        if (!file) return 'File is required.';
+
+        if (file.size > MAX_FILE_SIZE) {
+            return 'File size exceeds the limit of 5MB.';
+        }
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            return 'Invalid file type. Please upload a PDF or DOCX file.';
+        }
+
+        return null;
+    };
+
+    const handleValidatedFileSet = (file, type) => {
+        const error = validateFiles(file);
+
+        if (error) {
+            toast.error(error, { duration: 4000 });
+            return;
+        }
+
+        type === 'cv' ? setCvFile(file) : setPlanFile(file);
+
+    };
+
     const handleFileChange = (e, type) => {
         const file = e.target.files[0];
-        if (file) type === 'cv' ? setCvFile(file) : setPlanFile(file);
+        if (!file) {
+            toast.error('No file selected.', { duration: 4000 });
+            return;
+        }
+        handleValidatedFileSet(file, type);
     };
 
     const handleDrop = (e, type) => {
         e.preventDefault();
         const file = e.dataTransfer.files[0];
-        if (file) type === 'cv' ? setCvFile(file) : setPlanFile(file);
+        if (file) handleValidatedFileSet(file, type);
         type === 'cv' ? setCvDragging(false) : setPlanDragging(false);
     };
 
-    const handleSubmit = () => {
-        setSubmitted(true);
-        setTimeout(() => {
-            onClose();
+    const handleNext = () => {
+        if (currentStep === 1 && !cvFile) {
+            toast.error('Please upload your CV/Resume before proceeding.', { duration: 4000 });
+            return;
+        }
+
+        if (currentStep === 2 && !planFile) {
+            toast.error('Please upload your Project Plan before proceeding.', { duration: 4000 });
+            return;
+        }
+        setCurrentStep((prev) => prev + 1);
+    }
+
+    const handleSubmit = async () => {
+
+        if (!studentId) {
+            toast.error('Student ID is required.', { duration: 4000 });
+            return;
+        }
+        if (!projectId) {
+            toast.error('Project ID is required.', { duration: 4000 });
+            return;
+        }
+        if (!cvFile) {
+            toast.error('CV/Resume file is required.', { duration: 4000 });
             setCurrentStep(1);
-            setCvFile(null);
-            setPlanFile(null);
-            setNotes('');
-            setSubmitted(false);
-        }, 2000);
+            return;
+        }
+        if (!planFile) {
+            toast.error('Project Plan file is required.', { duration: 4000 });
+            setCurrentStep(2);
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const formData = new FormData();
+            formData.append('studentId', studentId);
+            formData.append('projectId', projectId);
+            formData.append('status', 'applied');
+            formData.append('cvFile', cvFile);
+            formData.append('planFile', planFile);
+            formData.append('notes', notes);
+
+            const response = await fetch('http://localhost:5000/api/student/apply-project', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                toast.error(result.message || 'Failed to submit application');
+                return;
+            }
+
+            setSubmitted(true);
+            toast.success(result.message || 'Application submitted successfully!');
+
+            setTimeout(() => {
+                resetForm();
+                onClose();
+            }, 2000);
+
+
+        } catch (error) {
+            console.error('Error submitting application:', error);
+            toast.error('An error occurred while submitting the application.');
+        } finally {
+            setLoading(false);
+        }
+
     };
 
     const steps = [
@@ -85,28 +200,30 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
     return (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4'>
             <div className='bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden'>
-                {/* Header */}
                 <div className='flex items-start justify-between p-8 pb-6 border-b border-gray-100'>
                     <div>
                         <h2 className='text-2xl font-bold text-gray-900'>Apply for: {projectTitle}</h2>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={() => {
+                            onClose();
+                            resetForm();
+                        }}
                         className='text-gray-400 hover:text-gray-600 transition-colors mt-1 cursor-pointer'
                     >
                         <X className='w-5 h-5' />
                     </button>
                 </div>
 
-                {/* Stepper */}
                 <div className='px-8 pt-6 pb-2'>
                     <div className='flex items-center'>
                         {steps.map((step, index) => (
-                            <React.Fragment key={step.number} >
+                            <React.Fragment key={step.number}>
                                 <div className='flex flex-col items-center'>
-                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
-                                            ${currentStep >= step.number ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}
-                                        `}>
+                                    <div
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${currentStep >= step.number ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+                                            }`}
+                                    >
                                         {step.number}
                                     </div>
                                 </div>
@@ -130,7 +247,10 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                             <span
                                 key={step.number}
                                 className={`text-xs transition-colors ${currentStep >= step.number ? 'text-gray-700' : 'text-gray-400'}`}
-                                style={{ width: '70px', textAlign: step.number === 1 ? 'left' : step.number === 2 ? 'center' : 'right' }}
+                                style={{
+                                    width: '70px',
+                                    textAlign: step.number === 1 ? 'left' : step.number === 2 ? 'center' : 'right'
+                                }}
                             >
                                 {step.label}
                             </span>
@@ -138,14 +258,12 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                     </div>
                 </div>
 
-                {/* step content */}
                 <div className='px-8 py-6 min-h-[280px]'>
                     {currentStep === 1 && (
                         <div>
                             <h3 className="text-base font-semibold text-gray-900 mb-4">Upload Your CV/Resume</h3>
                             <FileUploadBox
                                 file={cvFile}
-                                setFile={setCvFile}
                                 dragging={cvDragging}
                                 setDragging={setCvDragging}
                                 inputRef={cvInputRef}
@@ -162,7 +280,6 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                             <h3 className="text-base font-semibold text-gray-900 mb-4">Upload Project Plan</h3>
                             <FileUploadBox
                                 file={planFile}
-                                setFile={setPlanFile}
                                 dragging={planDragging}
                                 setDragging={setPlanDragging}
                                 inputRef={planInputRef}
@@ -210,7 +327,6 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                     )}
                 </div>
 
-                {/* Footer Buttons */}
                 {!submitted && (
                     <div className="flex justify-end gap-3 px-8 pb-8">
                         {currentStep > 1 && (
@@ -221,9 +337,10 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                                 Back
                             </button>
                         )}
+
                         {currentStep < 3 ? (
                             <button
-                                onClick={() => setCurrentStep((s) => s + 1)}
+                                onClick={handleNext}
                                 className="px-8 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                             >
                                 Next
@@ -231,16 +348,18 @@ const ApplyModel = ({ isOpen, onClose, projectTitle }) => {
                         ) : (
                             <button
                                 onClick={handleSubmit}
-                                className="px-8 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                                disabled={loading}
+                                className={`px-8 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''
+                                    }`}
                             >
-                                Submit Application
+                                {loading ? 'Submitting...' : 'Submit Application'}
                             </button>
                         )}
                     </div>
                 )}
             </div>
         </div>
-    )
+    );
 }
 
 export default ApplyModel

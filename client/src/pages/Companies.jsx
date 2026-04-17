@@ -2,186 +2,132 @@ import React, { useMemo, useState } from 'react';
 import {
   ArrowRight,
   Building2,
-  CheckCircle2,
   Filter,
   Globe,
   MapPin,
   Search,
-  Star,
   Users,
   X,
 } from 'lucide-react';
 import Navbar2 from '../components/Navbar2';
 import Footer from '../components/Footer';
+import { AppContext } from '../context/AppContext';
+import { useContext } from 'react';
 
-const companies = [
-  {
-    id: 1,
-    name: 'NovaByte Labs',
-    initials: 'NB',
-    industry: 'SaaS',
-    location: 'San Francisco, USA',
-    size: '51-200',
-    projectsPosted: 58,
-    hiredStudents: 143,
-    rating: 4.9,
-    verified: true,
-    website: 'novabytelabs.com',
-    about: 'Building productivity SaaS for remote teams and fast-moving startups.',
-    hiringFor: ['Frontend Developers', 'Data Analysts', 'Product Designers'],
-    logoColor: 'from-blue-600 to-cyan-500',
-  },
-  {
-    id: 2,
-    name: 'GreenOrbit Mobility',
-    initials: 'GO',
-    industry: 'Mobility',
-    location: 'Berlin, Germany',
-    size: '201-500',
-    projectsPosted: 34,
-    hiredStudents: 89,
-    rating: 4.7,
-    verified: true,
-    website: 'greenorbit.io',
-    about: 'Designing connected mobility software for urban transport systems.',
-    hiringFor: ['Mobile Engineers', 'ML Engineers', 'QA Testers'],
-    logoColor: 'from-emerald-600 to-teal-500',
-  },
-  {
-    id: 3,
-    name: 'PixelMint Studio',
-    initials: 'PM',
-    industry: 'Design Agency',
-    location: 'Toronto, Canada',
-    size: '11-50',
-    projectsPosted: 41,
-    hiredStudents: 102,
-    rating: 4.8,
-    verified: false,
-    website: 'pixelmint.studio',
-    about: 'A product-first design agency partnering with high-growth digital brands.',
-    hiringFor: ['UI/UX Designers', 'Brand Designers'],
-    logoColor: 'from-fuchsia-600 to-pink-500',
-  },
-  {
-    id: 4,
-    name: 'QuantNest Analytics',
-    initials: 'QN',
-    industry: 'FinTech',
-    location: 'London, UK',
-    size: '51-200',
-    projectsPosted: 27,
-    hiredStudents: 67,
-    rating: 4.6,
-    verified: true,
-    website: 'quantnest.ai',
-    about: 'Real-time financial intelligence tools powered by machine learning.',
-    hiringFor: ['Data Scientists', 'Backend Developers', 'API Engineers'],
-    logoColor: 'from-indigo-600 to-violet-500',
-  },
-  {
-    id: 5,
-    name: 'CloudVerse Systems',
-    initials: 'CV',
-    industry: 'Cloud Infrastructure',
-    location: 'Bangalore, India',
-    size: '501-1000',
-    projectsPosted: 76,
-    hiredStudents: 208,
-    rating: 4.9,
-    verified: true,
-    website: 'cloudverse.dev',
-    about: 'Cloud-native infrastructure solutions for scaling software teams.',
-    hiringFor: ['DevOps Interns', 'Full Stack Developers'],
-    logoColor: 'from-sky-600 to-blue-500',
-  },
-  {
-    id: 6,
-    name: 'MediSpark Health',
-    initials: 'MS',
-    industry: 'HealthTech',
-    location: 'Melbourne, Australia',
-    size: '201-500',
-    projectsPosted: 32,
-    hiredStudents: 95,
-    rating: 4.7,
-    verified: false,
-    website: 'medispark.health',
-    about: 'Digital health products improving patient engagement and care workflows.',
-    hiringFor: ['React Developers', 'Product Researchers'],
-    logoColor: 'from-rose-600 to-orange-500',
-  },
-  {
-    id: 7,
-    name: 'TerraGrid Energy',
-    initials: 'TG',
-    industry: 'Energy',
-    location: 'Austin, USA',
-    size: '1000+',
-    projectsPosted: 49,
-    hiredStudents: 136,
-    rating: 4.5,
-    verified: true,
-    website: 'terragrid.energy',
-    about: 'Building software for smart grids, sustainability, and energy optimization.',
-    hiringFor: ['IoT Developers', 'Data Engineers'],
-    logoColor: 'from-lime-600 to-green-500',
-  },
-  {
-    id: 8,
-    name: 'OrbitEdu Platforms',
-    initials: 'OE',
-    industry: 'EdTech',
-    location: 'Singapore',
-    size: '11-50',
-    projectsPosted: 63,
-    hiredStudents: 179,
-    rating: 4.8,
-    verified: true,
-    website: 'orbitedu.com',
-    about: 'Modern learning platforms for universities and online academies.',
-    hiringFor: ['Frontend Developers', 'Content Writers', 'Motion Designers'],
-    logoColor: 'from-amber-500 to-yellow-400',
-  },
-];
+const sizeOptions = ['all', '1-10', '11-50', '51-200', '201-500', '501-1000', '1000+', 'Unknown'];
 
-const industryOptions = ['all', ...new Set(companies.map((company) => company.industry))];
-const sizeOptions = ['all', '11-50', '51-200', '201-500', '501-1000', '1000+'];
+const getInitials = (companyName = '') => {
+  return companyName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+};
+
+const normalizeSize = (rawSize = '') => {
+  const cleaned = String(rawSize).trim().toLowerCase().replace(/employees?/g, '').trim();
+
+  if (!cleaned) return 'Unknown';
+
+  const rangeMatch = cleaned.match(/(\d+)\s*-\s*(\d+)/);
+  if (rangeMatch) {
+    return `${rangeMatch[1]}-${rangeMatch[2]}`;
+  }
+
+  const numeric = Number(cleaned);
+  if (!Number.isNaN(numeric)) {
+    if (numeric <= 10) return '1-10';
+    if (numeric <= 50) return '11-50';
+    if (numeric <= 200) return '51-200';
+    if (numeric <= 500) return '201-500';
+    if (numeric <= 1000) return '501-1000';
+    return '1000+';
+  }
+
+  return 'Unknown';
+};
+
+const toWebsiteUrl = (website = '') => {
+  const trimmed = String(website).trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://${trimmed}`;
+};
+
+
 
 export default function Companies() {
+  const { companies = [] } = useContext(AppContext);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('all');
   const [selectedSize, setSelectedSize] = useState('all');
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [withOpenRolesOnly, setWithOpenRolesOnly] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
+  const normalizedCompanies = useMemo(() => {
+    return companies.map((company) => {
+      const normalizedIndustry = company?.industry?.trim() || 'Unspecified';
+      const normalizedSize = normalizeSize(company?.companySize);
+      const websiteUrl = toWebsiteUrl(company?.companyWebsite);
+
+      return {
+        id: company?._id,
+        companyName: company?.companyName?.trim() || 'Unnamed Company',
+        contactName: company?.name?.trim() || 'Unknown Recruiter',
+        bio: company?.bio?.trim() || 'No company bio added yet.',
+        location: company?.location?.trim() || 'Location not specified',
+        industry: normalizedIndustry,
+        size: normalizedSize,
+        hiringFor: Array.isArray(company?.hiringFor) ? company.hiringFor.filter(Boolean) : [],
+        logo: company?.companyLogo?.trim() || '',
+        website: company?.companyWebsite?.trim() || '',
+        websiteUrl,
+        initials: getInitials(company?.companyName || ''),
+      };
+    });
+  }, [companies]);
+
+  const industryOptions = useMemo(() => {
+    return ['all', ...new Set(normalizedCompanies.map((company) => company.industry))];
+  }, [normalizedCompanies]);
+
   const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return normalizedCompanies.filter((company) => {
       const matchesSearch =
-        !searchQuery ||
-        company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.about.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.hiringFor.some((role) => role.toLowerCase().includes(searchQuery.toLowerCase()));
+        !query ||
+        company.companyName.toLowerCase().includes(query) ||
+        company.contactName.toLowerCase().includes(query) ||
+        company.bio.toLowerCase().includes(query) ||
+        company.location.toLowerCase().includes(query) ||
+        company.industry.toLowerCase().includes(query) ||
+        company.hiringFor.some((role) => role.toLowerCase().includes(query));
 
       const matchesIndustry = selectedIndustry === 'all' || company.industry === selectedIndustry;
       const matchesSize = selectedSize === 'all' || company.size === selectedSize;
-      const matchesVerification = !verifiedOnly || company.verified;
+      const matchesOpenRoles = !withOpenRolesOnly || company.hiringFor.length > 0;
 
-      return matchesSearch && matchesIndustry && matchesSize && matchesVerification;
+      return matchesSearch && matchesIndustry && matchesSize && matchesOpenRoles;
     });
-  }, [searchQuery, selectedIndustry, selectedSize, verifiedOnly]);
+  }, [normalizedCompanies, searchQuery, selectedIndustry, selectedSize, withOpenRolesOnly]);
 
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedIndustry('all');
     setSelectedSize('all');
-    setVerifiedOnly(false);
+    setWithOpenRolesOnly(false);
   };
 
   const activeFilterCount =
     (selectedIndustry !== 'all' ? 1 : 0) +
     (selectedSize !== 'all' ? 1 : 0) +
-    (verifiedOnly ? 1 : 0);
+    (withOpenRolesOnly ? 1 : 0);
+
+  const totalOpenRoles = normalizedCompanies.reduce((sum, company) => sum + company.hiringFor.length, 0);
+  const companiesWithWebsite = normalizedCompanies.filter((company) => Boolean(company.websiteUrl)).length;
 
   return (
     <div className="bg-white text-gray-900 font-sans min-h-screen">
@@ -194,7 +140,7 @@ export default function Companies() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-medium px-4 py-2 rounded-full mb-6">
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            {companies.length} verified companies hiring now
+            {normalizedCompanies.length} companies listed on the platform
           </div>
 
           <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight">
@@ -204,7 +150,7 @@ export default function Companies() {
             </span>
           </h1>
           <p className="text-slate-400 text-base max-w-2xl mx-auto mb-8">
-            Explore project owners with strong track records, student-friendly collaboration, and consistent paid opportunities.
+            Explore real companies, discover active hiring roles, and connect with recruiters posting student-friendly opportunities.
           </p>
 
           <div className="max-w-2xl mx-auto relative">
@@ -226,11 +172,10 @@ export default function Companies() {
             <button
               key={industry}
               onClick={() => setSelectedIndustry(industry)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                selectedIndustry === industry
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedIndustry === industry
                   ? 'bg-blue-600 border-blue-600 text-white'
                   : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-              }`}
+                }`}
             >
               {industry === 'all' ? 'All Industries' : industry}
             </button>
@@ -269,11 +214,10 @@ export default function Companies() {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        selectedSize === size
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${selectedSize === size
                           ? 'bg-blue-600 border-blue-600 text-white'
                           : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-                      }`}
+                        }`}
                     >
                       {size === 'all' ? 'All Sizes' : size}
                     </button>
@@ -284,11 +228,11 @@ export default function Companies() {
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={verifiedOnly}
-                  onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  checked={withOpenRolesOnly}
+                  onChange={(e) => setWithOpenRolesOnly(e.target.checked)}
                   className="w-4 h-4 accent-blue-600"
                 />
-                Show verified companies only
+                Show companies with open roles only
               </label>
 
               {activeFilterCount > 0 && (
@@ -334,11 +278,11 @@ export default function Companies() {
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mb-5">
                 <input
                   type="checkbox"
-                  checked={verifiedOnly}
-                  onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  checked={withOpenRolesOnly}
+                  onChange={(e) => setWithOpenRolesOnly(e.target.checked)}
                   className="w-4 h-4 accent-blue-600"
                 />
-                Verified only
+                Open roles only
               </label>
 
               {activeFilterCount > 0 && (
@@ -363,11 +307,11 @@ export default function Companies() {
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span className="inline-flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-blue-500" />
-                  {companies.reduce((sum, company) => sum + company.projectsPosted, 0)} projects posted
+                  {totalOpenRoles} open roles
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-emerald-500" />
-                  {companies.reduce((sum, company) => sum + company.hiredStudents, 0)} students hired
+                  {companiesWithWebsite} with company websites
                 </span>
               </div>
             </div>
@@ -376,38 +320,52 @@ export default function Companies() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {filteredCompanies.map((company) => (
                   <article
-                    key={company.id}
+                    key={company.id || company.companyName}
                     className="bg-white border border-blue-200 rounded-2xl p-5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all"
                   >
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${company.logoColor} text-white font-bold text-sm flex items-center justify-center shrink-0`}>
-                          {company.initials}
-                        </div>
+                        {company.logo ? (
+                          <img
+                            src={company.logo}
+                            alt={`${company.companyName} logo`}
+                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-gray-100"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                            {company.initials || 'CO'}
+                          </div>
+                        )}
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{company.name}</h3>
+                          <h3 className="font-semibold text-gray-900 truncate">{company.companyName}</h3>
                           <p className="text-xs text-gray-400">{company.industry}</p>
                         </div>
                       </div>
-                      {company.verified && (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-full shrink-0">
-                          <CheckCircle2 className="w-3 h-3" /> Verified
-                        </span>
-                      )}
+                      <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2 py-1 rounded-full shrink-0">
+                        {company.size} employees
+                      </span>
                     </div>
 
-                    <p className="text-sm text-gray-600 leading-relaxed mb-4">{company.about}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4">{company.bio}</p>
 
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {company.hiringFor.map((role) => (
-                        <span
-                          key={role}
-                          className="text-xs text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full"
-                        >
-                          {role}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Recruiter: <span className="font-medium text-gray-700">{company.contactName}</span>
+                    </p>
+
+                    {company.hiringFor.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {company.hiringFor.map((role) => (
+                          <span
+                            key={role}
+                            className="text-xs text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full"
+                          >
+                            {role}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 mb-5">No hiring roles published yet.</p>
+                    )}
 
                     <div className="grid grid-cols-2 gap-3 text-xs text-gray-500 mb-5">
                       <div className="flex items-center gap-1.5">
@@ -416,31 +374,38 @@ export default function Companies() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{company.size} employees</span>
+                        <span>{company.size} size bracket</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{company.projectsPosted} projects</span>
+                        <span>{company.hiringFor.length} active role{company.hiringFor.length === 1 ? '' : 's'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                        <span>{company.rating.toFixed(1)} rating</span>
+                        <Globe className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="truncate">{company.website || 'Website not provided'}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                      <a
-                        href={`https://${company.website}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition-colors"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        {company.website}
-                      </a>
-                      <button className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-semibold hover:gap-2 transition-all">
-                        View Profile <ArrowRight className="w-4 h-4" />
-                      </button>
+                      {company.websiteUrl ? (
+                        <a
+                          href={company.websiteUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                          Visit website
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                          <Globe className="w-3.5 h-3.5" />
+                          No website
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-semibold">
+                        Explore Company <ArrowRight className="w-4 h-4" />
+                      </span>
                     </div>
                   </article>
                 ))}
@@ -466,7 +431,7 @@ export default function Companies() {
         </div>
       </div>
 
-            <section className="py-16 bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 relative overflow-hidden mt-8">
+      <section className="py-16 bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 relative overflow-hidden mt-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-48 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-extrabold text-white mb-3">Want your company featured here?</h2>
