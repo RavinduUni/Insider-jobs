@@ -3,11 +3,14 @@ import {
   Send, UserIcon, X, XCircle, Shield, ArrowRight
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { AppContext } from '../../context/AppContext';
+import { useContext } from 'react';
+import { useEffect } from 'react';
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
-  'nda-sent': { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-accepted': { label: 'Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  'nda_sent': { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  'accepted': { label: 'Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
   'rejected': { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
 };
 const StatusBadge = ({ status }) => {
@@ -21,24 +24,16 @@ const StatusBadge = ({ status }) => {
 
 // ── Dot colour per status ─────────────────────────────────────────────────────
 const dotColor = {
-  'nda-sent': 'bg-yellow-400',
-  'nda-accepted': 'bg-green-400',
+  'nda_sent': 'bg-yellow-400',
+  'accepted': 'bg-green-400',
   'rejected': 'bg-red-400',
 };
 
-// ── Static data ───────────────────────────────────────────────────────────────
-const ndaData = [
-  { id: 1, projectTitle: 'React Dashboard Development', projectId: 1, studentName: 'Alex Johnson', studentEmail: 'alex.j@mit.edu', university: 'MIT', sentDate: '2024-11-15', status: 'nda-accepted', acceptedDate: '2024-11-16', signedDocument: 'NDA_ReactDashboard_Signed_AlexJohnson.pdf', signedDocumentSize: '312 KB' },
-  { id: 2, projectTitle: 'Mobile App UI Design', projectId: 2, studentName: 'Sarah Chen', studentEmail: 'sarah.c@stanford.edu', university: 'Stanford', sentDate: '2024-11-14', status: 'nda-sent', acceptedDate: null, signedDocument: null, signedDocumentSize: null },
-  { id: 3, projectTitle: 'Mobile App UI Design', projectId: 2, studentName: 'Mike Wilson', studentEmail: 'mike.w@ucla.edu', university: 'UCLA', sentDate: '2024-11-13', status: 'nda-sent', acceptedDate: null, signedDocument: null, signedDocumentSize: null },
-  { id: 4, projectTitle: 'E-commerce Website Development', projectId: 3, studentName: 'Emily Davis', studentEmail: 'emily.d@berkeley.edu', university: 'UC Berkeley', sentDate: '2024-11-10', status: 'rejected', acceptedDate: null, signedDocument: null, signedDocumentSize: null },
-  { id: 5, projectTitle: 'Content Writing - Tech Blog', projectId: 4, studentName: 'David Lee', studentEmail: 'david.l@harvard.edu', university: 'Harvard', sentDate: '2024-11-08', status: 'nda-accepted', acceptedDate: '2024-11-09', signedDocument: 'NDA_ContentWriting_Signed_DavidLee.pdf', signedDocumentSize: '298 KB' },
-];
 
 const statusFilters = [
   { value: 'all', label: 'All NDAs' },
-  { value: 'nda-sent', label: 'Pending' },
-  { value: 'nda-accepted', label: 'Accepted' },
+  { value: 'nda_sent', label: 'Pending' },
+  { value: 'accepted', label: 'Accepted' },
   { value: 'rejected', label: 'Rejected' },
 ];
 
@@ -53,6 +48,14 @@ const statAccent = {
 // ── NDA Modal ─────────────────────────────────────────────────────────────────
 const NDAModal = ({ nda, onClose }) => {
   const fmt = d => d ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  const student = nda?.applicationId?.studentId;
+  const projectTitle = nda?.applicationId?.projectId?.title || 'Untitled Project';
+  const acceptedDate = nda?.acceptedDate || nda?.acceptedAt || (nda?.ndaStatus === 'accepted' ? nda?.updatedAt : null);
+
+  const handleDownloadNDA = () => {
+    if (!nda?.documentUrl) return;
+    window.open(nda.documentUrl, '_blank');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -80,17 +83,17 @@ const NDAModal = ({ nda, onClose }) => {
           <div className="flex items-start justify-between bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
             <div>
               <p className="text-xs text-blue-400 font-medium uppercase tracking-widest mb-1">Project</p>
-              <h3 className="text-white font-semibold text-sm mb-2">{nda.projectTitle}</h3>
+              <h3 className="text-white font-semibold text-sm mb-2">{projectTitle}</h3>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center">
                   <UserIcon className="w-3 h-3 text-slate-400" />
                 </div>
-                <span className="text-slate-300 text-xs">{nda.studentName}</span>
+                <span className="text-slate-300 text-xs">{student?.name || 'Unknown Student'}</span>
                 <span className="text-slate-600 text-xs">·</span>
-                <span className="text-slate-500 text-xs">{nda.studentEmail}</span>
+                <span className="text-slate-500 text-xs">{student?.email || 'No email provided'}</span>
               </div>
             </div>
-            <StatusBadge status={nda.status} />
+            <StatusBadge status={nda.ndaStatus} />
           </div>
         </div>
 
@@ -98,7 +101,7 @@ const NDAModal = ({ nda, onClose }) => {
         <div className="px-6 py-4 overflow-y-auto flex-1">
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 text-xs text-slate-400 leading-relaxed space-y-4">
             <h4 className="text-slate-200 text-sm font-semibold">Non-Disclosure Agreement</h4>
-            <p>This Non-Disclosure Agreement ("Agreement") is entered into as of the date of electronic acceptance by and between TechStart Inc. ("Disclosing Party") and {nda.studentName} ("Receiving Party").</p>
+            <p>This Non-Disclosure Agreement ("Agreement") is entered into as of the date of electronic acceptance by and between TechStart Inc. ("Disclosing Party") and {student?.name || 'the Receiving Party'} ("Receiving Party").</p>
             {[
               ['1. Definition of Confidential Information', 'For purposes of this Agreement, "Confidential Information" shall include all information or material that has or could have commercial value or other utility in the business in which Disclosing Party is engaged. This includes, but is not limited to, technical data, trade secrets, know-how, research, product plans, products, services, customers, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, hardware configuration information, marketing, finances, or other business information.'],
               ['2. Obligations of Receiving Party', 'Receiving Party agrees to hold and maintain the Confidential Information in strictest confidence for the sole and exclusive benefit of the Disclosing Party. Receiving Party shall carefully restrict access to Confidential Information to employees, contractors, and third parties as is reasonably required and shall require those persons to sign nondisclosure restrictions at least as protective as those in this Agreement.'],
@@ -121,14 +124,14 @@ const NDAModal = ({ nda, onClose }) => {
               <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
                 <Send className="w-3 h-3" /> Sent date
               </div>
-              <p className="text-slate-200 text-xs font-medium">{fmt(nda.sentDate)}</p>
+              <p className="text-slate-200 text-xs font-medium">{fmt(nda.createdAt)}</p>
             </div>
             <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
               <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
                 <CheckCircle className="w-3 h-3" /> Accepted date
               </div>
-              <p className={`text-xs font-medium ${nda.acceptedDate ? 'text-green-400' : 'text-slate-600'}`}>
-                {fmt(nda.acceptedDate)}
+              <p className={`text-xs font-medium ${acceptedDate ? 'text-green-400' : 'text-slate-600'}`}>
+                {fmt(acceptedDate)}
               </p>
             </div>
           </div>
@@ -142,7 +145,11 @@ const NDAModal = ({ nda, onClose }) => {
           >
             Close
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 transition-all cursor-pointer">
+          <button
+            onClick={handleDownloadNDA}
+            disabled={!nda?.documentUrl}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer"
+          >
             <Download className="w-3.5 h-3.5" /> Download Signed NDA
           </button>
         </div>
@@ -153,6 +160,10 @@ const NDAModal = ({ nda, onClose }) => {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const NDAManagement = () => {
+
+  const { token, role } = useContext(AppContext);
+
+  const [ndaData, setNdaData] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [showNDAModal, setShowNDAModal] = useState(false);
   const [selectedNDA, setSelectedNDA] = useState(null);
@@ -161,13 +172,13 @@ const NDAManagement = () => {
 
   const ndaFiltered = filterStatus === 'all'
     ? ndaData
-    : ndaData.filter(n => n.status === filterStatus);
+    : ndaData.filter(n => n.ndaStatus === filterStatus);
 
   const counts = {
     total: ndaData.length,
-    pending: ndaData.filter(n => n.status === 'nda-sent').length,
-    accepted: ndaData.filter(n => n.status === 'nda-accepted').length,
-    rejected: ndaData.filter(n => n.status === 'rejected').length,
+    pending: ndaData.filter(n => n.ndaStatus === 'nda_sent').length,
+    accepted: ndaData.filter(n => n.ndaStatus === 'accepted').length,
+    rejected: ndaData.filter(n => n.ndaStatus === 'rejected').length,
   };
 
   const statCards = [
@@ -176,6 +187,34 @@ const NDAManagement = () => {
     { key: 'accepted', label: 'Accepted', count: counts.accepted },
     { key: 'rejected', label: 'Rejected', count: counts.rejected },
   ];
+
+  const fetchNDAData = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/recruiter/ndas', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      setNdaData(Array.isArray(data?.ndas) ? data.ndas : []);
+
+    } catch (error) {
+      console.error('Error fetching NDA data:', error);
+    }
+  };
+
+  const handleDownloadNDA = (nda) => {
+    if (!nda?.documentUrl) return;
+    window.open(nda.documentUrl, '_blank');
+  };
+
+  useEffect(() => {
+    if (token && role === 'recruiter') {
+      fetchNDAData();
+    }
+  }, [token, role]);
+
 
   return (
     <div className="min-h-screen">
@@ -211,7 +250,7 @@ const NDAManagement = () => {
       {/* ── Filter tabs ── */}
       <div className="flex flex-wrap gap-2 mb-6">
         {statusFilters.map(f => {
-          const count = f.value === 'all' ? ndaData.length : ndaData.filter(n => n.status === f.value).length;
+          const count = f.value === 'all' ? ndaData.length : ndaData.filter(n => n.ndaStatus === f.value).length;
           const active = filterStatus === f.value;
           return (
             <button
@@ -238,7 +277,7 @@ const NDAManagement = () => {
       <div className="flex flex-col gap-4">
         {ndaFiltered.map(nda => (
           <div
-            key={nda.id}
+            key={nda._id}
             className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group"
           >
             {/* Top row */}
@@ -256,7 +295,7 @@ const NDAManagement = () => {
                   </span>
                 </div>
               </div>
-              <StatusBadge status={nda.status} />
+              <StatusBadge status={nda.ndaStatus} />
             </div>
 
             {/* Student info row */}
@@ -265,8 +304,8 @@ const NDAManagement = () => {
                 <UserIcon className="w-3.5 h-3.5 text-slate-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-200">{nda.studentName}</p>
-                <p className="text-xs text-slate-500">{nda.university} · {nda.studentEmail}</p>
+                <p className="text-xs font-medium text-slate-200">{nda.applicationId.studentId.name}</p>
+                <p className="text-xs text-slate-500">{nda.applicationId.studentId.university} · {nda.applicationId.studentId.email}</p>
               </div>
             </div>
 
@@ -274,7 +313,7 @@ const NDAManagement = () => {
             <div className="flex flex-wrap items-center gap-4 mb-3 ml-12">
               <span className="flex items-center gap-1.5 text-xs text-slate-400">
                 <Send className="w-3 h-3" />
-                Sent: <span className="text-slate-300 font-medium ml-0.5">{fmt(nda.sentDate)}</span>
+                Sent: <span className="text-slate-300 font-medium ml-0.5">{fmt(nda.createdAt)}</span>
               </span>
               {nda.acceptedDate && (
                 <span className="flex items-center gap-1.5 text-xs text-green-400">
@@ -282,10 +321,10 @@ const NDAManagement = () => {
                   Accepted: <span className="font-medium ml-0.5">{fmt(nda.acceptedDate)}</span>
                 </span>
               )}
-              {nda.signedDocument && (
-                <span className="flex items-center gap-1.5 text-xs text-slate-500">
+              {nda.documentUrl && (
+                <span onClick={() => window.open(nda.documentUrl, '_blank')} className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer hover:text-white">
                   <FileText className="w-3 h-3" />
-                  {nda.signedDocument} · {nda.signedDocumentSize}
+                  View NDA document
                 </span>
               )}
             </div>
@@ -303,8 +342,11 @@ const NDAManagement = () => {
                 <UserIcon className="w-3.5 h-3.5" /> View Applicant
               </button>
 
-              {nda.signedDocument && (
-                <button className="flex items-center gap-1.5 text-xs text-green-400 border border-green-500/20 px-3 py-2 rounded-xl hover:bg-green-500/10 transition-all cursor-pointer">
+              {nda.documentUrl && (
+                <button
+                  onClick={() => handleDownloadNDA(nda)}
+                  className="flex items-center gap-1.5 text-xs text-green-400 border border-green-500/20 px-3 py-2 rounded-xl hover:bg-green-500/10 transition-all cursor-pointer"
+                >
                   <Download className="w-3.5 h-3.5" /> Download
                 </button>
               )}

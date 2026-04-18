@@ -6,6 +6,7 @@ import Project from "../models/Project.js";
 import { generateOtp } from "../utils/generateOtp.js";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import Application from "../models/Application.js";
+import NDA from "../models/NDA.js";
 
 export const sendEmailVerificationOtp = async (req, res) => {
     try {
@@ -225,7 +226,7 @@ export const createProject = async (req, res) => {
 export const getAllApplicationsForProject = async (req, res) => {
     try {
         const recruiter = req.user;
-        
+
         if (!recruiter) {
             return res.status(404).json({ success: false, message: 'Recruiter not found' });
         }
@@ -234,11 +235,101 @@ export const getAllApplicationsForProject = async (req, res) => {
 
         const applications = await Application.find({ projectId: { $in: projectIds } })
             .populate('studentId', 'name email skills university major graduationYear profilePicture')
-            .populate('projectId', 'title description budget deadline technologies createdAt');
+            .populate('projectId', 'title description budget deadline technologies createdAt')
+            .populate('ndaId', 'documentUrl status createdAt');
 
         return res.status(200).json({ success: true, applications });
     } catch (error) {
         console.error('Error fetching applications for project:', error);
         return res.status(500).json({ success: false, message: 'Server error while fetching applications' });
+    }
+}
+
+export const sendNDA = async (req, res) => {
+    let ndaPublicId = null;
+    try {
+        const recruiter = req.user;
+        const ndaDocument = req.file ? req.file.path : null;
+        const { applicationId } = req.body;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!applicationId || !ndaDocument) {
+            return res.status(400).json({ success: false, message: 'Application ID and NDA document are required' });
+        }
+
+        const application = await Application.findById(applicationId).populate('projectId');
+
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
+        }
+
+        if (String(application.projectId.recruiter) !== String(recruiter._id)) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to send NDA for this application' });
+        }
+
+        const existingNDA = await NDA.findOne({ applicationId });
+
+        if (existingNDA) {
+            return res.status(400).json({ success: false, message: 'NDA already exists for this application' });
+        }
+
+        const result = await cloudinary.uploader.upload(ndaDocument, {
+            folder: 'ndas',
+            allowed_formats: ['pdf', 'doc', 'docx'],
+            use_filename: true,
+            unique_filename: true
+        });
+        ndaPublicId = result.public_id;
+
+        const newNDA = new NDA({
+            applicationId,
+            documentUrl: result.secure_url,
+            ndaStatus: 'nda_sent'
+        });
+        await newNDA.save();
+
+        application.ndaId = newNDA._id;
+        application.status = 'nda_sent';
+        await application.save();
+
+        return res.status(200).json({ success: true, message: 'NDA sent successfully', application, nda: newNDA });
+
+    } catch (error) {
+        console.error('Error sending NDA:', error);
+        if (ndaPublicId) {
+            try {
+                await cloudinary.uploader.destroy(ndaPublicId);
+            }
+            catch (cleanupError) {
+                console.error('Error cleaning up NDA document from Cloudinary:', cleanupError);
+            }
+        }
+        return res.status(500).json({ success: false, message: 'Server error while sending NDA' });
+    }
+}
+
+export const getAllNDAs = async (req, res) => {
+    try {
+        const recruiter = req.user;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        const projectIds = await Project.find({ recruiter: recruiter._id }).select('_id');
+
+        const applications = await Application.find({ projectId: { $in: projectIds } }).select('_id');
+
+        const ndaList = await NDA.find({ applicationId: { $in: applications } })
+            .populate({ path: 'applicationId', populate: { path: 'studentId', select: 'name email university' } })
+            .populate({ path: 'applicationId', populate: { path: 'projectId', select: 'title' } });
+        
+        return res.status(200).json({ success: true, ndas: ndaList });
+    } catch (error) {
+        console.error('Error fetching NDAs:', error);
+        return res.status(500).json({ success: false, message: 'Server error while fetching NDAs' });
     }
 }

@@ -25,7 +25,7 @@ const ProjectDetail = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleApplyClick = () => {
-        if (!user) {
+        if (!user && !token) {
             toast.error('You must login before applying for the project');
             setTimeout(() => {
                 navigate('/auth?type=student&mode=login');

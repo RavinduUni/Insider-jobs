@@ -29,17 +29,6 @@ const stats = [
   { label: 'Completed', value: '5', icon: CheckCircle, color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
 ];
 
-const recentProjects = [
-  { id: 1, title: 'React Dashboard Development', budget: 800, applicants: 8, status: 'in-progress', createdAt: '2024-07-01', deadline: '2 weeks left', assignedTo: 'Alex Johnson', hasSubmission: true },
-  { id: 2, title: 'Mobile App UI Design', budget: 500, applicants: 12, status: 'nda-sent', createdAt: '2024-06-01', deadline: '10 days left', assignedTo: null, hasSubmission: false },
-  { id: 3, title: 'Content Writing - Tech Blog', budget: 200, applicants: 5, status: 'applied', createdAt: '2024-05-01', deadline: '1 week left', assignedTo: null, hasSubmission: false },
-];
-
-const recentApplicants = [
-  { id: 1, name: 'Alex Johnson', profileImg: null, project: 'React Dashboard Development', projectId: 1, university: 'MIT', rating: 4.9, appliedDate: '2025-11-28', hasCV: true },
-  { id: 2, name: 'Sarah Chen', profileImg: null, project: 'Mobile App UI Design', projectId: 2, university: 'Stanford', rating: 4.8, appliedDate: '2025-12-01', hasCV: true },
-  { id: 3, name: 'Mike Wilson', profileImg: null, project: 'Content Writing', projectId: 3, university: 'UCLA', rating: 4.7, appliedDate: '2025-12-05', hasCV: true },
-];
 
 // ── timeAgo ─────────────────────────────────────────────────
 const timeAgo = (dateString) => {
@@ -78,16 +67,24 @@ const SectionHeader = ({ title, action, onAction }) => (
 const OwnerDashboardLanding = () => {
   const navigate = useNavigate();
 
-  const {user} = useContext(AppContext);
+  const { user, projects, allApplicants, fetchApplications } = useContext(AppContext);
+
+  const recruiterProjects = user?._id
+    ? projects.filter(
+      proj =>
+        proj.recruiter?._id === user._id ||
+        proj.recruiter === user._id
+    )
+    : [];
 
   const [currentPage, setCurrentPage] = useState(1);
 
   const ITEMS_PER_PAGE = 3;
 
-  const totalPages = Math.ceil(recentProjects.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(recruiterProjects.length / ITEMS_PER_PAGE);
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentProjects = recentProjects.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentProjects = recruiterProjects.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const goNext = () => {
     if (currentPage < totalPages) {
@@ -100,6 +97,9 @@ const OwnerDashboardLanding = () => {
       setCurrentPage(prev => prev - 1);
     }
   }
+
+  const recentApplicants = allApplicants;
+
 
   return (
     <div className='min-h-screen space-y-6'>
@@ -149,7 +149,7 @@ const OwnerDashboardLanding = () => {
               .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
               .slice(0, 3)
               .map(project => (
-                <div key={project.id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group'>
+                <div key={project._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group'>
                   {/* Header */}
                   <div className='flex items-start justify-between mb-3'>
                     <h3 className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors'>{project.title}</h3>
@@ -165,7 +165,7 @@ const OwnerDashboardLanding = () => {
                       <Users className='w-3 h-3' />{project.applicants} applicants
                     </span>
                     <span className='flex items-center gap-1.5 text-xs text-slate-400'>
-                      <Clock className='w-3 h-3' />{project.deadline}
+                      <Clock className='w-3 h-3' />{new Date(project.deadline).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -223,36 +223,36 @@ const OwnerDashboardLanding = () => {
           <SectionHeader title='Recent Applicants' action='View All' onAction={() => navigate('all-applicants')} />
           <div className='flex flex-col gap-3'>
             {recentApplicants
-              .sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate))
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
               .slice(0, 3)
               .map(applicant => (
-                <div key={applicant.id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 hover:border-blue-500/30 transition-all cursor-pointer group'>
+                <div key={applicant.studentId._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 hover:border-blue-500/30 transition-all cursor-pointer group'>
                   {/* Avatar + name */}
                   <div className='flex items-center gap-3 mb-2'>
-                    {applicant.profileImg
-                      ? <img src={applicant.profileImg} alt='' className='w-9 h-9 rounded-xl object-cover border border-slate-700' />
+                    {applicant.studentId.profilePicture
+                      ? <img src={applicant.studentId.profilePicture} alt='' className='w-9 h-9 rounded-xl object-cover border border-slate-700' />
                       : <div className='w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0'>
-                        {applicant.name.slice(0, 2).toUpperCase()}
+                        {applicant.studentId.name.slice(0, 2).toUpperCase()}
                       </div>
                     }
                     <div className='min-w-0'>
-                      <p className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors truncate'>{applicant.name}</p>
-                      <p className='text-xs text-slate-500'>{applicant.university}</p>
+                      <p className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors truncate'>{applicant.studentId.name}</p>
+                      <p className='text-xs text-slate-500'>{applicant.studentId.university}</p>
                     </div>
                   </div>
 
                   {/* Project */}
-                  <p className='text-xs text-slate-400 mb-2 truncate'>{applicant.project}</p>
+                  <p className='text-xs text-slate-400 mb-2 truncate'>{applicant.projectId.title}</p>
 
                   {/* Footer meta */}
                   <div className='flex items-center justify-between'>
-                    <span className='text-xs text-slate-600'>{timeAgo(applicant.appliedDate)}</span>
+                    <span className='text-xs text-slate-600'>{timeAgo(applicant.createdAt)}</span>
                     <span className='flex items-center gap-1 text-xs text-yellow-400'>
                       <Star className='w-3 h-3 fill-current' />{applicant.rating}
                     </span>
                   </div>
 
-                  {applicant.hasCV && (
+                  {applicant.cvUrl && (
                     <div className='flex items-center gap-1.5 text-xs text-blue-400 mt-2'>
                       <FileText className='w-3 h-3' /> CV Available
                     </div>
@@ -264,11 +264,11 @@ const OwnerDashboardLanding = () => {
           {/* Quick stats at bottom */}
           <div className='mt-4 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2'>
             <div className='bg-slate-800/50 rounded-xl p-3 text-center'>
-              <p className='text-lg font-bold text-white'>15</p>
+              <p className='text-lg font-bold text-white'>{recentApplicants.length}</p>
               <p className='text-xs text-slate-500'>Total Apps</p>
             </div>
             <div className='bg-slate-800/50 rounded-xl p-3 text-center'>
-              <p className='text-lg font-bold text-green-400'>3</p>
+              <p className='text-lg font-bold text-green-400'>{recentApplicants.filter(a => a.createdAt >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</p>
               <p className='text-xs text-slate-500'>This Week</p>
             </div>
           </div>

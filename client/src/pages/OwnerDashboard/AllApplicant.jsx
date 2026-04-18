@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
 import { useContext } from 'react'
 import { useEffect } from 'react'
+import { toast } from 'react-hot-toast'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -20,8 +21,6 @@ const StatusBadge = ({ status }) => {
   const cfg = statusConfig[status] || { label: status, color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' }
   return <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.color}`}>{cfg.label}</span>
 }
-
-
 
 
 // ── timeAgo (unchanged logic) ─────────────────────────────────────────────────
@@ -55,14 +54,14 @@ const Backdrop = ({ onClick }) => (
 const AllApplicant = () => {
   const navigate = useNavigate()
 
-  const { user, token, projects } = useContext(AppContext);
+  const { user, token, projects, allApplicants, fetchApplicants } = useContext(AppContext);
 
-  const [allApplicants, setAllApplicants] = useState([])
   const [showNDAModel, setShowNDAModel] = useState(false)
   const [showAssignProjectModel, setShowAssignProjectModel] = useState(false)
   const [showSendNDAModel, setShowSendNDAModel] = useState(false)
   const [selectedApplicant, setSelectedApplicant] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [file, setFile] = useState(null)
   const inputRef = useRef(null)
 
@@ -80,41 +79,55 @@ const AllApplicant = () => {
     setShowSendNDAModel(false)
   }
 
-  const fetchApplications = async () => {
+  const recruiterProjects = projects.filter(project =>
+    allApplicants.some(applicant => applicant.projectId._id === project._id)
+  );
 
-    if (!token) return;
-
+  const handleSendNDA = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/recruiter/project-applicants', {
-        method: 'GET',
+      if (!token) {
+        toast.error('You must be logged in to perform this action');
+        return;
+      }
+
+      if (!selectedApplicant?._id) {
+        toast.error('Please select an applicant to send NDA');
+        return;
+      }
+     
+      const formData = new FormData();
+      formData.append('applicationId', selectedApplicant._id);
+      formData.append('ndaDocument', file);
+
+      const response = await fetch('http://localhost:5000/api/recruiter/send-nda', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: formData
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        console.error('Error fetching applications:', data.message || 'Unknown error');
+        toast.error(data.message || 'Failed to send NDA');
         return;
       }
 
-      setAllApplicants(data.applications);
-
+      toast.success('NDA sent successfully');
+      
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      toast.error('Failed to send NDA');
+      console.error('Error sending NDA:', error);
+    } finally {
+      setLoading(false);
+      setFile(null);
+      if (inputRef.current) inputRef.current.value = '';
+      closeAllModals();
     }
   }
 
-  const recruiterProjects = projects.filter(project =>
-    allApplicants.some(applicant => applicant.projectId._id === project._id)
-  );
-
-  useEffect(() => {
-    if (token && user) {
-      fetchApplications();
-    }
-  }, [token, user]);
 
   return (
     <div className="min-h-screen">
@@ -128,7 +141,7 @@ const AllApplicant = () => {
 
       {/* ── Projects + applicants ── */}
       <div className="flex flex-col gap-5">
-        {recruiterProjects.map(project => {
+        {recruiterProjects && recruiterProjects.map(project => {
           const projectApplicants = allApplicants.filter(a => a.projectId._id === project._id)
 
           return (
@@ -146,7 +159,7 @@ const AllApplicant = () => {
                         <DollarSign className="w-3 h-3" />${project.budget}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />{project.deadline}
+                        <Clock className="w-3 h-3" />{new Date(project.deadline).toLocaleDateString()}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" />{projectApplicants.length} applicants
@@ -214,7 +227,7 @@ const AllApplicant = () => {
                         <Eye className="w-3 h-3" /> View
                       </button>
 
-                      {applicant.ndaStatus === 'pending' ? (
+                      {applicant.ndaStatus === 'nda_sent' ? (
                         <button className="flex items-center gap-1.5 text-xs text-yellow-400 border border-yellow-500/20 px-2.5 py-1.5 rounded-lg cursor-not-allowed opacity-60">
                           <Clock className="w-3 h-3" /> Pending
                         </button>
@@ -449,8 +462,8 @@ const AllApplicant = () => {
               <button onClick={() => setShowSendNDAModel(false)} className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors cursor-pointer">
-                <Send className="w-4 h-4" /> Send NDA
+              <button onClick={handleSendNDA} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={loading}>
+                <Send className="w-4 h-4" />{loading ? 'Sending...' : 'Send NDA'}
               </button>
             </div>
           </div>

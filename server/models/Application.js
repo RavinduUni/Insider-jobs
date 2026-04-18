@@ -28,6 +28,10 @@ const applicationSchema = new mongoose.Schema({
         enum: ["applied","selected","nda_sent","nda_accepted","working","submitted","rejected"], 
         default: "applied" 
     },
+    ndaId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'NDA'
+    }
 }, { timestamps: true });
 
 const Application = mongoose.model('Application', applicationSchema);

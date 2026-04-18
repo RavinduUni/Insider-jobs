@@ -10,6 +10,7 @@ const AppContextProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [projects, setProjects] = useState([]);
     const [companies, setCompanies] = useState([]);
+    const [allApplicants, setAllApplicants] = useState([]);
 
     const fetchUserProfile = async () => {
         if (!token) return;
@@ -86,7 +87,7 @@ const AppContextProvider = ({ children }) => {
         try {
             const response = await fetch('http://localhost:5000/api/companies');
             const data = await response.json();
-            
+
             if (data.success) {
                 console.log('Companies:', data.companies);
                 setCompanies(data.companies);
@@ -101,6 +102,39 @@ const AppContextProvider = ({ children }) => {
         fetchAllCompanies();
     }, [token]);
 
+
+    const fetchApplications = async () => {
+
+        if (!token) return;
+
+        try {
+            const response = await fetch('http://localhost:5000/api/recruiter/project-applicants', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                console.error('Error fetching applications:', data.message || 'Unknown error');
+                return;
+            }
+
+            setAllApplicants(data.applications);
+
+        } catch (error) {
+            console.error('Error fetching applications:', error);
+        }
+    }
+
+     useEffect(() => {
+        if (token && user && role === 'recruiter') {
+          fetchApplications();
+        }
+      }, [token, user, role]);
+
     const value = {
         token,
         setToken,
@@ -110,7 +144,10 @@ const AppContextProvider = ({ children }) => {
         projects,
         setProjects,
         companies,
-        setCompanies
+        setCompanies,
+        allApplicants,
+        setAllApplicants,
+        fetchApplications,
     };
 
     return (

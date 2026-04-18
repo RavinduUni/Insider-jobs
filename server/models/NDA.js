@@ -1,29 +1,19 @@
 import mongoose from "mongoose";
 
 const ndaSchema = new mongoose.Schema({
-    studentId: {
+    applicationId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
-        required: true
-    },
-    recruiterId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Recruiter',
-        required: true
-    },
-    projectId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Project',
+        ref: 'Application',
         required: true
     },
     documentUrl: {
         type: String,
         required: true
     },
-    status: { 
+    ndaStatus: { 
         type: String, 
-        enum: ["sent","accepted","rejected"], 
-        default: "sent" 
+        enum: ["nda_sent","accepted","rejected","assigned"], 
+        default: "nda_sent" 
     },
 }, { timestamps: true });
 
