@@ -5,7 +5,11 @@ import {
 } from 'lucide-react'
 import React, { useRef } from 'react'
 import heroImg2 from '../../assets/heroImg2.jpg'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { AppContext } from '../../context/AppContext'
+import { useContext } from 'react'
+import { useEffect } from 'react'
+import { useState } from 'react'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -20,43 +24,21 @@ const StatusBadge = ({ status }) => {
   return <span className={`text-xs font-medium px-3 py-1 rounded-full border ${cfg.color}`}>{cfg.label}</span>
 }
 
-// ── Applicant data ────────────────────────────────────────────────────────────
-const applicant = {
-  id: 1,
-  name: 'Alex Johnson',
-  email: 'alex.johnson@mit.edu',
-  phone: '+1 (555) 123-4567',
-  profilePhoto: heroImg2,
-  projectId: 1,
-  university: 'MIT',
-  degree: 'Computer Science, Senior',
-  location: 'Cambridge, MA',
-  rating: 4.9,
-  completedProjects: 12,
-  totalEarnings: 12500,
-  memberSince: 'Jan 2024',
-  appliedDate: '2 hours ago',
-  responseRate: '98%',
-  skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Python', 'AWS', 'MongoDB', 'REST APIs'],
-  bio: "Passionate full-stack developer with 2+ years of experience building modern web applications. Specialized in React and Node.js ecosystems. I love creating clean, efficient, and scalable solutions. Currently pursuing my Bachelor's in Computer Science at MIT with a focus on software engineering and cloud technologies. Available for freelance projects 20+ hours per week.",
-  projectPlan: 'Available',
-  cv: 'Available',
-  ndaStatus: 'nda-accepted',
-  ndaAcceptedDate: '1 hour ago',
-  portfolio: 'https://alexjohnson.dev',
-  linkedin: 'https://linkedin.com/in/alexjohnson',
-  github: 'https://github.com/alexjohnson',
-  feedbacks: [
-    { id: 1, projectTitle: 'E-commerce Platform Frontend', clientName: 'TechCorp Inc.', rating: 5, date: 'Nov 2025', budget: 1200, duration: '3 weeks', comment: 'Excellent work! Alex delivered the project ahead of schedule with outstanding quality. Very professional and responsive to feedback. The code was clean, well-documented, and exceeded our expectations. Highly recommended for any React-based projects!', skills: ['React', 'TypeScript', 'Tailwind CSS'] },
-    { id: 2, projectTitle: 'Dashboard Analytics Tool', clientName: 'DataViz Solutions', rating: 5, date: 'Oct 2025', budget: 1500, duration: '4 weeks', comment: 'Amazing developer with great attention to detail. The dashboard exceeded our expectations with beautiful visualizations and smooth performance. Will definitely work with Alex again on future projects.', skills: ['React', 'Chart.js', 'Node.js'] },
-    { id: 3, projectTitle: 'Mobile App Landing Page', clientName: 'StartupX', rating: 4.8, date: 'Sep 2025', budget: 800, duration: '2 weeks', comment: 'Great communication and solid technical skills. Delivered a beautiful, responsive landing page that works perfectly across all devices. Minor revisions needed but overall very satisfied with the final result.', skills: ['HTML', 'CSS', 'JavaScript'] },
-    { id: 4, projectTitle: 'API Integration Service', clientName: 'CloudSync Pro', rating: 4.9, date: 'Aug 2025', budget: 1000, duration: '2 weeks', comment: 'Exceptional problem-solving skills. Alex integrated multiple third-party APIs seamlessly and handled complex authentication flows with ease. Professional, timely, and great to work with!', skills: ['Node.js', 'REST APIs', 'AWS'] },
-    { id: 5, projectTitle: 'Database Migration Project', clientName: 'Enterprise Solutions Ltd', rating: 4.7, date: 'Jul 2025', budget: 900, duration: '3 weeks', comment: 'Solid performance on a challenging migration project. Alex demonstrated strong database knowledge and completed the task efficiently. Good communication throughout the project.', skills: ['MongoDB', 'Node.js', 'Python'] },
-  ]
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+
+  const options = { year: 'numeric', month: 'short' };
+  return date.toLocaleDateString(undefined, options);
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const ViewStudentDetails = () => {
+
+  const { token, user, role } = useContext(AppContext);
+  const [searchParams] = useSearchParams();
+  const studentId = searchParams.get('studentId');
+  const projectId = searchParams.get('projectId');
+
   const navigate = useNavigate()
 
   // ── Drag scroll refs (unchanged logic) ──
@@ -80,6 +62,41 @@ const ViewStudentDetails = () => {
     feedbackRef.current.scrollLeft = scrollLeft.current - walk
   }
 
+  // ── Applicant data ────────────────────────────────────────────────────────────
+  const [applicant, setApplicant] = useState({
+    id: 1,
+    name: 'Alex Johnson',
+    email: 'alex.johnson@mit.edu',
+    phone: '+1 (555) 123-4567',
+    profilePhoto: heroImg2,
+    projectId: 1,
+    university: 'MIT',
+    degree: 'Computer Science, Senior',
+    location: 'Cambridge, MA',
+    rating: 4.9,
+    completedProjects: 12,
+    totalEarnings: 12500,
+    memberSince: 'Jan 2024',
+    appliedDate: '2 hours ago',
+    responseRate: '98%',
+    skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Python', 'AWS', 'MongoDB', 'REST APIs'],
+    bio: "Passionate full-stack developer with 2+ years of experience building modern web applications. Specialized in React and Node.js ecosystems. I love creating clean, efficient, and scalable solutions. Currently pursuing my Bachelor's in Computer Science at MIT with a focus on software engineering and cloud technologies. Available for freelance projects 20+ hours per week.",
+    projectPlan: 'Available',
+    cv: 'Available',
+    ndaStatus: 'nda-accepted',
+    ndaAcceptedDate: '1 hour ago',
+    portfolio: 'https://alexjohnson.dev',
+    linkedin: 'https://linkedin.com/in/alexjohnson',
+    github: 'https://github.com/alexjohnson',
+    feedbacks: [
+      { id: 1, projectTitle: 'E-commerce Platform Frontend', clientName: 'TechCorp Inc.', rating: 5, date: 'Nov 2025', budget: 1200, duration: '3 weeks', comment: 'Excellent work! Alex delivered the project ahead of schedule with outstanding quality. Very professional and responsive to feedback. The code was clean, well-documented, and exceeded our expectations. Highly recommended for any React-based projects!', skills: ['React', 'TypeScript', 'Tailwind CSS'] },
+      { id: 2, projectTitle: 'Dashboard Analytics Tool', clientName: 'DataViz Solutions', rating: 5, date: 'Oct 2025', budget: 1500, duration: '4 weeks', comment: 'Amazing developer with great attention to detail. The dashboard exceeded our expectations with beautiful visualizations and smooth performance. Will definitely work with Alex again on future projects.', skills: ['React', 'Chart.js', 'Node.js'] },
+      { id: 3, projectTitle: 'Mobile App Landing Page', clientName: 'StartupX', rating: 4.8, date: 'Sep 2025', budget: 800, duration: '2 weeks', comment: 'Great communication and solid technical skills. Delivered a beautiful, responsive landing page that works perfectly across all devices. Minor revisions needed but overall very satisfied with the final result.', skills: ['HTML', 'CSS', 'JavaScript'] },
+      { id: 4, projectTitle: 'API Integration Service', clientName: 'CloudSync Pro', rating: 4.9, date: 'Aug 2025', budget: 1000, duration: '2 weeks', comment: 'Exceptional problem-solving skills. Alex integrated multiple third-party APIs seamlessly and handled complex authentication flows with ease. Professional, timely, and great to work with!', skills: ['Node.js', 'REST APIs', 'AWS'] },
+      { id: 5, projectTitle: 'Database Migration Project', clientName: 'Enterprise Solutions Ltd', rating: 4.7, date: 'Jul 2025', budget: 900, duration: '3 weeks', comment: 'Solid performance on a challenging migration project. Alex demonstrated strong database knowledge and completed the task efficiently. Good communication throughout the project.', skills: ['MongoDB', 'Node.js', 'Python'] },
+    ]
+  });
+
   const statCards = [
     { icon: Briefcase, label: 'Projects Completed', value: applicant.completedProjects, color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
     { icon: Award, label: 'Member Since', value: applicant.memberSince, color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
@@ -92,6 +109,99 @@ const ViewStudentDetails = () => {
     { href: applicant.linkedin, label: 'LinkedIn', icon: ExternalLink },
     { href: applicant.github, label: 'GitHub', icon: ExternalLink },
   ]
+
+
+
+  const fetchStudentProfile = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/recruiter/applicant-details`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ studentId, projectId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Error fetching student profile:', data.message || 'Failed to fetch student profile');
+        return;
+      }
+
+      setApplicant({
+        id: data?.applicantDetails.studentId._id,
+        name: data?.applicantDetails.studentId.name,
+        email: data?.applicantDetails.studentId.email,
+        phone: data?.applicantDetails.studentId.phone || '+1 (555) 123-4567',
+        profilePhoto: data?.applicantDetails.studentId.profilePicture || heroImg2,
+        projectId: data?.applicantDetails.projectId._id,
+        university: data?.applicantDetails.studentId.university,
+        degree: data?.applicantDetails.studentId.major,
+        location: data?.applicantDetails.studentId.location,
+        rating: data?.applicantDetails.studentId.rating,
+        completedProjects: data?.applicantDetails.studentId.completedProjects,
+        totalEarnings: data?.applicantDetails.studentId.totalEarnings,
+        memberSince: data?.applicantDetails.studentId.memberSince,
+        appliedDate: formatDate(data?.applicantDetails.createdAt),
+        skills: data?.applicantDetails.studentId.skills || [],
+        bio: data?.applicantDetails.studentId.bio || "Passionate full-stack developer with 2+ years of experience building modern web applications. Specialized in React and Node.js ecosystems. I love creating clean, efficient, and scalable solutions. Currently pursuing my Bachelor's in Computer Science at MIT with a focus on software engineering and cloud technologies. Available for freelance projects 20+ hours per week.",
+        projectPlan: data?.applicantDetails.projectPlanUrl || null,
+        cv: data?.applicantDetails.studentId.resume || null,
+        ndaStatus: data?.applicantDetails.ndaId ? data?.applicantDetails.ndaId.ndaStatus : 'applied',
+        ndaAcceptedDate: data?.applicantDetails.ndaId ? data?.applicantDetails.ndaId.createdAt : '1 hour ago',
+        portfolio: data?.applicantDetails.studentId.portfolio || 'https://alexjohnson.dev',
+        linkedin: data?.applicantDetails.studentId.linkedin || 'https://linkedin.com/in/alexjohnson',
+        github: data?.applicantDetails.studentId.github || 'https://github.com/alexjohnson',
+        project: data?.applicantDetails.projectId.title,
+        projectBudget: data?.applicantDetails.projectId.budget,
+        projectDeadline: data?.applicantDetails.projectId.deadline,
+        feedbacks: [
+          { id: 1, projectTitle: 'E-commerce Platform Frontend', clientName: 'TechCorp Inc.', rating: 5, date: 'Nov 2025', budget: 1200, duration: '3 weeks', comment: 'Excellent work! Alex delivered the project ahead of schedule with outstanding quality. Very professional and responsive to feedback. The code was clean, well-documented, and exceeded our expectations. Highly recommended for any React-based projects!', skills: ['React', 'TypeScript', 'Tailwind CSS'] },
+          { id: 2, projectTitle: 'Dashboard Analytics Tool', clientName: 'DataViz Solutions', rating: 5, date: 'Oct 2025', budget: 1500, duration: '4 weeks', comment: 'Amazing developer with great attention to detail. The dashboard exceeded our expectations with beautiful visualizations and smooth performance. Will definitely work with Alex again on future projects.', skills: ['React', 'Chart.js', 'Node.js'] },
+          { id: 3, projectTitle: 'Mobile App Landing Page', clientName: 'StartupX', rating: 4.8, date: 'Sep 2025', budget: 800, duration: '2 weeks', comment: 'Great communication and solid technical skills. Delivered a beautiful, responsive landing page that works perfectly across all devices. Minor revisions needed but overall very satisfied with the final result.', skills: ['HTML', 'CSS', 'JavaScript'] },
+          { id: 4, projectTitle: 'API Integration Service', clientName: 'CloudSync Pro', rating: 4.9, date: 'Aug 2025', budget: 1000, duration: '2 weeks', comment: 'Exceptional problem-solving skills. Alex integrated multiple third-party APIs seamlessly and handled complex authentication flows with ease. Professional, timely, and great to work with!', skills: ['Node.js', 'REST APIs', 'AWS'] },
+          { id: 5, projectTitle: 'Database Migration Project', clientName: 'Enterprise Solutions Ltd', rating: 4.7, date: 'Jul 2025', budget: 900, duration: '3 weeks', comment: 'Solid performance on a challenging migration project. Alex demonstrated strong database knowledge and completed the task efficiently. Good communication throughout the project.', skills: ['MongoDB', 'Node.js', 'Python'] },
+        ]
+      })
+
+    } catch (error) {
+      console.error('Error fetching student profile:', error);
+    }
+  }
+
+  const getAllFeedbacks = async () => {
+    try {
+
+      const response = await fetch(`http://localhost:5000/api/recruiter/applicant-feedbacks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId, projectId })
+      });
+
+      const feedbacks = await response.json();
+
+      if (!response.ok) {
+        console.error('Error fetching feedbacks:', feedbacks.message || 'Failed to fetch feedbacks');
+        return;
+      }
+
+      console.log('Feedbacks:', feedbacks);
+    } catch (error) {
+      console.error('Error fetching feedbacks:', error);
+    }
+  }
+
+  useEffect(() => {
+    if (token && studentId && projectId) {
+      fetchStudentProfile();
+      getAllFeedbacks();
+    }
+  }, [token, studentId, projectId]);
+
 
   return (
     <div className="min-h-screen">
@@ -179,15 +289,15 @@ const ViewStudentDetails = () => {
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-1">Applied for</p>
-              <h2 className="text-lg font-semibold text-white mb-3">React Dashboard Development</h2>
+              <h2 className="text-lg font-semibold text-white mb-3">{applicant.project || 'Project Title'}</h2>
               <div className="flex items-center gap-6">
                 <div>
                   <p className="text-xs text-slate-500">Budget</p>
-                  <p className="text-sm font-bold text-green-400 mt-0.5">$800</p>
+                  <p className="text-sm font-bold text-green-400 mt-0.5">${applicant.projectBudget || '800'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Deadline</p>
-                  <p className="text-sm font-bold text-blue-400 mt-0.5">2 weeks</p>
+                  <p className="text-sm font-bold text-blue-400 mt-0.5">{formatDate(applicant.projectDeadline) || '2 weeks'}</p>
                 </div>
               </div>
             </div>
@@ -323,20 +433,38 @@ const ViewStudentDetails = () => {
               <h2 className="text-base font-semibold text-white">Documents</h2>
             </div>
 
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4 text-red-400" />
+            {applicant.cv && (
+              <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">CV / Resume</p>
+                    <p className="text-xs text-slate-500">{applicant.resumeSize || '245 KB'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-white">CV / Resume</p>
-                  <p className="text-xs text-slate-500">PDF · 245 KB</p>
-                </div>
+                <button className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer">
+                  Download
+                </button>
               </div>
-              <button className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer">
-                Download
-              </button>
-            </div>
+            )}
+            {applicant.projectPlan && (
+              <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 flex items-center justify-between mt-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Project Plan</p>
+                    <p className="text-xs text-slate-500">{applicant.projectPlanSize || '245 KB'}</p>
+                  </div>
+                </div>
+                <button className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer">
+                  Download
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Links */}
