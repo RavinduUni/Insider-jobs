@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Clock, DollarSign, Eye, FileText, X, Calendar, Building2, Tag, CheckCircle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AppContext } from '../../context/AppContext';
 
 // ── StatusBadge (inline dark-theme version) ───────────────────────────────────
 const statusConfig = {
@@ -38,15 +39,6 @@ const catColor = {
   'Video Editing': 'bg-red-500/10 text-red-400',
 };
 
-// ── Data ──────────────────────────────────────────────────────────────────────
-const appliedProjects = [
-  { id: 1, title: 'Mobile App UI Design', company: 'TechStart Inc', budget: 500, status: 'nda-sent', appliedDate: '2024-11-15', deadline: '2024-12-20', category: 'UI/UX Design', description: 'Design a modern mobile app interface for a fitness tracking application.', skills: ['Figma', 'UI/UX', 'Mobile Design'] },
-  { id: 2, title: 'E-commerce Website Development', company: 'ShopEasy LLC', budget: 1200, status: 'in-progress', appliedDate: '2024-11-10', deadline: '2024-12-30', category: 'Web Development', description: 'Build a fully functional e-commerce website with payment integration.', skills: ['React', 'Node.js', 'MongoDB', 'Stripe'] },
-  { id: 3, title: 'Logo Design for Startup', company: 'InnovateCo', budget: 300, status: 'applied', appliedDate: '2024-11-08', deadline: '2024-12-15', category: 'Graphic Design', description: 'Create a modern and memorable logo for a tech startup.', skills: ['Illustrator', 'Photoshop', 'Branding'] },
-  { id: 4, title: 'Content Writing - Tech Blog', company: 'TechInsights', budget: 200, status: 'applied', appliedDate: '2024-11-12', deadline: '2024-12-10', category: 'Content Writing', description: 'Write 5 blog posts about emerging technologies.', skills: ['Writing', 'SEO', 'Research'] },
-  { id: 5, title: 'React Dashboard Development', company: 'DataViz Corp', budget: 800, status: 'nda-accepted', appliedDate: '2024-11-05', deadline: '2024-12-25', category: 'Web Development', description: 'Build an analytics dashboard with data visualization.', skills: ['React', 'TypeScript', 'Recharts', 'Tailwind CSS'] },
-  { id: 6, title: 'Video Editing - Product Demo', company: 'MediaPro', budget: 400, status: 'completed', appliedDate: '2024-10-20', deadline: '2024-11-15', category: 'Video Editing', description: 'Edit a 3-minute product demonstration video.', skills: ['Premiere Pro', 'After Effects'] },
-];
 
 const statusFilters = [
   { value: 'all', label: 'All Applications' },
@@ -59,8 +51,13 @@ const statusFilters = [
 
 // ── Main component ─────────────────────────────────────────────────────────────
 const AppliedProjects = () => {
+
+  const { token, user, role } = useContext(AppContext);
+
   const navigate = useNavigate();
 
+  const [appliedProjects, setAppliedProjects] = useState([]); 
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
   const [showModel, setShowModel] = useState(false);
@@ -82,6 +79,38 @@ const AppliedProjects = () => {
   };
 
   const fmt = (d) => new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const fetchAppliedProjects = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/student/applied-projects', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        console.error('Error fetching applications:', data.message || 'Unknown error');
+        return;
+      }
+
+      setAppliedProjects(data.applications);
+      
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (token && user && role === 'student') {
+      fetchAppliedProjects();
+    }
+  }, [token, user, role]);
 
   return (
     <div className='min-h-screen'>
@@ -123,24 +152,25 @@ const AppliedProjects = () => {
 
       {/* ── Applications list ── */}
       <div className='flex flex-col gap-4'>
+        
         {filteredProjects.map(project => (
           <div
-            key={project.id}
+            key={project.projectId._id}
             className='bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group'
           >
             {/* Top row */}
             <div className='flex items-start justify-between gap-4 mb-3'>
               <div className='flex items-start gap-3'>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${catColor[project.projectId.category] || 'bg-slate-700 text-slate-400'}`}>
                   <FileText className='w-4 h-4' />
                 </div>
                 <div>
                   <h2 className='text-base font-semibold text-white group-hover:text-blue-400 transition-colors leading-snug'>
-                    {project.title}
+                    {project.projectId.title}
                   </h2>
                   <div className='flex items-center gap-1.5 mt-1'>
                     <Building2 className='w-3 h-3 text-slate-500' />
-                    <span className='text-xs text-slate-500'>{project.company}</span>
+                    <span className='text-xs text-slate-500'>{project.projectId.recruiter.companyName}</span>
                   </div>
                 </div>
               </div>
@@ -149,26 +179,26 @@ const AppliedProjects = () => {
 
             {/* Meta row */}
             <div className='flex flex-wrap items-center gap-4 mb-4 ml-12'>
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
-                {project.category}
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${catColor[project.projectId.category] || 'bg-slate-700 text-slate-400'}`}>
+                {project.projectId.category}
               </span>
               <span className='flex items-center gap-1.5 text-xs text-slate-400'>
                 <DollarSign className='w-3 h-3 text-green-400' />
-                <span className='text-green-400 font-semibold'>${project.budget.toLocaleString()}</span>
+                <span className='text-green-400 font-semibold'>${project.projectId.budget.toLocaleString()}</span>
               </span>
               <span className='flex items-center gap-1.5 text-xs text-slate-500'>
                 <Clock className='w-3 h-3' />
-                Due: {fmt(project.deadline)}
+                Due: {fmt(project.projectId.deadline)}
               </span>
               <span className='flex items-center gap-1.5 text-xs text-slate-500'>
                 <Calendar className='w-3 h-3' />
-                Applied: {fmt(project.appliedDate)}
+                Applied: {fmt(project.createdAt)}
               </span>
             </div>
 
             {/* Skills */}
             <div className='flex flex-wrap gap-1.5 mb-4 ml-12'>
-              {project.skills.map((skill, i) => (
+              {project.projectId.technologies.map((skill, i) => (
                 <span key={i} className='text-xs px-2.5 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700/50'>
                   {skill}
                 </span>
@@ -244,33 +274,33 @@ const AppliedProjects = () => {
             <div className='p-6'>
               {/* Title + status */}
               <div className='flex items-start justify-between gap-3 mb-2'>
-                <h3 className='text-lg font-semibold text-white leading-snug'>{selectedProject.title}</h3>
+                <h3 className='text-lg font-semibold text-white leading-snug'>{selectedProject.projectId.title}</h3>
                 <StatusBadge status={selectedProject.status} />
               </div>
               <div className='flex items-center gap-4 mb-5'>
                 <span className='flex items-center gap-1.5 text-sm text-slate-500'>
-                  <Building2 className='w-3.5 h-3.5' /> {selectedProject.company}
+                  <Building2 className='w-3.5 h-3.5' /> {selectedProject.projectId.recruiter.companyName}
                 </span>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${catColor[selectedProject.category] || 'bg-slate-700 text-slate-400'}`}>
-                  {selectedProject.category}
+                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${catColor[selectedProject.projectId.category] || 'bg-slate-700 text-slate-400'}`}>
+                  {selectedProject.projectId.category}
                 </span>
               </div>
 
               {/* Description */}
               <div className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 mb-5'>
                 <p className='text-xs text-slate-500 uppercase tracking-widest font-semibold mb-2'>Description</p>
-                <p className='text-sm text-slate-300 leading-relaxed'>{selectedProject.description}</p>
+                <p className='text-sm text-slate-300 leading-relaxed'>{selectedProject.projectId.description}</p>
               </div>
 
               {/* Stats grid */}
               <div className='grid grid-cols-2 gap-3 mb-5'>
                 <div className='bg-slate-800/60 border border-green-500/10 rounded-xl p-4'>
                   <p className='text-xs text-slate-500 mb-1.5'>Budget</p>
-                  <p className='text-lg font-bold text-green-400'>${selectedProject.budget.toLocaleString()}</p>
+                  <p className='text-lg font-bold text-green-400'>${selectedProject.projectId.budget.toLocaleString()}</p>
                 </div>
                 <div className='bg-slate-800/60 border border-orange-500/10 rounded-xl p-4'>
                   <p className='text-xs text-slate-500 mb-1.5'>Deadline</p>
-                  <p className='text-sm font-semibold text-white'>{fmt(selectedProject.deadline)}</p>
+                  <p className='text-sm font-semibold text-white'>{fmt(selectedProject.projectId.deadline)}</p>
                 </div>
                 <div className='bg-slate-800/60 border border-blue-500/10 rounded-xl p-4'>
                   <p className='text-xs text-slate-500 mb-1.5'>Applied On</p>
@@ -286,7 +316,7 @@ const AppliedProjects = () => {
               <div className='mb-6'>
                 <p className='text-xs text-slate-500 uppercase tracking-widest font-semibold mb-2.5'>Required Skills</p>
                 <div className='flex flex-wrap gap-2'>
-                  {selectedProject.skills.map((skill, i) => (
+                  {selectedProject.projectId.technologies.map((skill, i) => (
                     <span key={i} className='text-xs px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg border border-slate-700/50 flex items-center gap-1.5'>
                       <CheckCircle className='w-3 h-3 text-blue-400' />
                       {skill}

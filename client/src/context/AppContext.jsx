@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 
 export const AppContext = createContext();
@@ -11,6 +11,10 @@ const AppContextProvider = ({ children }) => {
     const [projects, setProjects] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [allApplicants, setAllApplicants] = useState([]);
+    const [recommendedProjects, setRecommendedProjects] = useState([]);
+    const [fetchingRecommendations, setFetchingRecommendations] = useState(false);
+
+    const recommendationFetchRef = useRef(false);
 
     const fetchUserProfile = async () => {
         if (!token) return;
@@ -44,6 +48,8 @@ const AppContextProvider = ({ children }) => {
                 setToken(null);
                 setRole(null);
                 setUser(null);
+                setRecommendedProjects([]);
+                recommendationFetchRef.current = false;
                 localStorage.removeItem('token');
                 return;
             }
@@ -52,6 +58,8 @@ const AppContextProvider = ({ children }) => {
                 setToken(null);
                 setRole(null);
                 setUser(null);
+                setRecommendedProjects([]);
+                recommendationFetchRef.current = false;
                 localStorage.removeItem('token');
             }, expiryTime);
 
@@ -60,6 +68,8 @@ const AppContextProvider = ({ children }) => {
             setToken(null);
             setRole(null);
             setUser(null);
+            setRecommendedProjects([]);
+            recommendationFetchRef.current = false;
             localStorage.removeItem('token');
         }
     }, [token]);
@@ -129,11 +139,51 @@ const AppContextProvider = ({ children }) => {
         }
     }
 
-     useEffect(() => {
+    useEffect(() => {
         if (token && user && role === 'recruiter') {
-          fetchApplications();
+            fetchApplications();
         }
-      }, [token, user, role]);
+    }, [token, user, role]);
+
+    const fetchRecommendedProjects = async () => {
+        if (!token || !user || role !== 'student') return;
+
+        setFetchingRecommendations(true);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/student/recommendations', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                console.error('Error fetching recommended projects:', data.message || 'Failed to fetch recommendations');
+                return;
+            }
+
+            setRecommendedProjects(data.recommendedProjects || []);
+            recommendationFetchRef.current = true; // Mark that recommendations have been fetched at least once
+
+        } catch (error) {
+            console.error('Error fetching recommended projects:', error);
+        } finally {
+            setFetchingRecommendations(false);
+        }
+    }
+
+    useEffect(() => {
+        if (token && user && role === 'student' && !recommendationFetchRef.current) {
+            // fetchRecommendedProjects();
+        }
+    }, [token, user, role]);
+
+    useEffect(() => {
+        recommendationFetchRef.current = false;
+    }, [token]);
 
     const value = {
         token,
@@ -148,6 +198,8 @@ const AppContextProvider = ({ children }) => {
         allApplicants,
         setAllApplicants,
         fetchApplications,
+        recommendedProjects,
+        fetchingRecommendations,
     };
 
     return (

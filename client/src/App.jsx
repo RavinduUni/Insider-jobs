@@ -31,6 +31,7 @@ import StudentRoutesProtector from './RouteProtector/StudentRoutesProtector'
 import RecruiterRouterProtector from './RouteProtector/RecruiterRouterProtector'
 import Companies from './pages/Companies'
 import AboutPage from './pages/AboutPage'
+import ViewStudentDetails2 from './pages/OwnerDashboard/ViewStudentDetails2'
 
 const App = () => {
 
@@ -82,7 +83,7 @@ const App = () => {
             <Route path="payments" element={<Payments />} />
             <Route path="owner-settings" element={<OwnerSettings />} />
             <Route path="review-submission/:studentId" element={<ReviewSubmission />} />
-            <Route path="view-details/:studentId" element={<ViewStudentDetails />} />
+            <Route path="view-details" element={<ViewStudentDetails />} />
           </Route>
         </Route>
 

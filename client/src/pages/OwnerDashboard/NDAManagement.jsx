@@ -29,6 +29,44 @@ const dotColor = {
   'rejected': 'bg-red-400',
 };
 
+const getNdaUrl = (nda) => nda?.documentUrl || nda?.documentURL || nda?.ndaDocumentUrl || '';
+
+const openNdaInNewTab = (nda) => {
+  const ndaUrl = getNdaUrl(nda);
+  if (!ndaUrl) return;
+  window.open(ndaUrl, '_blank', 'noopener,noreferrer');
+};
+
+const downloadNdaFile = async (nda) => {
+  const ndaUrl = getNdaUrl(nda);
+  if (!ndaUrl) return;
+
+  try {
+    const response = await fetch(ndaUrl);
+    if (!response.ok) {
+      throw new Error('Unable to fetch NDA document');
+    }
+
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+
+    const urlPath = ndaUrl.split('?')[0] || '';
+    const fileExtension = (urlPath.split('.').pop() || 'pdf').toLowerCase();
+
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `${nda?.applicationId?.projectId?.title || nda?.projectTitle || 'nda-document'}.${fileExtension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    // Fallback for sources that block fetch/CORS for blob downloads.
+    openNdaInNewTab(nda);
+  }
+};
+
 
 const statusFilters = [
   { value: 'all', label: 'All NDAs' },
@@ -52,10 +90,7 @@ const NDAModal = ({ nda, onClose }) => {
   const projectTitle = nda?.applicationId?.projectId?.title || 'Untitled Project';
   const acceptedDate = nda?.acceptedDate || nda?.acceptedAt || (nda?.ndaStatus === 'accepted' ? nda?.updatedAt : null);
 
-  const handleDownloadNDA = () => {
-    if (!nda?.documentUrl) return;
-    window.open(nda.documentUrl, '_blank');
-  };
+  const ndaUrl = getNdaUrl(nda);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -146,8 +181,8 @@ const NDAModal = ({ nda, onClose }) => {
             Close
           </button>
           <button
-            onClick={handleDownloadNDA}
-            disabled={!nda?.documentUrl}
+            onClick={() => downloadNdaFile(nda)}
+            disabled={!ndaUrl}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" /> Download Signed NDA
@@ -202,11 +237,6 @@ const NDAManagement = () => {
     } catch (error) {
       console.error('Error fetching NDA data:', error);
     }
-  };
-
-  const handleDownloadNDA = (nda) => {
-    if (!nda?.documentUrl) return;
-    window.open(nda.documentUrl, '_blank');
   };
 
   useEffect(() => {
@@ -321,8 +351,8 @@ const NDAManagement = () => {
                   Accepted: <span className="font-medium ml-0.5">{fmt(nda.acceptedDate)}</span>
                 </span>
               )}
-              {nda.documentUrl && (
-                <span onClick={() => window.open(nda.documentUrl, '_blank')} className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer hover:text-white">
+              {getNdaUrl(nda) && (
+                <span onClick={() => openNdaInNewTab(nda)} className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer hover:text-white">
                   <FileText className="w-3 h-3" />
                   View NDA document
                 </span>
@@ -342,9 +372,9 @@ const NDAManagement = () => {
                 <UserIcon className="w-3.5 h-3.5" /> View Applicant
               </button>
 
-              {nda.documentUrl && (
+              {getNdaUrl(nda) && (
                 <button
-                  onClick={() => handleDownloadNDA(nda)}
+                  onClick={() => downloadNdaFile(nda)}
                   className="flex items-center gap-1.5 text-xs text-green-400 border border-green-500/20 px-3 py-2 rounded-xl hover:bg-green-500/10 transition-all cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" /> Download

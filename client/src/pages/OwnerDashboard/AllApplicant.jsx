@@ -212,7 +212,7 @@ const AllApplicant = () => {
 
                     {/* Status + meta */}
                     <div className="flex items-center justify-between mb-3">
-                      <StatusBadge status={applicant.ndaStatus} />
+                      <StatusBadge status={applicant.studentId.bio} />
                       <span className="text-xs text-slate-600">{timeAgo(applicant.createdAt)}</span>
                     </div>
 
@@ -221,7 +221,7 @@ const AllApplicant = () => {
                     {/* Action buttons */}
                     <div className="flex items-center gap-2 pt-3 border-t border-slate-700/50">
                       <button
-                        onClick={() => navigate(`/owner-dashboard/view-details/${applicant._id}`)}
+                        onClick={() => navigate(`/owner-dashboard/view-details?studentId=${applicant.studentId._id}&projectId=${project._id}`)}
                         className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all cursor-pointer"
                       >
                         <Eye className="w-3 h-3" /> View

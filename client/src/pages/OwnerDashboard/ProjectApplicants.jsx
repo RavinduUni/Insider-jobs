@@ -61,7 +61,7 @@ const ProjectApplicants = () => {
     const [selectedApplicant, setSelectedApplicant] = useState(null)
 
     const project = projects.find(p => p._id === projectId)
-    const projectApplicants = allApplicants.filter(a => a.projectId._id === projectId)
+    const projectApplicants = allApplicants?.filter(a => a.projectId._id === projectId)
 
     const sendNDA = async (applicantId) => {
 
@@ -105,7 +105,7 @@ const ProjectApplicants = () => {
 
             {/* ── Applicant grid ── */}
             <div className="grid grid-cols-2 gap-4">
-                {projectApplicants.map(applicant => (
+                {projectApplicants ? projectApplicants.map(applicant => (
                     <div
                         key={applicant._id}
                         className="bg-slate-900 border border-slate-800 rounded-2xl p-4 hover:border-blue-500/30 transition-all group"
@@ -149,7 +149,7 @@ const ProjectApplicants = () => {
                         {/* Actions */}
                         <div className="flex items-center gap-2 pt-3 border-t border-slate-800">
                             <button
-                                onClick={() => navigate(`/owner-dashboard/view-details/${applicant._id}`)}
+                                onClick={() => navigate(`/owner-dashboard/view-details?studentId=${applicant.studentId._id}&projectId=${project._id}`)}
                                 className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all cursor-pointer"
                             >
                                 <Eye className="w-3 h-3" /> View Details
@@ -170,7 +170,9 @@ const ProjectApplicants = () => {
                             </button>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <p className="text-sm text-slate-500">No applicants found for this project.</p>
+                )}
             </div>
 
             {/* ── NDA Review Modal ── */}

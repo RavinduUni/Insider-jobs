@@ -77,21 +77,41 @@ const CreateProject = () => {
   }
   const removeDeliverable = i => setFormData(p => ({ ...p, deliverables: p.deliverables.filter((_, idx) => idx !== i) }))
 
-  // ── Edit mode loader (unchanged logic) ──
   useEffect(() => {
     if (!isEditMode) return
-    const mockProject = {
-      title: 'React Dashboard Development',
-      description: 'Build a modern admin dashboard using React and Tailwind CSS.',
-      budget: '750', deadline: '2025-10-15',
-      technologies: ['React', 'TypeScript', 'Tailwind CSS'],
-      category: 'Web Development',
-      requirements: ['Strong React fundamentals', 'Experience with REST APIs'],
-      deliverables: ['Fully responsive dashboard', 'Clean, reusable components']
+
+    const fetchProjectDetails = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`http://localhost:5000/api/projects/project/${projectId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const data = await response.json()
+        console.log('Fetched project details:', data)
+        if (!response.ok || !data.success) {
+          toast.error(data.message || 'Failed to load project details.');
+          return;
+        }
+
+        const project = data.project
+        setFormData({
+          title: project.title || '',
+          category: project.category || '',
+          description: project.description || '',
+          budget: project.budget?.toString() || '',
+          deadline: project.deadline || '',
+          technologies: project.technologies || [],
+          requirements: project.requirements || [],
+          deliverables: project.deliverables || []
+        })
+      } catch (error) {
+        toast.error('Failed to load project details.');
+      } finally {
+        setLoading(false)
+      }
     }
-    setFormData(mockProject)
-    setTechInput(mockProject.technologies.join(', '))
-  }, [projectId, isEditMode])
+
+  }, [projectId, isEditMode, token])
 
   // ── Tech chip click (unchanged logic) ──
   const handleTechSuggestion = (tech) => {

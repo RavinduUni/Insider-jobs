@@ -234,7 +234,7 @@ const Projects = () => {
               </span>
               <span className="flex items-center gap-1.5 text-xs text-slate-400">
                 <Users className="w-3 h-3" />
-                {project.applicants} applicants
+                {project.applicationsCount} applicants
               </span>
               <span className="flex items-center gap-1.5 text-xs text-slate-400">
                 <Clock className="w-3 h-3" />
@@ -264,9 +264,9 @@ const Projects = () => {
               {project.status !== 'submitted' ? (
                 <>
                   <button className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
-                    <Users className="w-3.5 h-3.5" /> Applicants ({project.applicants})
+                    <Users className="w-3.5 h-3.5" /> Applicants ({project.applicationsCount})
                   </button>
-                  <button onClick={() => navigate(`/owner-dashboard/create-project/${project.id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+                  <button onClick={() => navigate(`/owner-dashboard/create-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
                     <Edit className="w-3.5 h-3.5" /> Edit
                   </button>
                 </>

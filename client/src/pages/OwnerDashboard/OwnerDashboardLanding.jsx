@@ -177,7 +177,9 @@ const OwnerDashboardLanding = () => {
 
                   {/* Actions */}
                   <div className='flex items-center gap-2 pt-3 border-t border-slate-700/50'>
-                    <button className='flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700 px-3 py-1.5 rounded-lg hover:text-white hover:border-slate-500 transition-all'>
+                    <button className='flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700 px-3 py-1.5 rounded-lg hover:text-white hover:border-slate-500 transition-all'
+                      onClick={() => navigate(`all-applicants/${project._id}`)}
+                    >
                       <Users className='w-3 h-3' /> Applicants
                     </button>
                     <button className='flex items-center gap-1.5 text-xs text-white bg-blue-600/80 hover:bg-blue-600 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-colors'>

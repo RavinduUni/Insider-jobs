@@ -234,7 +234,7 @@ export const getAllApplicationsForProject = async (req, res) => {
         const projectIds = await Project.find({ recruiter: recruiter._id }).select('_id');
 
         const applications = await Application.find({ projectId: { $in: projectIds } })
-            .populate('studentId', 'name email skills university major graduationYear profilePicture')
+            .populate('studentId', 'name bio email skills university major graduationYear profilePicture')
             .populate('projectId', 'title description budget deadline technologies createdAt')
             .populate('ndaId', 'documentUrl status createdAt');
 
@@ -331,5 +331,37 @@ export const getAllNDAs = async (req, res) => {
     } catch (error) {
         console.error('Error fetching NDAs:', error);
         return res.status(500).json({ success: false, message: 'Server error while fetching NDAs' });
+    }
+}
+
+export const getApplicantDetails = async (req, res) => {
+    try {
+        
+        const recruiter = req.user;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const {studentId, projectId} = req.body;
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
+        const application = await Application.findOne({ studentId, projectId })
+        .populate('studentId', 'name bio email skills university major graduationYear profilePicture resume github linkedin portfolio appliedProjects')
+        .populate('projectId', 'title budget deadline createdAt recruiter')
+        .populate('ndaId', 'documentUrl status createdAt');
+
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'No application found for this student and project' });
+        }
+
+        return res.status(200).json({ success: true, application });
+
+    } catch (error) {
+        console.error('Error fetching applicant details:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Server error while fetching applicant details' });
     }
 }

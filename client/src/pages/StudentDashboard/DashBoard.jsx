@@ -1,9 +1,8 @@
 import {
   ArrowRight, Briefcase, CheckCircle, Clock,
-  DollarSign, FileText, Shield, Star,
-  TrendingUp, Upload, Wallet, Zap
+  FileText, Shield, TrendingUp, Upload, Wallet
 } from 'lucide-react'
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
 
@@ -13,25 +12,6 @@ const stats = [
   { icon: Briefcase, label: 'Active Projects', value: '3', sub: '1 due this week', color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
   { icon: Shield, label: 'Pending NDAs', value: '2', sub: 'Action needed', color: 'bg-yellow-500/10 text-yellow-400', border: 'border-yellow-500/20' },
   { icon: Wallet, label: 'Wallet Balance', value: '$1,240', sub: '+$300 this month', color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
-]
-
-const recentApps = [
-  { title: 'Mobile App UI Design', budget: '$500', time: '2 days ago', status: 'NDA Sent', statusColor: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  { title: 'E-commerce Website Development', budget: '$1,200', time: '5 days ago', status: 'In Progress', statusColor: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  { title: 'Logo Design for Startup', budget: '$300', time: '1 week ago', status: 'Applied', statusColor: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  { title: 'ML Price Prediction Model', budget: '$950', time: '2 weeks ago', status: 'Completed', statusColor: 'bg-green-500/10 text-green-400 border-green-500/20' },
-]
-
-const activeProjects = [
-  { title: 'E-commerce Website Development', client: 'TechStartup Inc.', deadline: '5 days left', progress: 65, budget: '$1,200' },
-  { title: 'Dashboard Analytics Tool', client: 'DataViz Solutions', deadline: '12 days left', progress: 30, budget: '$1,500' },
-  { title: 'Mobile App UI Design', client: 'FitLife Apps', deadline: '3 days left', progress: 85, budget: '$600' },
-]
-
-const suggestedProjects = [
-  { tag: 'Web Development', tagColor: 'bg-blue-500/10 text-blue-400', title: 'React Dashboard for SaaS', budget: '$800', skills: ['React', 'Tailwind', 'Node.js'] },
-  { tag: 'UI/UX Design', tagColor: 'bg-purple-500/10 text-purple-400', title: 'Mobile Banking App Design', budget: '$750', skills: ['Figma', 'UX Research'] },
-  { tag: 'Machine Learning', tagColor: 'bg-green-500/10 text-green-400', title: 'NLP Sentiment Analysis', budget: '$1,100', skills: ['Python', 'Transformers'] },
 ]
 
 const quickActions = [
@@ -58,7 +38,58 @@ const SectionHeader = ({ title, action, onAction }) => (
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const { user } = useContext(AppContext);
+  const { user, token, role, recommendedProjects, fetchingRecommendations } = useContext(AppContext);
+
+  const [myApplications, setMyApplications] = useState([]);
+
+
+  const formatDate = (value) => {
+    if (!value) return 'N/A';
+    return new Date(value).toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const activeApplications = myApplications
+    .filter(application => application?.projectId?.status?.toLowerCase() === 'in progress')
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  const recentApplications = myApplications
+    .filter(application => application?.status === 'applied')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const getMyApplications = async () => {
+
+    if (!token) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/student/applied-projects', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMyApplications(data.applications);
+      }
+
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
+  };
+
+ 
+
+  useEffect(() => {
+    if (token && role === 'student') {
+      getMyApplications();
+    }
+  }, [token, role]);
 
   return (
     <div className='space-y-6'>
@@ -73,7 +104,6 @@ const Dashboard = () => {
 
         <div className='relative z-10 flex items-center justify-between'>
           <div>
-            <p className='text-blue-200 text-sm mb-1'>Good morning 👋</p>
             <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, {user?.name || 'Alex'}!</h1>
             <p className='text-blue-200 text-sm'>Here's what's happening with your projects today.</p>
           </div>
@@ -102,21 +132,26 @@ const Dashboard = () => {
         <div className='xl:col-span-2 space-y-6'>
 
           {/* Active Projects */}
-          <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+          <div className='bg-slate-900 border h-[50%] border-slate-800 rounded-2xl p-5 overflow-y-scroll'>
             <SectionHeader title='Active Projects' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-4'>
-              {activeProjects.map(proj => (
-                <div key={proj.title} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer'>
+              {activeApplications.length === 0 && (
+                <div className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4'>
+                  <p className='text-sm text-slate-400'>No active projects in progress.</p>
+                </div>
+              )}
+              {activeApplications.map(application => (
+                <div key={application._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer' onClick={() => navigate(`projects/${application.projectId._id}`)}>
                   <div className='flex items-start justify-between mb-3'>
                     <div>
-                      <p className='text-sm font-medium text-white mb-0.5'>{proj.title}</p>
-                      <p className='text-xs text-slate-500'>{proj.client}</p>
+                      <p className='text-sm font-medium text-white mb-0.5'>{application?.projectId?.title || 'Untitled Project'}</p>
+                      <p className='text-xs text-slate-500'>{application?.projectId?.recruiter?.companyName || 'Unknown company'}</p>
                     </div>
                     <div className='text-right'>
-                      <p className='text-sm font-bold text-blue-400'>{proj.budget}</p>
+                      <p className='text-sm font-bold text-blue-400'>${application?.projectId?.budget || 0}</p>
                       <div className='flex items-center gap-1 justify-end mt-1'>
                         <Clock className='w-3 h-3 text-slate-500' />
-                        <p className='text-xs text-slate-500'>{proj.deadline}</p>
+                        <p className='text-xs text-slate-500'>{formatDate(application?.projectId?.deadline)}</p>
                       </div>
                     </div>
                   </div>
@@ -127,26 +162,31 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Applications */}
-          <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+          <div className='bg-slate-900 border h-[46%] border-slate-800 rounded-2xl p-5 overflow-y-scroll'>
             <SectionHeader title='Recent Applications' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-2'>
-              {recentApps.map(app => (
-                <div key={app.title} className='flex items-center justify-between py-3 border-b border-slate-800 last:border-0'>
+              {recentApplications.length === 0 && (
+                <div className='py-3'>
+                  <p className='text-sm text-slate-400'>No recently applied projects.</p>
+                </div>
+              )}
+              {recentApplications.map(application => (
+                <div key={application._id} className='flex items-center justify-between py-3 border-b border-slate-800 last:border-0 '>
                   <div className='flex items-center gap-3'>
                     <div className='w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center shrink-0'>
                       <Briefcase className='w-3.5 h-3.5 text-slate-400' />
                     </div>
                     <div>
-                      <p className='text-sm font-medium text-white'>{app.title}</p>
+                      <p className='text-sm font-medium text-white'>{application?.projectId?.title || 'Untitled Project'}</p>
                       <div className='flex items-center gap-2 mt-0.5'>
-                        <span className='text-xs text-blue-400 font-medium'>{app.budget}</span>
+                        <span className='text-xs text-blue-400 font-medium'>${application?.projectId?.budget || 0}</span>
                         <span className='text-slate-600'>·</span>
-                        <span className='text-xs text-slate-500'>{app.time}</span>
+                        <span className='text-xs text-slate-500'>{formatDate(application?.createdAt)}</span>
                       </div>
                     </div>
                   </div>
-                  <span className={`text-xs font-medium px-3 py-1 rounded-full border ${app.statusColor}`}>
-                    {app.status}
+                  <span className='text-xs font-medium px-3 py-1 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/20'>
+                    Applied
                   </span>
                 </div>
               ))}
@@ -226,7 +266,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ── Suggested Projects ── */}
+      {/* ── Recommended Projects ── */}
       <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
         <div className='flex items-center justify-between mb-5'>
           <div>
@@ -238,23 +278,31 @@ const Dashboard = () => {
           </button>
         </div>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-          {suggestedProjects.map(proj => (
-            <div key={proj.title} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 hover:bg-slate-800 transition-all cursor-pointer group'>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${proj.tagColor} mb-3 inline-block`}>{proj.tag}</span>
-              <h3 className='text-sm font-medium text-white mb-2 group-hover:text-blue-400 transition-colors leading-snug'>{proj.title}</h3>
-              <div className='flex flex-wrap gap-1.5 mb-3'>
-                {proj.skills.map(s => (
+          {fetchingRecommendations ? (
+            <div className='col-span-3 text-center text-slate-500'>Fetching recommended projects...</div>
+          ) : recommendedProjects.length === 0 ? (
+            <div className='col-span-3 text-center text-slate-500'>No recommendations found. Add your bio and skills to improve suggestions.</div>
+          ) : (
+            recommendedProjects.map(proj => (
+              <div key={proj.project.title} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 hover:bg-slate-800 transition-all cursor-pointer group'>
+                <span className='text-xs font-medium px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 mb-3 inline-block'>
+                  {proj.project.category || 'Recommended'}
+                </span>
+                <h3 className='text-sm font-medium text-white mb-2 group-hover:text-blue-400 transition-colors leading-snug'>{proj.project.title}</h3>
+                <p className='text-xs text-slate-400 mb-3 line-clamp-2'>{proj.project.description}</p>
+                <div className='flex flex-wrap gap-1.5 mb-3'>
+                  {(proj.project.technologies || []).map(s => (
                   <span key={s} className='text-xs px-2 py-0.5 bg-slate-700/60 text-slate-400 rounded-md'>{s}</span>
                 ))}
               </div>
               <div className='flex items-center justify-between pt-3 border-t border-slate-700/50'>
-                <span className='text-sm font-bold text-blue-400'>{proj.budget}</span>
+                <span className='text-sm font-bold text-blue-400'>{proj.project.budget}</span>
                 <button className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'>
                   Apply <ArrowRight className='w-3 h-3' />
                 </button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 
