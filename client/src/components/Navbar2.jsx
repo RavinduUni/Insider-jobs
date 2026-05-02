@@ -24,7 +24,7 @@ const Navbar2 = () => {
                 <NavLink to="/" className="flex items-center gap-2">
                     <img src={assets.logo} alt="" />
                 </NavLink>
-                <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
+                <div className="hidden md:flex items-center gap-8 text-sm text-gray-800">
                     <NavLink to="/projects">Projects</NavLink>
                     <NavLink to="/companies">Companies</NavLink>
                     <NavLink to="/about">About</NavLink>
