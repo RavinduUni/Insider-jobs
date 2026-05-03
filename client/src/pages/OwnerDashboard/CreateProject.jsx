@@ -36,6 +36,8 @@ const SectionCard = ({ icon: Icon, title, children }) => (
   </div>
 )
 
+const fmt = dateStr => new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const CreateProject = () => {
   const { projectId } = useParams()
@@ -77,40 +79,40 @@ const CreateProject = () => {
   }
   const removeDeliverable = i => setFormData(p => ({ ...p, deliverables: p.deliverables.filter((_, idx) => idx !== i) }))
 
+  const fetchProjectDetails = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`http://localhost:5000/api/projects/project/${projectId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+      console.log('Fetched project details:', data)
+      if (!response.ok || !data.success) {
+        toast.error(data.message || 'Failed to load project details.');
+        return;
+      }
+
+      const project = data.project
+      setFormData({
+        title: project.title || '',
+        category: project.category || '',
+        description: project.description || '',
+        budget: project.budget?.toString() || '',
+        deadline: fmt(project.deadline) || '',
+        technologies: project.technologies || [],
+        requirements: project.requirements || [],
+        deliverables: project.deliverables || []
+      })
+    } catch (error) {
+      toast.error('Failed to load project details.');
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!isEditMode) return
-
-    const fetchProjectDetails = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(`http://localhost:5000/api/projects/project/${projectId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const data = await response.json()
-        console.log('Fetched project details:', data)
-        if (!response.ok || !data.success) {
-          toast.error(data.message || 'Failed to load project details.');
-          return;
-        }
-
-        const project = data.project
-        setFormData({
-          title: project.title || '',
-          category: project.category || '',
-          description: project.description || '',
-          budget: project.budget?.toString() || '',
-          deadline: project.deadline || '',
-          technologies: project.technologies || [],
-          requirements: project.requirements || [],
-          deliverables: project.deliverables || []
-        })
-      } catch (error) {
-        toast.error('Failed to load project details.');
-      } finally {
-        setLoading(false)
-      }
-    }
-
+    fetchProjectDetails();
   }, [projectId, isEditMode, token])
 
   // ── Tech chip click (unchanged logic) ──
@@ -437,7 +439,7 @@ const CreateProject = () => {
               { label: 'Title', value: formData.title },
               { label: 'Category', value: formData.category },
               { label: 'Budget', value: formData.budget ? `$${formData.budget}` : '' },
-              { label: 'Deadline', value: formData.deadline },
+              { label: 'Deadline', value: fmt(formData.deadline) },
               { label: 'Technologies', value: formData.technologies.length > 0 ? formData.technologies.join(', ') : '' },
               { label: 'Requirements', value: `${formData.requirements.length} added` },
               { label: 'Deliverables', value: `${formData.deliverables.length} added` },

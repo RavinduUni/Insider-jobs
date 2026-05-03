@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { useContext } from 'react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -197,6 +198,8 @@ const NDAModal = ({ nda, onClose }) => {
 const NDAManagement = () => {
 
   const { token, role } = useContext(AppContext);
+  
+  const navigate = useNavigate();
 
   const [ndaData, setNdaData] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -368,7 +371,7 @@ const NDAManagement = () => {
                 <Eye className="w-3.5 h-3.5" /> View NDA
               </button>
 
-              <button className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+              <button onClick={() => navigate(`/owner-dashboard/view-details?studentId=${nda.applicationId.studentId._id}&projectId=${nda.applicationId.projectId._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
                 <UserIcon className="w-3.5 h-3.5" /> View Applicant
               </button>
 

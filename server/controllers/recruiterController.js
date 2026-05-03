@@ -366,3 +366,59 @@ export const getApplicantDetails = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message || 'Server error while fetching applicant details' });
     }
 }
+
+export const updateProject = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { projectId } = req.params;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        if (!projectId) {
+            return res.status(400).json({ success: false, message: 'Project ID is required' });
+        }
+
+        const project = await Project.findById(projectId);
+
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (String(project.recruiter) !== String(recruiter._id)) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to update this project' });
+        }
+
+        const {
+            title,
+            category,
+            description,
+            budget,
+            deadline,
+            technologies,
+            requirements,
+            deliverables,
+            status
+        } = req.body;
+
+        project.title = title ?? project.title;
+        project.category = category ?? project.category;
+        project.description = description ?? project.description;
+        project.budget = budget ?? project.budget;
+        project.deadline = deadline ?? project.deadline;
+        project.technologies = technologies ? technologies.map(tech => String(tech).trim()).filter(Boolean) : project.technologies;
+        project.requirements = requirements ? requirements.map(req => String(req).trim()).filter(Boolean) : project.requirements;
+        project.deliverables = deliverables ? deliverables.map(del => String(del).trim()).filter(Boolean) : project.deliverables;
+        project.status = status ?? project.status;
+
+        await project.save();
+
+        return res.status(200).json({ success: true, message: 'Project updated successfully', project });
+        
+    } catch (error) {
+        console.error('Error updating project:', error);
+        return res.status(500).json({ success: false, message: 'Server error while updating project' });
+    }
+}
+   

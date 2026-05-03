@@ -205,7 +205,7 @@ const Projects = () => {
         ) : (
           currentProjects.map(project => (
             <div
-              key={project.id}
+              key={project._id}
               className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group"
             >
             {/* Top row */}
@@ -241,7 +241,7 @@ const Projects = () => {
                 Due: {fmt(project.deadline)}
               </span>
               <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                Posted: {fmt(project.createdDate)}
+                Posted: {fmt(project.createdAt)}
               </span>
             </div>
 
@@ -263,7 +263,7 @@ const Projects = () => {
 
               {project.status !== 'submitted' ? (
                 <>
-                  <button className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+                  <button onClick={() => navigate(`/owner-dashboard/all-applicants/${project._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
                     <Users className="w-3.5 h-3.5" /> Applicants ({project.applicationsCount})
                   </button>
                   <button onClick={() => navigate(`/owner-dashboard/create-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
