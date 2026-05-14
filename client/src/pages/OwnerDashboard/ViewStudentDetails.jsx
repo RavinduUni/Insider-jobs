@@ -1,7 +1,8 @@
 import {
   ArrowLeft, Award, Briefcase, Clock, ExternalLink,
   Eye, FileText, GraduationCap, Mail, MapPin,
-  Phone, Star, UserCheck, X, DollarSign
+  Phone, Star, UserCheck, X, DollarSign,
+  Shield, UserIcon, Send, CheckCircle, Download, AlertTriangle
 } from 'lucide-react'
 import React, { useRef } from 'react'
 import heroImg2 from '../../assets/heroImg2.jpg'
@@ -10,13 +11,14 @@ import { AppContext } from '../../context/AppContext'
 import { useContext } from 'react'
 import { useEffect } from 'react'
 import { useState } from 'react'
+import { useCallback } from 'react'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
   'applied': { label: 'Under Review', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  'nda-sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-accepted': { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  'in-progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  'nda_sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  'accepted': { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'in progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   'completed': { label: 'Completed', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
 }
 const StatusBadge = ({ status }) => {
@@ -31,6 +33,187 @@ const formatDate = (dateStr) => {
   return date.toLocaleDateString(undefined, options);
 }
 
+// ── NDA Modal ─────────────────────────────────────────────────────────────────
+const NDAModal = ({ applicant, onClose }) => {
+  const fmt = d => d ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  
+  const downloadNdaFile = async () => {
+    const url = applicant.ndaDocumentUrl;
+    if (!url) return;
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `${applicant.project || 'nda-document'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-900 border border-slate-700/60 rounded-2xl w-full max-w-2xl z-10 flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center">
+              <Shield className="w-4 h-4 text-blue-400" />
+            </div>
+            <h2 className="text-base font-semibold text-white">Non-Disclosure Agreement</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-slate-800 transition-all cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-6 pt-4">
+          <div className="flex items-start justify-between bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
+            <div>
+              <p className="text-xs text-blue-400 font-medium uppercase tracking-widest mb-1">Project</p>
+              <h3 className="text-white font-semibold text-sm mb-2">{applicant.project || 'Untitled Project'}</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center">
+                  <UserIcon className="w-3 h-3 text-slate-400" />
+                </div>
+                <span className="text-slate-300 text-xs">{applicant.name || 'Unknown Student'}</span>
+                <span className="text-slate-600 text-xs">·</span>
+                <span className="text-slate-500 text-xs">{applicant.email || 'No email provided'}</span>
+              </div>
+            </div>
+            <StatusBadge status={applicant.ndaStatus} />
+          </div>
+        </div>
+
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 text-xs text-slate-400 leading-relaxed space-y-4">
+            <h4 className="text-slate-200 text-sm font-semibold">Non-Disclosure Agreement</h4>
+            <p>This Non-Disclosure Agreement ("Agreement") is entered into as of the date of electronic acceptance by and between TechStart Inc. ("Disclosing Party") and {applicant.name || 'the Receiving Party'} ("Receiving Party").</p>
+            {[
+              ['1. Definition of Confidential Information', 'For purposes of this Agreement, "Confidential Information" shall include all information or material that has or could have commercial value or other utility in the business in which Disclosing Party is engaged. This includes, but is not limited to, technical data, trade secrets, know-how, research, product plans, products, services, customers, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, hardware configuration information, marketing, finances, or other business information.'],
+              ['2. Obligations of Receiving Party', 'Receiving Party agrees to hold and maintain the Confidential Information in strictest confidence for the sole and exclusive benefit of the Disclosing Party. Receiving Party shall carefully restrict access to Confidential Information to employees, contractors, and third parties as is reasonably required and shall require those persons to sign nondisclosure restrictions at least as protective as those in this Agreement.'],
+              ['3. Term', 'This Agreement shall remain in effect for a period of 2 years from the date of acceptance, unless otherwise terminated in writing by both parties. The obligations of confidentiality shall survive termination of this Agreement.'],
+              ['4. Return of Materials', 'Upon completion of the project or upon request by Disclosing Party, all documents and materials containing Confidential Information shall be returned to Disclosing Party or destroyed with written certification of destruction.'],
+              ['5. Remedies', 'The parties acknowledge that monetary damages may not be a sufficient remedy for unauthorized disclosure of Confidential Information and that Disclosing Party shall be entitled, without waiving any other rights or remedies, to such injunctive or equitable relief as may be deemed proper by a court of competent jurisdiction.'],
+            ].map(([title, body]) => (
+              <div key={title}>
+                <p className="text-slate-300 font-medium mb-1">{title}</p>
+                <p>{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-6">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <Send className="w-3 h-3" /> Applied date
+              </div>
+              <p className="text-slate-200 text-xs font-medium">{applicant.appliedDate || '—'}</p>
+            </div>
+            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                <CheckCircle className="w-3 h-3" /> Accepted date
+              </div>
+              <p className={`text-xs font-medium ${applicant.ndaAcceptedDate ? 'text-green-400' : 'text-slate-600'}`}>
+                {fmt(applicant.ndaAcceptedDate)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-5 flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+            Close
+          </button>
+          <button onClick={downloadNdaFile} disabled={!applicant.ndaDocumentUrl} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer">
+            <Download className="w-3.5 h-3.5" /> Download Signed NDA
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Assign Project Modal ──
+const AssignProjectModal = ({ applicant, onClose, onAssign, assigning }) => {
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 z-10">
+        <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-1">Action</p>
+            <h2 className="text-xl font-bold text-white">Assign Project</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 mb-4">
+          <p className="text-xs text-slate-500 mb-2">Assigning to</p>
+          <div className="flex items-center gap-3">
+            {applicant.profilePhoto ? (
+              <img src={applicant.profilePhoto} alt={applicant.name} className="w-10 h-10 rounded-xl object-cover border border-slate-700" />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                {applicant.name?.slice(0, 2).toUpperCase() || 'NA'}
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-white">{applicant.name}</p>
+              <p className="text-xs text-slate-500">{applicant.university}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 bg-green-500/5 border border-green-500/20 rounded-xl px-4 py-3 mb-4">
+          <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-white">NDA Accepted</p>
+            <p className="text-xs text-slate-500">The student has reviewed and accepted the NDA agreement.</p>
+          </div>
+        </div>
+
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 mb-4">
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-3">Project Details</p>
+          <p className="text-sm font-medium text-white mb-1">{applicant.project}</p>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-xs text-green-400 font-medium flex items-center gap-1"><DollarSign className="w-3 h-3" />${applicant.projectBudget}</span>
+            <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" />{applicant.projectDeadline ? formatDate(applicant.projectDeadline) : '—'}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 bg-yellow-500/5 border border-yellow-500/20 rounded-xl px-4 py-3 mb-5">
+          <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-400 leading-relaxed">Once assigned, the student will be notified and can start working. Other applicants will be automatically rejected.</p>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} disabled={assigning} className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm transition-all cursor-pointer">
+            Cancel
+          </button>
+          <button onClick={onAssign} disabled={assigning} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors cursor-pointer ${assigning ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <UserCheck className="w-4 h-4" /> {assigning ? 'Assigning...' : 'Confirm Assignment'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 const ViewStudentDetails = () => {
 
@@ -40,6 +223,39 @@ const ViewStudentDetails = () => {
   const projectId = searchParams.get('projectId');
 
   const navigate = useNavigate()
+
+  // ── Modals & Actions ────────────────────────────────────────────────────────
+  const [showNDAModal, setShowNDAModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+
+  const handleAssignProject = async () => {
+    setAssigning(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/recruiter/assign-project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId, projectId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Failed to assign project:', data.message);
+        return;
+      }
+      
+      setShowAssignModal(false);
+      fetchStudentProfile(); // Refresh profile after assigning
+    } catch (error) {
+      console.error('Error assigning project:', error);
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   // ── Drag scroll refs (unchanged logic) ──
   const feedbackRef = useRef(null)
@@ -63,46 +279,16 @@ const ViewStudentDetails = () => {
   }
 
   // ── Applicant data ────────────────────────────────────────────────────────────
-  const [applicant, setApplicant] = useState({
-    id: 1,
-    name: 'Alex Johnson',
-    email: 'alex.johnson@mit.edu',
-    phone: '+1 (555) 123-4567',
-    profilePhoto: heroImg2,
-    projectId: 1,
-    university: 'MIT',
-    degree: 'Computer Science, Senior',
-    location: 'Cambridge, MA',
-    rating: 4.9,
-    completedProjects: 12,
-    totalEarnings: 12500,
-    memberSince: 'Jan 2024',
-    appliedDate: '2 hours ago',
-    responseRate: '98%',
-    skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Python', 'AWS', 'MongoDB', 'REST APIs'],
-    bio: "Passionate full-stack developer with 2+ years of experience building modern web applications. Specialized in React and Node.js ecosystems. I love creating clean, efficient, and scalable solutions. Currently pursuing my Bachelor's in Computer Science at MIT with a focus on software engineering and cloud technologies. Available for freelance projects 20+ hours per week.",
-    projectPlan: 'Available',
-    cv: 'Available',
-    ndaStatus: 'nda-accepted',
-    ndaAcceptedDate: '1 hour ago',
-    portfolio: 'https://alexjohnson.dev',
-    linkedin: 'https://linkedin.com/in/alexjohnson',
-    github: 'https://github.com/alexjohnson',
-    feedbacks: [
-      { id: 1, projectTitle: 'E-commerce Platform Frontend', clientName: 'TechCorp Inc.', rating: 5, date: 'Nov 2025', budget: 1200, duration: '3 weeks', comment: 'Excellent work! Alex delivered the project ahead of schedule with outstanding quality. Very professional and responsive to feedback. The code was clean, well-documented, and exceeded our expectations. Highly recommended for any React-based projects!', skills: ['React', 'TypeScript', 'Tailwind CSS'] },
-      { id: 2, projectTitle: 'Dashboard Analytics Tool', clientName: 'DataViz Solutions', rating: 5, date: 'Oct 2025', budget: 1500, duration: '4 weeks', comment: 'Amazing developer with great attention to detail. The dashboard exceeded our expectations with beautiful visualizations and smooth performance. Will definitely work with Alex again on future projects.', skills: ['React', 'Chart.js', 'Node.js'] },
-      { id: 3, projectTitle: 'Mobile App Landing Page', clientName: 'StartupX', rating: 4.8, date: 'Sep 2025', budget: 800, duration: '2 weeks', comment: 'Great communication and solid technical skills. Delivered a beautiful, responsive landing page that works perfectly across all devices. Minor revisions needed but overall very satisfied with the final result.', skills: ['HTML', 'CSS', 'JavaScript'] },
-      { id: 4, projectTitle: 'API Integration Service', clientName: 'CloudSync Pro', rating: 4.9, date: 'Aug 2025', budget: 1000, duration: '2 weeks', comment: 'Exceptional problem-solving skills. Alex integrated multiple third-party APIs seamlessly and handled complex authentication flows with ease. Professional, timely, and great to work with!', skills: ['Node.js', 'REST APIs', 'AWS'] },
-      { id: 5, projectTitle: 'Database Migration Project', clientName: 'Enterprise Solutions Ltd', rating: 4.7, date: 'Jul 2025', budget: 900, duration: '3 weeks', comment: 'Solid performance on a challenging migration project. Alex demonstrated strong database knowledge and completed the task efficiently. Good communication throughout the project.', skills: ['MongoDB', 'Node.js', 'Python'] },
-    ]
-  });
+  const [applicant, setApplicant] = useState({});
 
   const statCards = [
-    { icon: Briefcase, label: 'Projects Completed', value: applicant.completedProjects, color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
-    { icon: Award, label: 'Member Since', value: applicant.memberSince, color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
-    { icon: Clock, label: 'Applied', value: applicant.appliedDate, color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
-    { icon: Star, label: 'Rating', value: applicant.rating, color: 'bg-yellow-500/10 text-yellow-400', border: 'border-yellow-500/20' },
+    { icon: Briefcase, label: 'Projects Completed', value: applicant.completedProjects || 0, color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
+    { icon: Award, label: 'Member Since', value: applicant.memberSince || 'N/A', color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
+    { icon: Clock, label: 'Applied', value: applicant.appliedDate || 'N/A', color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
   ]
+  if (applicant.rating) {
+    statCards.push({ icon: Star, label: 'Rating', value: applicant.rating, color: 'bg-yellow-500/10 text-yellow-400', border: 'border-yellow-500/20' });
+  }
 
   const linkItems = [
     { href: applicant.portfolio, label: 'Portfolio', icon: Briefcase },
@@ -112,7 +298,7 @@ const ViewStudentDetails = () => {
 
 
 
-  const fetchStudentProfile = async () => {
+  const fetchStudentProfile = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/recruiter/applicant-details`, {
         method: 'POST',
@@ -134,8 +320,8 @@ const ViewStudentDetails = () => {
         id: data?.applicantDetails.studentId._id,
         name: data?.applicantDetails.studentId.name,
         email: data?.applicantDetails.studentId.email,
-        phone: data?.applicantDetails.studentId.phone || '+1 (555) 123-4567',
-        profilePhoto: data?.applicantDetails.studentId.profilePicture || heroImg2,
+        phone: data?.applicantDetails.studentId.phone,
+        profilePhoto: data?.applicantDetails.studentId.profilePicture,
         projectId: data?.applicantDetails.projectId._id,
         university: data?.applicantDetails.studentId.university,
         degree: data?.applicantDetails.studentId.major,
@@ -143,35 +329,30 @@ const ViewStudentDetails = () => {
         rating: data?.applicantDetails.studentId.rating,
         completedProjects: data?.applicantDetails.studentId.completedProjects,
         totalEarnings: data?.applicantDetails.studentId.totalEarnings,
-        memberSince: data?.applicantDetails.studentId.memberSince,
-        appliedDate: formatDate(data?.applicantDetails.createdAt),
+        responseRate: data?.applicantDetails.studentId.responseRate,
+        memberSince: data?.applicantDetails.studentId.createdAt ? formatDate(data?.applicantDetails.studentId.createdAt) : '',
+        appliedDate: data?.applicantDetails.createdAt ? formatDate(data?.applicantDetails.createdAt) : '',
         skills: data?.applicantDetails.studentId.skills || [],
-        bio: data?.applicantDetails.studentId.bio || "Passionate full-stack developer with 2+ years of experience building modern web applications. Specialized in React and Node.js ecosystems. I love creating clean, efficient, and scalable solutions. Currently pursuing my Bachelor's in Computer Science at MIT with a focus on software engineering and cloud technologies. Available for freelance projects 20+ hours per week.",
-        projectPlan: data?.applicantDetails.projectPlanUrl || null,
-        cv: data?.applicantDetails.studentId.resume || null,
-        ndaStatus: data?.applicantDetails.ndaId ? data?.applicantDetails.ndaId.ndaStatus : 'applied',
-        ndaAcceptedDate: data?.applicantDetails.ndaId ? data?.applicantDetails.ndaId.createdAt : '1 hour ago',
-        portfolio: data?.applicantDetails.studentId.portfolio || 'https://alexjohnson.dev',
-        linkedin: data?.applicantDetails.studentId.linkedin || 'https://linkedin.com/in/alexjohnson',
-        github: data?.applicantDetails.studentId.github || 'https://github.com/alexjohnson',
+        bio: data?.applicantDetails.studentId.bio || data?.applicantDetails.notes || 'No bio provided.',
+        projectPlan: data?.applicantDetails.projectPlanUrl,
+        cv: data?.applicantDetails.cvUrl || data?.applicantDetails.studentId.resume,
+        ndaStatus: data?.applicantDetails.status,
+        ndaDocumentUrl: data?.applicantDetails.ndaId?.documentUrl,
+        portfolio: data?.applicantDetails.studentId.portfolio,
+        linkedin: data?.applicantDetails.studentId.linkedin,
+        github: data?.applicantDetails.studentId.github,
         project: data?.applicantDetails.projectId.title,
         projectBudget: data?.applicantDetails.projectId.budget,
         projectDeadline: data?.applicantDetails.projectId.deadline,
-        feedbacks: [
-          { id: 1, projectTitle: 'E-commerce Platform Frontend', clientName: 'TechCorp Inc.', rating: 5, date: 'Nov 2025', budget: 1200, duration: '3 weeks', comment: 'Excellent work! Alex delivered the project ahead of schedule with outstanding quality. Very professional and responsive to feedback. The code was clean, well-documented, and exceeded our expectations. Highly recommended for any React-based projects!', skills: ['React', 'TypeScript', 'Tailwind CSS'] },
-          { id: 2, projectTitle: 'Dashboard Analytics Tool', clientName: 'DataViz Solutions', rating: 5, date: 'Oct 2025', budget: 1500, duration: '4 weeks', comment: 'Amazing developer with great attention to detail. The dashboard exceeded our expectations with beautiful visualizations and smooth performance. Will definitely work with Alex again on future projects.', skills: ['React', 'Chart.js', 'Node.js'] },
-          { id: 3, projectTitle: 'Mobile App Landing Page', clientName: 'StartupX', rating: 4.8, date: 'Sep 2025', budget: 800, duration: '2 weeks', comment: 'Great communication and solid technical skills. Delivered a beautiful, responsive landing page that works perfectly across all devices. Minor revisions needed but overall very satisfied with the final result.', skills: ['HTML', 'CSS', 'JavaScript'] },
-          { id: 4, projectTitle: 'API Integration Service', clientName: 'CloudSync Pro', rating: 4.9, date: 'Aug 2025', budget: 1000, duration: '2 weeks', comment: 'Exceptional problem-solving skills. Alex integrated multiple third-party APIs seamlessly and handled complex authentication flows with ease. Professional, timely, and great to work with!', skills: ['Node.js', 'REST APIs', 'AWS'] },
-          { id: 5, projectTitle: 'Database Migration Project', clientName: 'Enterprise Solutions Ltd', rating: 4.7, date: 'Jul 2025', budget: 900, duration: '3 weeks', comment: 'Solid performance on a challenging migration project. Alex demonstrated strong database knowledge and completed the task efficiently. Good communication throughout the project.', skills: ['MongoDB', 'Node.js', 'Python'] },
-        ]
+        feedbacks: []
       })
 
     } catch (error) {
       console.error('Error fetching student profile:', error);
     }
-  }
+  }, [token, studentId, projectId])
 
-  const getAllFeedbacks = async () => {
+  const getAllFeedbacks = useCallback(async () => {
     try {
 
       const response = await fetch(`http://localhost:5000/api/recruiter/applicant-feedbacks`, {
@@ -193,14 +374,14 @@ const ViewStudentDetails = () => {
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
     }
-  }
+  }, [token, studentId, projectId])
 
   useEffect(() => {
     if (token && studentId && projectId) {
       fetchStudentProfile();
       getAllFeedbacks();
     }
-  }, [token, studentId, projectId]);
+  }, [fetchStudentProfile, getAllFeedbacks]);
 
 
   return (
@@ -224,7 +405,7 @@ const ViewStudentDetails = () => {
               <img src={applicant.profilePhoto} alt="profile" className="w-full h-full object-cover object-center" />
             </div>
             : <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-              {applicant.name.slice(0, 2)}
+              {applicant.name?.slice(0, 2).toUpperCase() || 'NA'}
             </div>
           }
           <div className="flex-1 min-w-0">
@@ -233,13 +414,13 @@ const ViewStudentDetails = () => {
               <StatusBadge status={applicant.ndaStatus} />
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mb-1.5">
-              <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 text-blue-400" />{applicant.university}</span>
-              <span className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-blue-400" />{applicant.degree}</span>
-              <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" />{applicant.location}</span>
+              {applicant.university && <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 text-blue-400" />{applicant.university}</span>}
+              {applicant.degree && <span className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-blue-400" />{applicant.degree}</span>}
+              {applicant.location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" />{applicant.location}</span>}
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />{applicant.email}</span>
-              <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{applicant.phone}</span>
+              {applicant.email && <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />{applicant.email}</span>}
+              {applicant.phone && <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{applicant.phone}</span>}
             </div>
           </div>
         </div>
@@ -263,10 +444,16 @@ const ViewStudentDetails = () => {
         <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3">
           <StatusBadge status={applicant.ndaStatus} />
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+            <button 
+              onClick={() => setShowNDAModal(true)}
+              className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
+            >
               <Eye className="w-3.5 h-3.5" /> View NDA
             </button>
-            <button className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer">
+            <button 
+              onClick={() => setShowAssignModal(true)}
+              className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
+            >
               <UserCheck className="w-3.5 h-3.5" /> Assign Project
             </button>
             <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer">
@@ -275,6 +462,9 @@ const ViewStudentDetails = () => {
           </div>
         </div>
       </div>
+
+      {showNDAModal && <NDAModal applicant={applicant} onClose={() => setShowNDAModal(false)} />}
+      {showAssignModal && <AssignProjectModal applicant={applicant} onClose={() => setShowAssignModal(false)} onAssign={handleAssignProject} assigning={assigning} />}
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-3 gap-5 items-start">
@@ -328,96 +518,102 @@ const ViewStudentDetails = () => {
                 <h3 className="text-base font-semibold text-white">Skills & Expertise</h3>
               </div>
               <div className="flex flex-wrap gap-2">
-                {applicant.skills.map((skill, i) => (
-                  <span key={i} className="text-xs px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl font-medium">
-                    {skill}
-                  </span>
-                ))}
+                {applicant.skills && applicant.skills.length > 0 ? (
+                  applicant.skills.map((skill, i) => (
+                    <span key={i} className="text-xs px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl font-medium">
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-500 italic">No skills listed</span>
+                )}
               </div>
             </div>
 
             <div className="border-t border-slate-800" />
 
             {/* Client Feedbacks */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center rounded-xl">
-                  <Star className="w-4 h-4 text-yellow-400" />
+            {applicant.feedbacks && applicant.feedbacks.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center rounded-xl">
+                    <Star className="w-4 h-4 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white">Client Feedbacks</h3>
+                    <p className="text-xs text-slate-500">4.9 average rating</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-semibold text-white">Client Feedbacks</h3>
-                  <p className="text-xs text-slate-500">4.9 average rating</p>
-                </div>
-              </div>
 
-              {/* Drag scroll carousel */}
-              <ul
-                ref={feedbackRef}
-                className="flex gap-4 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none scrollbar-none"
-                style={{ scrollbarWidth: 'none' }}
-                onMouseDown={onMouseDown}
-                onMouseLeave={onMouseLeave}
-                onMouseUp={onMouseUp}
-                onMouseMove={onMouseMove}
-              >
-                {applicant.feedbacks.map((fb) => (
-                  <li key={fb.id} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl max-w-[400px] shrink-0">
-                    {/* Card header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-xl text-xs font-bold shrink-0">
-                          {fb.clientName.slice(0, 2).toUpperCase()}
+                {/* Drag scroll carousel */}
+                <ul
+                  ref={feedbackRef}
+                  className="flex gap-4 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none scrollbar-none"
+                  style={{ scrollbarWidth: 'none' }}
+                  onMouseDown={onMouseDown}
+                  onMouseLeave={onMouseLeave}
+                  onMouseUp={onMouseUp}
+                  onMouseMove={onMouseMove}
+                >
+                  {applicant.feedbacks.map((fb) => (
+                    <li key={fb.id} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl max-w-[400px] shrink-0">
+                      {/* Card header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-xl text-xs font-bold shrink-0">
+                            {fb.clientName?.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white leading-snug">{fb.projectTitle}</p>
+                            <p className="text-xs text-slate-500">{fb.clientName}</p>
+                          </div>
                         </div>
+                        <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full shrink-0">
+                          <Star className="w-3 h-3 fill-current" />{fb.rating}
+                        </span>
+                      </div>
+
+                      {/* Comment */}
+                      <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-3">{fb.comment}</p>
+
+                      {/* Footer */}
+                      <div className="flex items-center gap-5 pt-3 border-t border-slate-700/50">
                         <div>
-                          <p className="text-sm font-semibold text-white leading-snug">{fb.projectTitle}</p>
-                          <p className="text-xs text-slate-500">{fb.clientName}</p>
+                          <p className="text-xs font-semibold text-white">{fb.date}</p>
+                          <p className="text-xs text-slate-600">Date</p>
+                        </div>
+                        <div className="w-px h-6 bg-slate-700" />
+                        <div>
+                          <p className="text-xs font-semibold text-green-400">${fb.budget}</p>
+                          <p className="text-xs text-slate-600">Budget</p>
+                        </div>
+                        <div className="w-px h-6 bg-slate-700" />
+                        <div>
+                          <p className="text-xs font-semibold text-white">{fb.duration}</p>
+                          <p className="text-xs text-slate-600">Duration</p>
                         </div>
                       </div>
-                      <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full shrink-0">
-                        <Star className="w-3 h-3 fill-current" />{fb.rating}
-                      </span>
-                    </div>
+                    </li>
+                  ))}
+                </ul>
 
-                    {/* Comment */}
-                    <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-3">{fb.comment}</p>
-
-                    {/* Footer */}
-                    <div className="flex items-center gap-5 pt-3 border-t border-slate-700/50">
-                      <div>
-                        <p className="text-xs font-semibold text-white">{fb.date}</p>
-                        <p className="text-xs text-slate-600">Date</p>
-                      </div>
-                      <div className="w-px h-6 bg-slate-700" />
-                      <div>
-                        <p className="text-xs font-semibold text-green-400">${fb.budget}</p>
-                        <p className="text-xs text-slate-600">Budget</p>
-                      </div>
-                      <div className="w-px h-6 bg-slate-700" />
-                      <div>
-                        <p className="text-xs font-semibold text-white">{fb.duration}</p>
-                        <p className="text-xs text-slate-600">Duration</p>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Scroll nav */}
-              <div className="flex justify-center gap-4 mt-4">
-                <button
-                  onClick={() => feedbackRef.current.scrollBy({ left: -400, behavior: 'smooth' })}
-                  className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={() => feedbackRef.current.scrollBy({ left: 400, behavior: 'smooth' })}
-                  className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
-                >
-                  Next →
-                </button>
+                {/* Scroll nav */}
+                <div className="flex justify-center gap-4 mt-4">
+                  <button
+                    onClick={() => feedbackRef.current.scrollBy({ left: -400, behavior: 'smooth' })}
+                    className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    onClick={() => feedbackRef.current.scrollBy({ left: 400, behavior: 'smooth' })}
+                    className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
+                  >
+                    Next →
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -441,12 +637,17 @@ const ViewStudentDetails = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-white">CV / Resume</p>
-                    <p className="text-xs text-slate-500">{applicant.resumeSize || '245 KB'}</p>
+                    <p className="text-xs text-slate-500">Document</p>
                   </div>
                 </div>
-                <button className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer">
-                  Download
-                </button>
+                <a 
+                  href={applicant.cv} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer"
+                >
+                  View / Download
+                </a>
               </div>
             )}
             {applicant.projectPlan && (
@@ -457,12 +658,17 @@ const ViewStudentDetails = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-white">Project Plan</p>
-                    <p className="text-xs text-slate-500">{applicant.projectPlanSize || '245 KB'}</p>
+                    <p className="text-xs text-slate-500">Document</p>
                   </div>
                 </div>
-                <button className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer">
-                  Download
-                </button>
+                <a 
+                  href={applicant.projectPlan} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer"
+                >
+                  View / Download
+                </a>
               </div>
             )}
           </div>
@@ -492,24 +698,28 @@ const ViewStudentDetails = () => {
           </div>
 
           {/* Earnings info */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 bg-green-500/10 border border-green-500/20 flex items-center justify-center rounded-xl">
-                <DollarSign className="w-4 h-4 text-green-400" />
+          {applicant.totalEarnings !== undefined && applicant.totalEarnings !== null && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-green-500/10 border border-green-500/20 flex items-center justify-center rounded-xl">
+                  <DollarSign className="w-4 h-4 text-green-400" />
+                </div>
+                <h2 className="text-base font-semibold text-white">Earnings</h2>
               </div>
-              <h2 className="text-base font-semibold text-white">Earnings</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-white">${(applicant.totalEarnings / 1000).toFixed(1)}k</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Total Earned</p>
+                </div>
+                {applicant.responseRate && (
+                  <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-white">{applicant.responseRate}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Response Rate</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-white">${(applicant.totalEarnings / 1000).toFixed(1)}k</p>
-                <p className="text-xs text-slate-500 mt-0.5">Total Earned</p>
-              </div>
-              <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-white">{applicant.responseRate}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Response Rate</p>
-              </div>
-            </div>
-          </div>
+          )}
 
         </div>
       </div>

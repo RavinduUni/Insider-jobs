@@ -10,10 +10,10 @@ import { AppContext } from '../../context/AppContext'
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
   'open': { label: 'Open', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  'applied': { label: 'Has Applicants', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  'nda-sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-accepted': { label: 'NDA Accepted', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
-  'in-progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  'has applicants': { label: 'Has Applicants', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'nda_sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  'accepted': { label: 'NDA Accepted', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+  'in progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   'submitted': { label: 'Submitted', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   'completed': { label: 'Completed', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
 }
@@ -25,10 +25,10 @@ const StatusBadge = ({ status }) => {
 // ── Dot colour per status ─────────────────────────────────────────────────────
 const dotColor = {
   'open': 'bg-slate-400',
-  'applied': 'bg-blue-400',
-  'nda-sent': 'bg-yellow-400',
-  'nda-accepted': 'bg-indigo-400',
-  'in-progress': 'bg-cyan-400',
+  'has applicants': 'bg-blue-400',
+  'nda_sent': 'bg-yellow-400',
+  'accepted': 'bg-indigo-400',
+  'in progress': 'bg-cyan-400',
   'submitted': 'bg-purple-400',
   'completed': 'bg-green-400',
 }
@@ -46,8 +46,8 @@ const catColor = {
 const statusFilters = [
   { value: 'all', label: 'All Projects' },
   { value: 'open', label: 'Open' },
-  { value: 'applied', label: 'Has Applicants' },
-  { value: 'in-progress', label: 'In Progress' },
+  { value: 'has applicants', label: 'Has Applicants' },
+  { value: 'in progress', label: 'In Progress' },
   { value: 'submitted', label: 'Submitted' },
   { value: 'completed', label: 'Completed' },
 ]
@@ -257,7 +257,7 @@ const Projects = () => {
 
             {/* Divider + actions */}
             <div className="border-t border-slate-800 pt-4 flex items-center gap-2 ml-12">
-              <button className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+              <button onClick={() => navigate(`/apply-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
                 <Eye className="w-3.5 h-3.5" /> View
               </button>
 

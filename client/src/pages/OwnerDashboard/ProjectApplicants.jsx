@@ -9,10 +9,10 @@ import { AppContext } from '../../context/AppContext'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
-    'not-sent': { label: 'NDA Not Sent', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-    'pending': { label: 'NDA Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-    'nda-sent': { label: 'NDA Sent', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-    'nda-accepted': { label: 'NDA Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'nda_sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+    'accepted': { label: 'NDA Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'rejected': { label: 'NDA Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+    'assigned': { label: 'Assigned', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
 }
 const StatusBadge = ({ status }) => {
     const cfg = statusConfig[status] || { label: status, color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' }

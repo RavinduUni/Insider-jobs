@@ -12,10 +12,13 @@ import { toast } from 'react-hot-toast'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
+  'applied': { label: 'Under Review', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
   'not-sent': { label: 'NDA Not Sent', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
   'pending': { label: 'NDA Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-sent': { label: 'NDA Sent', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  'nda-accepted': { label: 'NDA Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  'nda_sent': { label: 'NDA Sent', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'accepted': { label: 'NDA Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  'rejected': { label: 'NDA Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  'assigned': { label: 'Assigned', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
 }
 const StatusBadge = ({ status }) => {
   const cfg = statusConfig[status] || { label: status, color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' }
@@ -177,83 +180,107 @@ const AllApplicant = () => {
 
               {/* Applicant cards grid */}
               <div className="grid grid-cols-2 gap-3">
-                {projectApplicants.slice(0, 4).map(applicant => (
-                  <div key={applicant._id} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group">
+                {projectApplicants.slice(0, 4).map(applicant => {
+                  const student = applicant.studentId || {};
+                  return (
+                    <div key={applicant._id} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all group flex flex-col h-full">
 
-                    {/* Top: avatar + name + rating */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                          {applicant.studentId.name.slice(0, 2).toUpperCase()}
+                      {/* Top: avatar + name */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {student.profilePicture ? (
+                            <img src={student.profilePicture} alt={student.name} className="w-10 h-10 rounded-xl object-cover border border-slate-700" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                              {student.name?.slice(0, 2).toUpperCase() || 'NA'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-1">{student.name || 'Unknown Student'}</p>
+                            <p className="text-xs text-slate-500 line-clamp-1">{student.university || 'University not provided'}</p>
+                            <p className="text-xs text-slate-600 line-clamp-1">{student.major || 'Major not provided'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{applicant.studentId.name}</p>
-                          <p className="text-xs text-slate-500">{applicant.studentId.university}</p>
-                          <p className="text-xs text-slate-600">{applicant.studentId.major}</p>
+                        {/* Status Badge */}
+                        <div className="shrink-0">
+                          <StatusBadge status={applicant.status} />
                         </div>
                       </div>
-                      {applicant.rating && (
-                        <div className="flex items-center gap-1 text-yellow-400 shrink-0">
-                          <Star className="w-3 h-3 fill-current" />
-                          <span className="text-xs font-medium">{applicant.rating}</span>
+
+                      {/* Skills */}
+                      <div className="flex flex-wrap gap-1.5 mb-3 min-h-[24px]">
+                        {student.skills && student.skills.length > 0 ? (
+                          <>
+                            {student.skills.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-300 border border-slate-600/50 rounded-md">
+                                {skill}
+                              </span>
+                            ))}
+                            {student.skills.length > 3 && (
+                              <span className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-500 rounded-md">
+                                +{student.skills.length - 3}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-slate-500 italic">No skills listed</span>
+                        )}
+                      </div>
+
+                      {/* Bio / Notes preview & Time */}
+                      <div className="flex items-end justify-between mb-4 flex-1">
+                        <div className="pr-4">
+                          <p className="text-xs text-slate-400 line-clamp-2">
+                            {applicant.notes || student.bio || 'No additional information provided.'}
+                          </p>
                         </div>
-                      )}
-                    </div>
+                        <span className="text-xs text-slate-500 whitespace-nowrap flex items-center gap-1 shrink-0">
+                          <Clock className="w-3 h-3" />
+                          {timeAgo(applicant.createdAt)}
+                        </span>
+                      </div>
 
-                    {/* Skills */}
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {applicant.studentId.skills.slice(0, 3).map(skill => (
-                        <span key={skill} className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-400 rounded-md">{skill}</span>
-                      ))}
-                      {applicant.studentId.skills.length > 3 && (
-                        <span className="text-xs px-2 py-0.5 bg-slate-700/60 text-slate-500 rounded-md">+{applicant.studentId.skills.length - 3}</span>
-                      )}
-                    </div>
-
-                    {/* Status + meta */}
-                    <div className="flex items-center justify-between mb-3">
-                      <StatusBadge status={applicant.studentId.bio} />
-                      <span className="text-xs text-slate-600">{timeAgo(applicant.createdAt)}</span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 mb-3">{applicant.studentId.completedProjects} projects completed</p>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-slate-700/50">
-                      <button
-                        onClick={() => navigate(`/owner-dashboard/view-details?studentId=${applicant.studentId._id}&projectId=${project._id}`)}
-                        className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all cursor-pointer"
-                      >
-                        <Eye className="w-3 h-3" /> View
-                      </button>
-
-                      {applicant.ndaStatus === 'nda_sent' ? (
-                        <button className="flex items-center gap-1.5 text-xs text-yellow-400 border border-yellow-500/20 px-2.5 py-1.5 rounded-lg cursor-not-allowed opacity-60">
-                          <Clock className="w-3 h-3" /> Pending
-                        </button>
-                      ) : (
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 pt-3 border-t border-slate-700/50 mt-auto">
                         <button
-                          onClick={() => { closeAllModals(); setSelectedApplicant(applicant); setShowSendNDAModel(true) }}
-                          className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-600 px-2.5 py-1.5 rounded-lg hover:text-white hover:border-slate-500 transition-all cursor-pointer"
+                          onClick={() => navigate(`/owner-dashboard/view-details?studentId=${student._id}&projectId=${project._id}`)}
+                          className="flex items-center justify-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-2 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all cursor-pointer flex-1"
                         >
-                          <Send className="w-3 h-3" /> Send NDA
+                          <Eye className="w-3 h-3" /> View
                         </button>
-                      )}
 
-                      <button
-                        disabled={applicant.ndaStatus !== 'nda-accepted'}
-                        onClick={() => { closeAllModals(); setSelectedApplicant(applicant); setSelectedProject(project); setShowAssignProjectModel(true) }}
-                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-all
-                          ${applicant.ndaStatus === 'nda-accepted'
-                            ? 'text-green-400 border-green-500/20 hover:bg-green-500/10 cursor-pointer'
-                            : 'text-slate-600 border-slate-700/50 cursor-not-allowed opacity-40'
-                          }`}
-                      >
-                        <UserCheck className="w-3 h-3" /> Assign
-                      </button>
+                        {applicant.status === 'nda_sent' ? (
+                          <button className="flex items-center justify-center gap-1 text-xs text-yellow-400 border border-yellow-500/20 px-2 py-1.5 rounded-lg cursor-not-allowed opacity-60 flex-1 whitespace-nowrap">
+                            <Clock className="w-3 h-3" /> NDA Sent
+                          </button>
+                        ) : applicant.status === 'accepted' ? (
+                          <button className="flex items-center justify-center gap-1 text-xs text-green-400 border border-green-500/20 px-2 py-1.5 rounded-lg cursor-default flex-1 whitespace-nowrap">
+                            <CheckCircle className="w-3 h-3" /> Signed
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => { closeAllModals(); setSelectedApplicant(applicant); setShowSendNDAModel(true) }}
+                            className="flex items-center justify-center gap-1 text-xs text-slate-300 border border-slate-600 px-2 py-1.5 rounded-lg hover:text-white hover:border-slate-500 transition-all cursor-pointer flex-1 whitespace-nowrap"
+                          >
+                            <Send className="w-3 h-3" /> Send NDA
+                          </button>
+                        )}
+
+                        <button
+                          disabled={applicant.status !== 'accepted'}
+                          onClick={() => { closeAllModals(); setSelectedApplicant(applicant); setSelectedProject(project); setShowAssignProjectModel(true) }}
+                          className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border transition-all flex-1
+                            ${applicant.status === 'accepted'
+                              ? 'text-green-400 border-green-500/30 hover:bg-green-500/10 cursor-pointer'
+                              : 'text-slate-600 border-slate-700/50 cursor-not-allowed opacity-40'
+                            }`}
+                        >
+                          <UserCheck className="w-3 h-3" /> Assign
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )
@@ -279,7 +306,7 @@ const AllApplicant = () => {
               <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-white">NDA Accepted</p>
-                <p className="text-xs text-slate-500 mt-0.5">Accepted {timeAgo(selectedApplicant.ndaAcceptedDate)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Accepted {timeAgo(selectedApplicant?.ndaId?.createdAt || selectedApplicant.updatedAt)}</p>
               </div>
             </div>
 
@@ -302,16 +329,16 @@ const AllApplicant = () => {
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 mb-5">
               <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-3">Applicant Information</p>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {selectedApplicant.name.slice(0, 2).toUpperCase()}
-                </div>
+                {selectedApplicant.studentId.profilePicture ? (
+                  <img src={selectedApplicant.studentId.profilePicture} alt={selectedApplicant.studentId.name} className="w-9 h-9 rounded-xl object-cover border border-slate-700" />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {selectedApplicant.studentId.name?.slice(0, 2).toUpperCase() || 'NA'}
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
                   <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>
-                </div>
-                <div className="ml-auto flex items-center gap-1 text-yellow-400">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span className="text-sm font-medium">{selectedApplicant.studentId.rating}</span>
                 </div>
               </div>
             </div>
@@ -347,9 +374,13 @@ const AllApplicant = () => {
             <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 mb-4">
               <p className="text-xs text-slate-500 mb-2">Assigning to</p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {selectedApplicant.name.slice(0, 2).toUpperCase()}
-                </div>
+                {selectedApplicant.studentId.profilePicture ? (
+                  <img src={selectedApplicant.studentId.profilePicture} alt={selectedApplicant.studentId.name} className="w-10 h-10 rounded-xl object-cover border border-slate-700" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {selectedApplicant.studentId.name?.slice(0, 2).toUpperCase() || 'NA'}
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
                   <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>
@@ -413,9 +444,13 @@ const AllApplicant = () => {
             <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 mb-5">
               <p className="text-xs text-slate-500 mb-2">Sending NDA to</p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {selectedApplicant.studentId.name.slice(0, 2).toUpperCase()}
-                </div>
+                {selectedApplicant.studentId.profilePicture ? (
+                  <img src={selectedApplicant.studentId.profilePicture} alt={selectedApplicant.studentId.name} className="w-10 h-10 rounded-xl object-cover border border-slate-700" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {selectedApplicant.studentId.name?.slice(0, 2).toUpperCase() || 'NA'}
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-semibold text-white">{selectedApplicant.studentId.name}</p>
                   <p className="text-xs text-slate-500">{selectedApplicant.studentId.university}</p>

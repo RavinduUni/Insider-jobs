@@ -16,9 +16,9 @@ import { AppContext } from '../../context/AppContext'
 
 const statusConfig = {
   applied: { label: 'Under Review', color: 'bg-slate-500/10 text-slate-300 border-slate-500/30' },
-  'nda-sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' },
-  'nda-accepted': { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
-  'in-progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
+  nda_sent: { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' },
+  accepted: { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
+  'in progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
   completed: { label: 'Completed', color: 'bg-green-500/10 text-green-300 border-green-500/30' }
 }
 

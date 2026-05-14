@@ -4,12 +4,8 @@ import { AppContext } from '../../context/AppContext';
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
-  'pending': { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
   'nda_sent': { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-accepted': { label: 'Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  'nda_accepted': { label: 'Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
   'accepted': { label: 'Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  'nda_rejected': { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
   'rejected': { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
 };
 const StatusBadge = ({ status }) => {
@@ -42,8 +38,8 @@ const NDARequests = () => {
 
   const getNDAStatus = (nda) => nda?.ndaId?.ndaStatus || nda?.status || 'unknown';
 
-  const pendingNDAs = ndas.filter((nda) => ['pending', 'nda_sent'].includes(getNDAStatus(nda)));
-  const historyNDAs = ndas.filter((nda) => ['nda-accepted', 'nda_accepted', 'accepted', 'nda_rejected', 'rejected'].includes(getNDAStatus(nda)));
+  const pendingNDAs = ndas.filter((nda) => ['nda_sent'].includes(getNDAStatus(nda)));
+  const historyNDAs = ndas.filter((nda) => ['accepted', 'rejected'].includes(getNDAStatus(nda)));
 
   const openModal = (nda) => { setSelectedNDAModal(nda); setNdaFile(null); setShowModal(true); };
   const closeModal = () => { setShowModal(false); setSelectedNDAModal(null); setNdaFile(null); };
@@ -207,11 +203,11 @@ const NDARequests = () => {
               className='bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-slate-700 transition-all'
             >
               <div className='flex items-center gap-4'>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${['nda-accepted', 'nda_accepted', 'accepted'].includes(getNDAStatus(nda))
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${['accepted'].includes(getNDAStatus(nda))
                     ? 'bg-green-500/10 border border-green-500/20'
                     : 'bg-red-500/10 border border-red-500/20'
                   }`}>
-                  {['nda-accepted', 'nda_accepted', 'accepted'].includes(getNDAStatus(nda))
+                  {['accepted'].includes(getNDAStatus(nda))
                     ? <CheckCircle className='w-4 h-4 text-green-400' />
                     : <XCircle className='w-4 h-4 text-red-400' />}
                 </div>

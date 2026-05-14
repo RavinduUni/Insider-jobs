@@ -6,10 +6,13 @@ import { AppContext } from '../../context/AppContext';
 // ── StatusBadge (inline dark-theme version) ───────────────────────────────────
 const statusConfig = {
   'applied': { label: 'Under Review', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  'nda-sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  'nda-accepted': { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  'in-progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  'nda_sent': { label: 'NDA Sent', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  'accepted': { label: 'NDA Accepted', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  'in progress': { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   'completed': { label: 'Completed', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  'selected': { label: 'Selected', color: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+  'rejected': { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  'assigned': { label: 'Assigned', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
 };
 
 const StatusBadge = ({ status }) => {
@@ -24,10 +27,13 @@ const StatusBadge = ({ status }) => {
 // ── Dot indicator ─────────────────────────────────────────────────────────────
 const dotColor = {
   'applied': 'bg-slate-400',
-  'nda-sent': 'bg-yellow-400',
-  'nda-accepted': 'bg-blue-400',
-  'in-progress': 'bg-cyan-400',
+  'nda_sent': 'bg-yellow-400',
+  'accepted': 'bg-blue-400',
+  'in progress': 'bg-cyan-400',
   'completed': 'bg-green-400',
+  'selected': 'bg-teal-400',
+  'rejected': 'bg-red-400',
+  'assigned': 'bg-indigo-400',
 };
 
 // ── Category colour ───────────────────────────────────────────────────────────
@@ -43,9 +49,12 @@ const catColor = {
 const statusFilters = [
   { value: 'all', label: 'All Applications' },
   { value: 'applied', label: 'Under Review' },
-  { value: 'nda-sent', label: 'NDA Sent' },
-  { value: 'nda-accepted', label: 'NDA Accepted' },
-  { value: 'in-progress', label: 'In Progress' },
+  { value: 'selected', label: 'Selected' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'nda_sent', label: 'NDA Sent' },
+  { value: 'accepted', label: 'NDA Accepted' },
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'in progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
 ];
 
