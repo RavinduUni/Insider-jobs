@@ -337,8 +337,8 @@ const NDAManagement = () => {
                 <UserIcon className="w-3.5 h-3.5 text-slate-400" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-200">{nda.applicationId.studentId.name}</p>
-                <p className="text-xs text-slate-500">{nda.applicationId.studentId.university} · {nda.applicationId.studentId.email}</p>
+                <p className="text-xs font-medium text-slate-200">{nda.applicationId?.studentId?.name || 'Deleted User'}</p>
+                <p className="text-xs text-slate-500">{nda.applicationId?.studentId?.university || 'Unknown'} · {nda.applicationId?.studentId?.email || 'Unknown'}</p>
               </div>
             </div>
 
@@ -371,7 +371,7 @@ const NDAManagement = () => {
                 <Eye className="w-3.5 h-3.5" /> View NDA
               </button>
 
-              <button onClick={() => navigate(`/owner-dashboard/view-details?studentId=${nda.applicationId.studentId._id}&projectId=${nda.applicationId.projectId._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+              <button onClick={() => navigate(`/owner-dashboard/view-details?studentId=${nda.applicationId?.studentId?._id || ''}&projectId=${nda.applicationId?.projectId?._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
                 <UserIcon className="w-3.5 h-3.5" /> View Applicant
               </button>
 

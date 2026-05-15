@@ -233,23 +233,23 @@ const OwnerDashboardLanding = () => {
               .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
               .slice(0, 3)
               .map(applicant => (
-                <div key={applicant.studentId._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 hover:border-blue-500/30 transition-all cursor-pointer group'>
+                <div key={applicant._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-3.5 hover:border-blue-500/30 transition-all cursor-pointer group'>
                   {/* Avatar + name */}
                   <div className='flex items-center gap-3 mb-2'>
-                    {applicant.studentId.profilePicture
+                    {applicant.studentId?.profilePicture
                       ? <img src={applicant.studentId.profilePicture} alt='' className='w-9 h-9 rounded-xl object-cover border border-slate-700' />
                       : <div className='w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0'>
-                        {applicant.studentId.name.slice(0, 2).toUpperCase()}
+                        {applicant.studentId?.name ? applicant.studentId.name.slice(0, 2).toUpperCase() : '??'}
                       </div>
                     }
                     <div className='min-w-0'>
-                      <p className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors truncate'>{applicant.studentId.name}</p>
-                      <p className='text-xs text-slate-500'>{applicant.studentId.university}</p>
+                      <p className='text-sm font-semibold text-white group-hover:text-blue-400 transition-colors truncate'>{applicant.studentId?.name || 'Deleted User'}</p>
+                      <p className='text-xs text-slate-500'>{applicant.studentId?.university || 'Unknown'}</p>
                     </div>
                   </div>
 
                   {/* Project */}
-                  <p className='text-xs text-slate-400 mb-2 truncate'>{applicant.projectId.title}</p>
+                  <p className='text-xs text-slate-400 mb-2 truncate'>{applicant.projectId?.title || 'Unknown Project'}</p>
 
                   {/* Footer meta */}
                   <div className='flex items-center justify-between'>

@@ -32,6 +32,9 @@ import RecruiterRouterProtector from './RouteProtector/RecruiterRouterProtector'
 import Companies from './pages/Companies'
 import AboutPage from './pages/AboutPage'
 import ViewStudentDetails2 from './pages/OwnerDashboard/ViewStudentDetails2'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminLogin from './pages/AdminLogin'
+
 
 const App = () => {
 
@@ -87,6 +90,8 @@ const App = () => {
           </Route>
         </Route>
 
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
       </Routes>
     </>

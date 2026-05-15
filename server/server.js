@@ -7,7 +7,7 @@ import connectCloudinary from './configs/cloudinary.js';
 import recruiterRouter from './routes/recruiterRoutes.js';
 import projectRouter from './routes/projectRoutes.js';
 import companyRouter from './routes/companyRoutes.js';
-
+import adminRouter from './routes/adminRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +27,7 @@ app.use('/api/student', studentRouter);
 app.use('/api/recruiter', recruiterRouter);
 app.use('/api/projects', projectRouter);
 app.use('/api/companies', companyRouter);
+app.use('/api/admin', adminRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

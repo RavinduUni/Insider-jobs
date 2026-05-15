@@ -173,8 +173,8 @@ export default function Companies() {
               key={industry}
               onClick={() => setSelectedIndustry(industry)}
               className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedIndustry === industry
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
                 }`}
             >
               {industry === 'all' ? 'All Industries' : industry}
@@ -215,8 +215,8 @@ export default function Companies() {
                       key={size}
                       onClick={() => setSelectedSize(size)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${selectedSize === size
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
                         }`}
                     >
                       {size === 'all' ? 'All Sizes' : size}

@@ -37,7 +37,7 @@ const ProjectCard = ({ project }) => {
           <p className='text-blue-600 font-semibold'>${project.budget}</p>
           <p className='text-gray-500 text-sm ml-4'>{new Date(project.deadline).toLocaleDateString()}</p>
         </div>
-      
+
         <p className='text-gray-500 text-sm'>{project.applicants} applicants</p>
       </div>
     </div>

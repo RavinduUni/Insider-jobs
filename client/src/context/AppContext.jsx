@@ -16,19 +16,28 @@ const AppContextProvider = ({ children }) => {
 
     const recommendationFetchRef = useRef(false);
 
+
     const fetchUserProfile = async () => {
         if (!token) return;
 
-        const endpoint = role === 'student' ? 'http://localhost:5000/api/student/profile' : 'http://localhost:5000/api/recruiter/profile';
+        let endpoint = '';
+
+        if (role === 'student') {
+            endpoint = 'http://localhost:5000/api/student/profile';
+        } else if (role === 'recruiter') {
+            endpoint = 'http://localhost:5000/api/recruiter/profile';
+        } else if (role === 'admin') {
+            endpoint = 'http://localhost:5000/api/admin/profile';
+        }
 
         try {
-            const { success, student, recruiter } = await fetch(endpoint, {
+            const { success, student, recruiter, admin } = await fetch(endpoint, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             }).then(res => res.json());
             if (success) {
-                setUser(student || recruiter);
+                setUser(student || recruiter || admin);
             }
 
         } catch (error) {
