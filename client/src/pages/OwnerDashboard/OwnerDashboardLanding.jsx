@@ -4,7 +4,8 @@ import {
   Users, FileText, ArrowRight, Plus,
   ArrowLeft
 } from 'lucide-react';
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
 
@@ -26,13 +27,26 @@ const StatusBadge = ({ status }) => {
   return <span className={`text-xs font-medium px-3 py-1 rounded-full border ${cfg.color}`}>{cfg.label}</span>;
 };
 
-// ── Static data ───────────────────────────────────────────────────
-const stats = [
-  { label: 'Total Projects', value: '8', icon: Briefcase, color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
-  { label: 'Pending Applications', value: '15', icon: Users, color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
-  { label: 'NDA Pending', value: '3', icon: Shield, color: 'bg-yellow-500/10 text-yellow-400', border: 'border-yellow-500/20' },
-  { label: 'Completed', value: '5', icon: CheckCircle, color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
-];
+const formatPieData = (countsObj) => {
+  if (!countsObj) return [];
+  return Object.keys(countsObj).map(key => ({
+    name: key,
+    value: countsObj[key]
+  }));
+};
+
+const COLORS = ['#38bdf8', '#818cf8', '#c084fc', '#e879f9', '#2dd4bf', '#fbbf24'];
+
+const renderCustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-800 border border-slate-700 p-2 rounded-lg shadow-xl text-xs">
+        <p className="text-white font-medium">{`${payload[0].name} : ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 
 // ── timeAgo ─────────────────────────────────────────────────
@@ -72,7 +86,21 @@ const SectionHeader = ({ title, action, onAction }) => (
 const OwnerDashboardLanding = () => {
   const navigate = useNavigate();
 
-  const { user, projects, allApplicants, fetchApplications } = useContext(AppContext);
+  const { user, projects, allApplicants, fetchApplications, token } = useContext(AppContext);
+  const [dashboardStats, setDashboardStats] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+       fetch('http://localhost:5000/api/recruiter/stats', {
+           headers: { Authorization: `Bearer ${token}` }
+       })
+       .then(res => res.json())
+       .then(data => {
+           if (data.success) setDashboardStats(data.stats);
+       })
+       .catch(err => console.error("Failed to fetch stats", err));
+    }
+  }, [token]);
 
   const recruiterProjects = user?._id
     ? projects.filter(
@@ -131,16 +159,57 @@ const OwnerDashboardLanding = () => {
       </div>
 
       {/* ── Stats grid ── */}
-      <div className='grid grid-cols-4 gap-4'>
-        {stats.map(({ label, value, icon: Icon, color, border }) => (
-          <div key={label} className={`bg-slate-900 border ${border} rounded-2xl p-5 hover:border-opacity-60 transition-all cursor-pointer`}>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
-              <Icon className='w-4 h-4' />
-            </div>
-            <p className='text-2xl font-bold text-white mb-0.5'>{value}</p>
-            <p className='text-xs text-slate-500'>{label}</p>
-          </div>
-        ))}
+      <div className='grid grid-cols-3 gap-4'>
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+           <h3 className='text-sm font-semibold text-white mb-2'>Project Status</h3>
+           <div className='h-48 w-full'>
+              <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                    <Pie data={formatPieData(dashboardStats?.projectStatusCounts)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                       {formatPieData(dashboardStats?.projectStatusCounts).map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
+                    </Pie>
+                    <Tooltip content={renderCustomTooltip} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+                 </PieChart>
+              </ResponsiveContainer>
+           </div>
+        </div>
+
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+           <h3 className='text-sm font-semibold text-white mb-2'>Application Status</h3>
+           <div className='h-48 w-full'>
+              <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                    <Pie data={formatPieData(dashboardStats?.applicationStatusCounts)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                       {formatPieData(dashboardStats?.applicationStatusCounts).map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
+                    </Pie>
+                    <Tooltip content={renderCustomTooltip} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+                 </PieChart>
+              </ResponsiveContainer>
+           </div>
+        </div>
+
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+           <h3 className='text-sm font-semibold text-white mb-2'>NDA Status</h3>
+           <div className='h-48 w-full'>
+              <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                    <Pie data={formatPieData(dashboardStats?.ndaStatusCounts)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                       {formatPieData(dashboardStats?.ndaStatusCounts).map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
+                    </Pie>
+                    <Tooltip content={renderCustomTooltip} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+                 </PieChart>
+              </ResponsiveContainer>
+           </div>
+        </div>
       </div>
 
       {/* ── Main two-col grid ── */}

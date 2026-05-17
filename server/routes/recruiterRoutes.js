@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createProject, getAllApplicationsForProject, getAllNDAs, getApplicantDetails, getRecruiter, loginRecruiter, registerRecruiter, sendEmailVerificationOtp, sendNDA, updateProject, updateRecruiter } from "../controllers/recruiterController.js";
+import { createProject, getAllApplicationsForProject, getAllNDAs, getApplicantDetails, getRecruiter, getStats, loginRecruiter, registerRecruiter, sendEmailVerificationOtp, sendNDA, updateProject, updateRecruiter } from "../controllers/recruiterController.js";
 import upload from "../configs/multer.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -16,5 +16,6 @@ recruiterRouter.get('/project-applicants', verifyToken, getAllApplicationsForPro
 recruiterRouter.post('/send-nda', verifyToken, upload.single('ndaDocument'), sendNDA);
 recruiterRouter.get('/ndas', verifyToken, getAllNDAs);
 recruiterRouter.post('/applicant-details', verifyToken, getApplicantDetails);
+recruiterRouter.get('/stats', verifyToken, getStats);
 
 export default recruiterRouter;

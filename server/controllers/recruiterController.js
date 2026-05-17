@@ -422,3 +422,48 @@ export const updateProject = async (req, res) => {
     }
 }
    
+
+export const getStats = async (req, res) => {
+    try {
+        const recruiter = req.user;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        const projects = await Project.find({ recruiter: recruiter._id });
+        const projectIds = projects.map(p => p._id);
+        const applications = await Application.find({ projectId: { $in: projectIds } });
+        const ndas = await NDA.find({ applicationId: { $in: applications.map(app => app._id) } });
+
+        const projectStatusCounts = projects.reduce((acc, p) => {
+            acc[p.status] = (acc[p.status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const applicationStatusCounts = applications.reduce((acc, a) => {
+            acc[a.status] = (acc[a.status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const ndaStatusCounts = ndas.reduce((acc, n) => {
+            acc[n.ndaStatus] = (acc[n.ndaStatus] || 0) + 1;
+            return acc;
+        }, {});
+
+        return res.status(200).json({
+            success: true,
+            stats: {
+                totalProjects: projects.length,
+                totalApplications: applications.length,
+                totalNDAs: ndas.length,
+                projectStatusCounts,
+                applicationStatusCounts,
+                ndaStatusCounts
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+        return res.status(500).json({ success: false, message: 'Server error while fetching stats' });
+    }
+}   
