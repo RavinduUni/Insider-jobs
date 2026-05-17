@@ -1,5 +1,5 @@
 import { Briefcase } from 'lucide-react'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext';
 import { assets } from '../assets/assets';
@@ -8,8 +8,22 @@ const Navbar2 = () => {
 
     const { token, role, setToken, user } = useContext(AppContext);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 20) {
+                setScrolled(true);
+            } else {
+                setScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
@@ -19,7 +33,7 @@ const Navbar2 = () => {
     }
 
     return (
-        <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+        <nav className={`sticky z-50 bg-white/95 backdrop-blur border-b border-gray-100 transition-all duration-600 ${scrolled ? "top-0 w-full" : "max-w-7xl mx-auto top-3 rounded-xl"}`}>
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 <NavLink to="/" className="flex items-center gap-2">
                     <img src={assets.logo} alt="" />

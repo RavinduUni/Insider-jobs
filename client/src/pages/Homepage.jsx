@@ -75,7 +75,7 @@ export default function HomePage() {
             <Navbar2 />
 
             {/* ── HERO ── */}
-            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 min-h-[90vh] flex items-center">
+            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 min-h-[90vh] flex items-center -mt-18 pt-20">
                 {/* Grid overlay */}
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: 'linear-linear(rgba(255,255,255,.15) 1px,transparent 1px),linear-linear(90deg,rgba(255,255,255,.15) 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
