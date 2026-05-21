@@ -5,14 +5,9 @@ import {
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 // ── Static data ─────────────────────────────────────────────────────────────
-const stats = [
-  { icon: FileText, label: 'Applications Sent', value: '12', sub: '+2 this week', color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
-  { icon: Briefcase, label: 'Active Projects', value: '3', sub: '1 due this week', color: 'bg-green-500/10 text-green-400', border: 'border-green-500/20' },
-  { icon: Shield, label: 'Pending NDAs', value: '2', sub: 'Action needed', color: 'bg-yellow-500/10 text-yellow-400', border: 'border-yellow-500/20' },
-  { icon: Wallet, label: 'Wallet Balance', value: '$1,240', sub: '+$300 this month', color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
-]
 
 const quickActions = [
   { icon: Briefcase, label: 'Browse Projects', to: 'browse-projects', color: 'bg-blue-500/10 text-blue-400' },
@@ -34,6 +29,29 @@ const SectionHeader = ({ title, action, onAction }) => (
   </div>
 )
 
+const formatPieData = (countsObj) => {
+  if (!countsObj) return [];
+  return Object.keys(countsObj)
+    .filter(key => key !== 'total' && countsObj[key] != null)
+    .map(key => ({
+      name: key.replace(/_/g, ' '),
+      value: countsObj[key]
+    }));
+};
+
+const COLORS = ['#38bdf8', '#818cf8', '#c084fc', '#e879f9', '#2dd4bf', '#fbbf24'];
+
+const renderCustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-800 border border-slate-700 p-2 rounded-lg shadow-xl text-xs">
+        <p className="text-white font-medium capitalize">{`${payload[0].name} : ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -41,6 +59,7 @@ const Dashboard = () => {
   const { user, token, role, recommendedProjects, fetchingRecommendations } = useContext(AppContext);
 
   const [myApplications, setMyApplications] = useState([]);
+  const [stats, setStats] = useState(null);
 
 
   const formatDate = (value) => {
@@ -83,13 +102,34 @@ const Dashboard = () => {
     }
   };
 
- 
+  const getStats = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch('http://localhost:5000/api/student/stats', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.stats || data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
 
   useEffect(() => {
     if (token && role === 'student') {
       getMyApplications();
+      getStats();
     }
   }, [token, role]);
+
+
+
 
   return (
     <div className='space-y-6'>
@@ -107,22 +147,62 @@ const Dashboard = () => {
             <h1 className='text-2xl font-bold text-white mb-1'>Welcome back, {user?.name || 'Alex'}!</h1>
             <p className='text-blue-200 text-sm'>Here's what's happening with your projects today.</p>
           </div>
-          
+
         </div>
       </div>
 
       {/* ── Stats grid ── */}
-      <div className='grid grid-cols-2 xl:grid-cols-4 gap-4'>
-        {stats.map(({ icon: Icon, label, value, sub, color, border }) => (
-          <div key={label} className={`bg-slate-900 border ${border} rounded-2xl p-5 hover:border-opacity-60 transition-all`}>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
-              <Icon className='w-4 h-4' />
-            </div>
-            <p className='text-2xl font-bold text-white mb-0.5'>{value}</p>
-            <p className='text-xs text-slate-400 mb-1'>{label}</p>
-            <p className='text-xs text-slate-500'>{sub}</p>
+      <div className='grid grid-cols-3 gap-4'>
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+          <h3 className='text-sm font-semibold text-white mb-2'>Project Status</h3>
+          <div className='h-48 w-full'>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={formatPieData(stats?.projects)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                  {formatPieData(stats?.projects).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={renderCustomTooltip} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-        ))}
+        </div>
+
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+          <h3 className='text-sm font-semibold text-white mb-2'>Application Status</h3>
+          <div className='h-48 w-full'>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={formatPieData(stats?.applications)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                  {formatPieData(stats?.applications).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={renderCustomTooltip} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className='bg-slate-900 border border-slate-800 rounded-2xl p-5'>
+          <h3 className='text-sm font-semibold text-white mb-2'>NDA Status</h3>
+          <div className='h-48 w-full'>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={formatPieData(stats?.ndas)} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                  {formatPieData(stats?.ndas).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={renderCustomTooltip} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'capitalize' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {/* ── Main two-column grid ── */}
@@ -155,7 +235,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </div>
-                 
+
                 </div>
               ))}
             </div>
@@ -292,17 +372,17 @@ const Dashboard = () => {
                 <p className='text-xs text-slate-400 mb-3 line-clamp-2'>{proj.project.description}</p>
                 <div className='flex flex-wrap gap-1.5 mb-3'>
                   {(proj.project.technologies || []).map(s => (
-                  <span key={s} className='text-xs px-2 py-0.5 bg-slate-700/60 text-slate-400 rounded-md'>{s}</span>
-                ))}
+                    <span key={s} className='text-xs px-2 py-0.5 bg-slate-700/60 text-slate-400 rounded-md'>{s}</span>
+                  ))}
+                </div>
+                <div className='flex items-center justify-between pt-3 border-t border-slate-700/50'>
+                  <span className='text-sm font-bold text-blue-400'>{proj.project.budget}</span>
+                  <button className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'>
+                    Apply <ArrowRight className='w-3 h-3' />
+                  </button>
+                </div>
               </div>
-              <div className='flex items-center justify-between pt-3 border-t border-slate-700/50'>
-                <span className='text-sm font-bold text-blue-400'>{proj.project.budget}</span>
-                <button className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'>
-                  Apply <ArrowRight className='w-3 h-3' />
-                </button>
-              </div>
-            </div>
-          )))}
+            )))}
         </div>
       </div>
 

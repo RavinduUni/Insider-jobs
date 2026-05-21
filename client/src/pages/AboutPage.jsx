@@ -112,7 +112,7 @@ export default function AboutPage() {
             <Navbar2 />
 
             {/* ── HERO ── */}
-            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 min-h-[80vh] flex items-center">
+            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 min-h-[80vh] flex items-center -mt-18 py-24">
                 {/* Grid overlay */}
                 <div
                     className="absolute inset-0 opacity-10"
@@ -249,14 +249,14 @@ export default function AboutPage() {
                     <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">What We Stand For</p>
                     <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Core Values</h2>
                     <p className="text-gray-500 max-w-md mx-auto">
-                        These aren't posters on a wall — they're the principles that guide every product decision we make.
+                        These aren't posters on a wall they're the principles that guide every product decision we make.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {values.map(({ icon: Icon, title, desc, color }) => (
                         <div
                             key={title}
-                            className="group bg-white border border-gray-100 rounded-2xl p-6 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300"
+                            className="group bg-white border border-blue-200 rounded-2xl p-6 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300"
                         >
                             <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${color} group-hover:scale-110 transition-transform duration-300`}>
                                 <Icon className="w-5 h-5" />

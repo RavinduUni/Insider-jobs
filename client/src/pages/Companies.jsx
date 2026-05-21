@@ -133,7 +133,7 @@ export default function Companies() {
     <div className="bg-white text-gray-900 font-sans min-h-screen">
       <Navbar2 />
 
-      <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 py-20">
+      <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 py-20 -mt-18 min-h-[85vh] flex flex-col justify-center items-center">
         <div className="absolute top-10 left-1/4 w-96 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-72 h-56 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -154,14 +154,15 @@ export default function Companies() {
           </p>
 
           <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by company, role, or keyword..."
-              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-slate-400 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+              className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-slate-400 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all z-10"
             />
+            <button className='bg-blue-500 px-4 py-2 rounded-lg text-white absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer'>Search</button>
           </div>
         </div>
       </section>

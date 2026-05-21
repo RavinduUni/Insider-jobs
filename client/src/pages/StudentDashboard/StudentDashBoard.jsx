@@ -4,8 +4,8 @@ import {
   Briefcase, File, FileText, LayoutDashboard,
   Settings, Shield, UploadIcon, Wallet
 } from 'lucide-react'
-import Navbar2 from '../../components/Navbar2'
 import { AppContext } from '../../context/AppContext'
+import Navbar from '../../components/Navbar'
 
 const navItems = [
   { to: '', end: true, icon: LayoutDashboard, label: 'Dashboard' },
@@ -24,11 +24,11 @@ const StudentDashBoard = () => {
 
   return (
     <div className='min-h-screen bg-slate-950'>
-      <Navbar2 />
+      <Navbar />
 
       <div className='flex'>
         {/* ── Sidebar ── */}
-        <aside className='w-60 shrink-0 min-h-screen bg-slate-900 border-r border-slate-800 px-3 py-6 sticky top-16'>
+        <aside className='w-70 shrink-0 min-h-screen bg-slate-900 border-r border-slate-800 px-3 py-6 sticky top-16'>
 
           {/* User mini profile */}
           <div className='flex items-center gap-3 px-3 mb-8'>

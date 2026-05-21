@@ -121,7 +121,7 @@ export default function AllProjects() {
                 p.description,
                 p.category,
                 p.deadline,
-                ...p.skills,
+                ...p.technologies,
             ].join(' '));
 
             const matchesAllTerms = terms.every(term => searchableContent.includes(term));
@@ -289,7 +289,7 @@ export default function AllProjects() {
             <Navbar2 />
 
             {/* ── HERO BANNER ── */}
-            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 py-20">
+            <section className="relative overflow-hidden bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 py-20 -mt-18 min-h-[85vh] flex flex-col justify-center items-center">
                 {/* Glow blobs */}
                 <div className="absolute top-10 left-1/4 w-96 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 right-1/4 w-72 h-56 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -311,7 +311,7 @@ export default function AllProjects() {
 
                     {/* Search bar */}
                     <div className="max-w-xl mx-auto relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white z-10" />
                         <input
                             type="text"
                             placeholder="Search projects by title or keyword…"
@@ -319,6 +319,9 @@ export default function AllProjects() {
                             onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                             className="w-full bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-slate-400 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                         />
+                        <button
+                            onClick={() => { setCurrentPage(1); }}
+                            className='bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer'>Search</button>
                     </div>
                 </div>
             </section>
@@ -330,11 +333,10 @@ export default function AllProjects() {
                         <button
                             key={cat.value}
                             onClick={() => { setSelectedCategory(cat.value); setCurrentPage(1); }}
-                            className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                                selectedCategory === cat.value
+                            className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedCategory === cat.value
                                     ? 'bg-blue-600 border-blue-600 text-white'
                                     : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-                            }`}
+                                }`}
                         >
                             {cat.icon && <cat.icon className="w-3.5 h-3.5" />}
                             {cat.label}
@@ -465,11 +467,10 @@ export default function AllProjects() {
                                 <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
-                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${
-                                        currentPage === 1
+                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${currentPage === 1
                                             ? 'border-gray-100 text-gray-300 cursor-not-allowed'
                                             : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-                                    }`}
+                                        }`}
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                 </button>
@@ -478,11 +479,10 @@ export default function AllProjects() {
                                     <button
                                         key={page}
                                         onClick={() => setCurrentPage(page)}
-                                        className={`w-9 h-9 rounded-xl border text-sm font-medium transition-all ${
-                                            currentPage === page
+                                        className={`w-9 h-9 rounded-xl border text-sm font-medium transition-all ${currentPage === page
                                                 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-200'
                                                 : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-                                        }`}
+                                            }`}
                                     >
                                         {page}
                                     </button>
@@ -491,11 +491,10 @@ export default function AllProjects() {
                                 <button
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
-                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${
-                                        currentPage === totalPages
+                                    className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-medium transition-all ${currentPage === totalPages
                                             ? 'border-gray-100 text-gray-300 cursor-not-allowed'
                                             : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-                                    }`}
+                                        }`}
                                 >
                                     <ArrowRight className="w-4 h-4" />
                                 </button>

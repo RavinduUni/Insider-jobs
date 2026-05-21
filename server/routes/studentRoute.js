@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { applyProject, enhanceResumeText, getAllNDAs, getMyApplications, getStudent, loginStudent, recommendProjects, registerStudent, sendEmailVerificationOtp, updateStudent, uploadSignedNDA } from "../controllers/studentController.js";
+import { applyProject, enhanceResumeText, getAllNDAs, getMyApplications, getStats, getStudent, loginStudent, recommendProjects, registerStudent, sendEmailVerificationOtp, updateStudent, uploadSignedNDA } from "../controllers/studentController.js";
 import upload from "../configs/multer.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -22,4 +22,5 @@ studentRouter.get('/applied-projects', verifyToken, getMyApplications);
 studentRouter.get('/recommendations', verifyToken, recommendProjects);
 studentRouter.get('/ndas', verifyToken, getAllNDAs);
 studentRouter.put('/upload-nda', verifyToken, upload.single('ndaFile'), uploadSignedNDA);
+studentRouter.get('/stats', verifyToken, getStats);
 export default studentRouter;

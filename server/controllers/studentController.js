@@ -537,3 +537,60 @@ export const uploadSignedNDA = async (req, res) => {
 }
 
 
+export const getStats = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+
+        const applications = await Application.find({ studentId });
+
+        let applicationStats = {
+            total: 0,
+            applied: 0,
+            selected: 0,
+            rejected: 0
+        };
+
+        applications.forEach(application => {
+            applicationStats.total++;
+            applicationStats[application.status]++;
+        });
+
+        const projects = await Project.find({ studentId });
+
+        let projectStats = {
+            total: 0,
+            in_progress: 0,
+            completed: 0,
+        }
+
+        projects.forEach(project => {
+            projectStats.total++;
+            projectStats[project.status]++;
+        });
+
+        const ndas = await NDA.find({ applicationId: { $in: applications.map(app => app.ndaId) } });
+
+        let ndaStats = {
+            total: 0,
+            nda_sent: 0,
+            accepted: 0,
+            rejected: 0
+        };
+
+        ndas.forEach(nda => {
+            ndaStats.total++;
+            ndaStats[nda.ndaStatus]++;
+        });
+
+        return res.status(200).json({
+            success: true,
+            applications: applicationStats,
+            projects: projectStats,
+            ndas: ndaStats
+        });
+
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error fetching stats' });
+    }
+}
