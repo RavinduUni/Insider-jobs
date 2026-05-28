@@ -36,7 +36,7 @@ const formatDate = (dateStr) => {
 // ── NDA Modal ─────────────────────────────────────────────────────────────────
 const NDAModal = ({ applicant, onClose }) => {
   const fmt = d => d ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-  
+
   const downloadNdaFile = async () => {
     const url = applicant.ndaDocumentUrl;
     if (!url) return;
@@ -232,7 +232,7 @@ const ViewStudentDetails = () => {
   const handleAssignProject = async () => {
     setAssigning(true);
     try {
-      const response = await fetch('http://localhost:5000/api/recruiter/assign-project', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/assign-project`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -247,7 +247,7 @@ const ViewStudentDetails = () => {
         console.error('Failed to assign project:', data.message);
         return;
       }
-      
+
       setShowAssignModal(false);
       fetchStudentProfile(); // Refresh profile after assigning
     } catch (error) {
@@ -300,7 +300,7 @@ const ViewStudentDetails = () => {
 
   const fetchStudentProfile = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/recruiter/applicant-details`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/applicant-details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -355,7 +355,7 @@ const ViewStudentDetails = () => {
   const getAllFeedbacks = useCallback(async () => {
     try {
 
-      const response = await fetch(`http://localhost:5000/api/recruiter/applicant-feedbacks`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/applicant-feedbacks`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -444,13 +444,13 @@ const ViewStudentDetails = () => {
         <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3">
           <StatusBadge status={applicant.ndaStatus} />
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setShowNDAModal(true)}
               className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5" /> View NDA
             </button>
-            <button 
+            <button
               onClick={() => setShowAssignModal(true)}
               className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
             >
@@ -640,10 +640,10 @@ const ViewStudentDetails = () => {
                     <p className="text-xs text-slate-500">Document</p>
                   </div>
                 </div>
-                <a 
-                  href={applicant.cv} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={applicant.cv}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer"
                 >
                   View / Download
@@ -661,10 +661,10 @@ const ViewStudentDetails = () => {
                     <p className="text-xs text-slate-500">Document</p>
                   </div>
                 </div>
-                <a 
-                  href={applicant.projectPlan} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={applicant.projectPlan}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-xs text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer"
                 >
                   View / Download

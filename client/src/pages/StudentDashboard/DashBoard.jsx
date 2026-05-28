@@ -84,7 +84,7 @@ const Dashboard = () => {
     if (!token) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/student/applied-projects', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/applied-projects`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -105,7 +105,7 @@ const Dashboard = () => {
   const getStats = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:5000/api/student/stats', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/stats`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

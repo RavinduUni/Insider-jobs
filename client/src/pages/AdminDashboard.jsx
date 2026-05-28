@@ -1,14 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { 
-    LayoutDashboard, Users, Building2, Briefcase, FileText, 
+import {
+    LayoutDashboard, Users, Building2, Briefcase, FileText,
     FileSignature, Trash2, Search, Activity, ChevronRight,
     Loader2, LogOut
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, 
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
 } from 'recharts';
 
@@ -44,11 +44,11 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
-            
+
             // Fetch stats
-            const statsRes = await fetch('http://localhost:5000/api/admin/stats', { headers });
+            const statsRes = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/stats`, { headers });
             const statsData = await statsRes.json();
-            
+
             if (statsData.success) {
                 setStats(statsData.stats);
                 setRecentActivity(statsData.recentActivity);
@@ -56,11 +56,11 @@ const AdminDashboard = () => {
 
             // Fetch all other lists
             const [studentsRes, recruitersRes, projectsRes, appsRes, ndasRes] = await Promise.all([
-                fetch('http://localhost:5000/api/admin/students', { headers }),
-                fetch('http://localhost:5000/api/admin/recruiters', { headers }),
-                fetch('http://localhost:5000/api/admin/projects', { headers }),
-                fetch('http://localhost:5000/api/admin/applications', { headers }),
-                fetch('http://localhost:5000/api/admin/ndas', { headers })
+                fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/students`, { headers }),
+                fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/recruiters`, { headers }),
+                fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/projects`, { headers }),
+                fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/applications`, { headers }),
+                fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/ndas`, { headers })
             ]);
 
             const [studentsData, recruitersData, projectsData, appsData, ndasData] = await Promise.all([
@@ -94,12 +94,12 @@ const AdminDashboard = () => {
 
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
-            const res = await fetch(`http://localhost:5000/api/admin/${type}s/${id}`, { 
+            const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/${type}s/${id}`, {
                 method: 'DELETE',
-                headers 
+                headers
             });
             const result = await res.json();
-            
+
             if (result.success) {
                 toast.success(`${type} deleted successfully`);
                 setData(prev => ({
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
     }
 
     const renderSidebar = () => (
-        <aside className="w-64 bg-white border-r h-screen fixed top-0 left-0 flex flex-col pt-20 shadow-sm z-10">
+        <aside className="w-64 bg-white border-r h-screen fixed top-0 left-0 flex flex-col pt-5 shadow-sm z-10">
             <div className="p-6 flex-1 flex flex-col h-full">
                 <h2 className="text-xl font-bold text-blue-600 mb-6 flex items-center gap-2">
                     <LayoutDashboard className="w-6 h-6" />
@@ -144,8 +144,8 @@ const AdminDashboard = () => {
                             key={item.id}
                             onClick={() => { setActiveTab(item.id); setSearchTerm(''); setSelectedUser(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium
-                                ${activeTab === item.id 
-                                    ? 'bg-blue-50 text-blue-600' 
+                                ${activeTab === item.id
+                                    ? 'bg-blue-50 text-blue-600'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'}`}
                         >
                             <item.icon className="w-5 h-5" />
@@ -154,7 +154,7 @@ const AdminDashboard = () => {
                     ))}
                 </nav>
                 <div className="mt-auto border-t border-gray-100 pt-4">
-                    <button 
+                    <button
                         onClick={() => {
                             setToken(null);
                             localStorage.removeItem('token');
@@ -190,7 +190,7 @@ const AdminDashboard = () => {
         return (
             <div className="space-y-6">
                 <h3 className="text-2xl font-bold text-gray-800">Platform Analytics</h3>
-                
+
                 {/* Analytics Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
@@ -199,11 +199,11 @@ const AdminDashboard = () => {
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={barData} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                                    <RechartsTooltip 
-                                        cursor={{fill: '#f3f4f6'}}
-                                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                    <RechartsTooltip
+                                        cursor={{ fill: '#f3f4f6' }}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                                         {barData.map((entry, index) => (
@@ -234,8 +234,8 @@ const AdminDashboard = () => {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % 2]} />
                                         ))}
                                     </Pie>
-                                    <RechartsTooltip 
-                                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                 </PieChart>
@@ -294,15 +294,15 @@ const AdminDashboard = () => {
 
     const renderTable = (type) => {
         let list = data[type] || [];
-        
+
         // Search filter
         if (searchTerm) {
             list = list.filter(item => {
                 const searchStr = searchTerm.toLowerCase();
-                return (item.name?.toLowerCase().includes(searchStr) || 
-                        item.email?.toLowerCase().includes(searchStr) || 
-                        item.title?.toLowerCase().includes(searchStr) ||
-                        item.companyName?.toLowerCase().includes(searchStr));
+                return (item.name?.toLowerCase().includes(searchStr) ||
+                    item.email?.toLowerCase().includes(searchStr) ||
+                    item.title?.toLowerCase().includes(searchStr) ||
+                    item.companyName?.toLowerCase().includes(searchStr));
             });
         }
 
@@ -313,9 +313,9 @@ const AdminDashboard = () => {
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="relative w-64">
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder={`Search ${type}...`} 
+                        <input
+                            type="text"
+                            placeholder={`Search ${type}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -357,14 +357,14 @@ const AdminDashboard = () => {
                                     <td className="p-4 flex items-center justify-center gap-3">
                                         {(type === 'students' || type === 'recruiters' || type === 'projects') && (
                                             <>
-                                                <button 
+                                                <button
                                                     onClick={() => setSelectedUser(item)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     title="View Details"
                                                 >
                                                     <ChevronRight className="w-5 h-5" />
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => handleDelete(type.slice(0, -1), item._id)}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Delete"
@@ -385,12 +385,12 @@ const AdminDashboard = () => {
 
     const renderUserDetails = () => {
         if (!selectedUser) return null;
-        
+
         return (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-gray-800">Details</h3>
-                    <button 
+                    <button
                         onClick={() => setSelectedUser(null)}
                         className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200"
                     >
@@ -425,7 +425,7 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {renderSidebar()}
-            
+
             <main className="flex-1 ml-64 p-8 pt-10">
                 {loading ? (
                     <div className="flex items-center justify-center h-[60vh]">
@@ -438,9 +438,9 @@ const AdminDashboard = () => {
                                 {activeTab} Management
                             </h1>
                         </div>
-                        
+
                         {activeTab === 'overview' && renderOverview()}
-                        
+
                         {activeTab !== 'overview' && !selectedUser && (
                             <div className="space-y-6">
                                 {renderTable(activeTab)}

@@ -129,7 +129,7 @@ const OwnerSettings = () => {
         formData.append('companyLogo', selectedFile);
       }
 
-      const res = await fetch('http://localhost:5000/api/recruiter/update-profile', {
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

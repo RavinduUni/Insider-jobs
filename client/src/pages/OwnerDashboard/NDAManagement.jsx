@@ -198,7 +198,7 @@ const NDAModal = ({ nda, onClose }) => {
 const NDAManagement = () => {
 
   const { token, role } = useContext(AppContext);
-  
+
   const navigate = useNavigate();
 
   const [ndaData, setNdaData] = useState([]);
@@ -228,7 +228,7 @@ const NDAManagement = () => {
 
   const fetchNDAData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/recruiter/ndas', {
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/ndas`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -290,8 +290,8 @@ const NDAManagement = () => {
               key={f.value}
               onClick={() => setFilterStatus(f.value)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border cursor-pointer ${active
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
                 }`}
             >
               {f.value !== 'all' && (

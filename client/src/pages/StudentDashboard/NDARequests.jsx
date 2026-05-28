@@ -27,7 +27,7 @@ const ndaClauses = [
 // ── Main Component ────────────────────────────────────────────────────────────
 const NDARequests = () => {
 
-  const {token, user, role} = useContext(AppContext);
+  const { token, user, role } = useContext(AppContext);
 
   const [ndas, setNdas] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -46,7 +46,7 @@ const NDARequests = () => {
 
   const fetchNDAs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/student/ndas', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/ndas`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -80,7 +80,7 @@ const NDARequests = () => {
       formData.append('applicationId', applicationId);
       formData.append('ndaFile', ndaFile);
 
-      const response = await fetch('http://localhost:5000/api/student/upload-nda', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/upload-nda`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -100,7 +100,7 @@ const NDARequests = () => {
       closeModal();
 
     } catch (error) {
-      console.error('Error uploading signed NDA:', error);      
+      console.error('Error uploading signed NDA:', error);
     } finally {
       setUploadingNDA(false);
     }
@@ -204,8 +204,8 @@ const NDARequests = () => {
             >
               <div className='flex items-center gap-4'>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${['accepted'].includes(getNDAStatus(nda))
-                    ? 'bg-green-500/10 border border-green-500/20'
-                    : 'bg-red-500/10 border border-red-500/20'
+                  ? 'bg-green-500/10 border border-green-500/20'
+                  : 'bg-red-500/10 border border-red-500/20'
                   }`}>
                   {['accepted'].includes(getNDAStatus(nda))
                     ? <CheckCircle className='w-4 h-4 text-green-400' />

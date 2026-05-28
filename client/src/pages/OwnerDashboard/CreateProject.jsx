@@ -82,7 +82,7 @@ const CreateProject = () => {
   const fetchProjectDetails = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/projects/project/${projectId}`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/projects/project/${projectId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -166,7 +166,7 @@ const CreateProject = () => {
     try {
       setLoading(true);
 
-      const endpoint = isEditMode ? `http://localhost:5000/api/recruiter/update-project/${projectId}` : 'http://localhost:5000/api/recruiter/create-project';
+      const endpoint = isEditMode ? `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/update-project/${projectId}` : `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/create-project`;
       const method = isEditMode ? 'PUT' : 'POST';
 
       const response = await fetch(endpoint, {

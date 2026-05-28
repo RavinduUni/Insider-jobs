@@ -98,12 +98,12 @@ const AllApplicant = () => {
         toast.error('Please select an applicant to send NDA');
         return;
       }
-     
+
       const formData = new FormData();
       formData.append('applicationId', selectedApplicant._id);
       formData.append('ndaDocument', file);
 
-      const response = await fetch('http://localhost:5000/api/recruiter/send-nda', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/send-nda`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -119,7 +119,7 @@ const AllApplicant = () => {
       }
 
       toast.success('NDA sent successfully');
-      
+
     } catch (error) {
       toast.error('Failed to send NDA');
       console.error('Error sending NDA:', error);

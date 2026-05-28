@@ -100,7 +100,7 @@ const ViewStudentDetails2 = () => {
       setLoading(true)
       setError('')
 
-      const res = await fetch('http://localhost:5000/api/recruiter/applicant-details', {
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/applicant-details`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

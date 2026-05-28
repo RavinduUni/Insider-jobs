@@ -21,16 +21,16 @@ const AdminLogin = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const endpoint = isRegister ? 'http://localhost:5000/api/admin/register' : 'http://localhost:5000/api/admin/login';
+            const endpoint = isRegister ? `${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/register` : `${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/login`;
             const payload = isRegister ? { name, email, password } : { email, password };
-            
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
-            
+
             if (data.success) {
                 toast.success(isRegister ? 'Registration successful' : 'Login successful');
                 localStorage.setItem('token', data.token);
@@ -64,9 +64,9 @@ const AdminLogin = () => {
                                 <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Full Name</label>
                                 <div className="relative">
                                     <User className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                    <input 
-                                        type="text" 
-                                        required 
+                                    <input
+                                        type="text"
+                                        required
                                         placeholder="John Doe"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
@@ -79,9 +79,9 @@ const AdminLogin = () => {
                             <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Email Address</label>
                             <div className="relative">
                                 <Mail className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input 
-                                    type="email" 
-                                    required 
+                                <input
+                                    type="email"
+                                    required
                                     placeholder="admin@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -93,9 +93,9 @@ const AdminLogin = () => {
                             <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Password</label>
                             <div className="relative">
                                 <Lock className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input 
-                                    type="password" 
-                                    required 
+                                <input
+                                    type="password"
+                                    required
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -103,8 +103,8 @@ const AdminLogin = () => {
                                 />
                             </div>
                         </div>
-                        
-                        <button 
+
+                        <button
                             type="submit"
                             className="w-full py-3 mt-6 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-600/20"
                         >
@@ -114,7 +114,7 @@ const AdminLogin = () => {
 
                     <div className="mt-6 text-center text-sm text-slate-400">
                         {isRegister ? 'Already have an admin account? ' : 'Need an admin account? '}
-                        <button 
+                        <button
                             type="button"
                             onClick={() => setIsRegister(!isRegister)}
                             className="text-blue-400 hover:text-blue-300 font-medium transition-colors"

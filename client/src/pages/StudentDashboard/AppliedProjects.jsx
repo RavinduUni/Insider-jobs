@@ -65,7 +65,7 @@ const AppliedProjects = () => {
 
   const navigate = useNavigate();
 
-  const [appliedProjects, setAppliedProjects] = useState([]); 
+  const [appliedProjects, setAppliedProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -92,7 +92,7 @@ const AppliedProjects = () => {
   const fetchAppliedProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/student/applied-projects', {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/applied-projects`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -107,7 +107,7 @@ const AppliedProjects = () => {
       }
 
       setAppliedProjects(data.applications);
-      
+
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {
@@ -143,8 +143,8 @@ const AppliedProjects = () => {
               key={f.value}
               onClick={() => setFilterStatus(f.value)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all border ${active
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
                 }`}
             >
               {f.value !== 'all' && (
@@ -161,7 +161,7 @@ const AppliedProjects = () => {
 
       {/* ── Applications list ── */}
       <div className='flex flex-col gap-4'>
-        
+
         {filteredProjects.map(project => (
           <div
             key={project.projectId._id}

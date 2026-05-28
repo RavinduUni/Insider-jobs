@@ -11,13 +11,13 @@ import toast from 'react-hot-toast';
 const uid = () => Math.random().toString(36).slice(2, 8);
 
 const enhanceWithAI = async (currentValue) => {
-    
+
     if (!currentValue?.trim()) {
         return currentValue;
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/student/enhance', {
+        const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/enhance`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

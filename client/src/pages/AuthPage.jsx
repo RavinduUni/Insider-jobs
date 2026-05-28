@@ -86,8 +86,8 @@ const AuthPage = () => {
         setError('')
     }
 
-    const BASE_URL = isStudent ? 'http://localhost:5000/api/student' : 'http://localhost:5000/api/recruiter'
-    const shouldUseOtpVerification = isRegister && isStudent 
+    const BASE_URL = isStudent ? `${import.meta.env.VITE_REACT_BACKEND_URL}/api/student` : `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter`
+    const shouldUseOtpVerification = isRegister && isStudent
 
 
     const handleSubmit = async (e) => {

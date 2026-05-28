@@ -100,7 +100,7 @@ const Projects = () => {
 
       setLoading(true);
 
-      const response = await fetch(`http://localhost:5000/api/projects/${user?._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/projects/${user?._id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -208,81 +208,81 @@ const Projects = () => {
               key={project._id}
               className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-all duration-300 group"
             >
-            {/* Top row */}
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
-                  <Briefcase className="w-4 h-4" />
+              {/* Top row */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
+                    <Briefcase className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-white group-hover:text-blue-400 transition-colors leading-snug">
+                      {project.title}
+                    </h2>
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full mt-1 inline-block ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
+                      {project.category}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-base font-semibold text-white group-hover:text-blue-400 transition-colors leading-snug">
-                    {project.title}
-                  </h2>
-                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full mt-1 inline-block ${catColor[project.category] || 'bg-slate-700 text-slate-400'}`}>
-                    {project.category}
-                  </span>
-                </div>
+                <StatusBadge status={project.status} />
               </div>
-              <StatusBadge status={project.status} />
-            </div>
 
-            {/* Meta row */}
-            <div className="flex flex-wrap items-center gap-4 mb-3 ml-12">
-              <span className="flex items-center gap-1.5 text-xs text-green-400">
-                <DollarSign className="w-3 h-3" />
-                <span className="font-semibold">${project.budget.toLocaleString()}</span>
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Users className="w-3 h-3" />
-                {project.applicationsCount} applicants
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Clock className="w-3 h-3" />
-                Due: {fmt(project.deadline)}
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                Posted: {fmt(project.createdAt)}
-              </span>
-            </div>
+              {/* Meta row */}
+              <div className="flex flex-wrap items-center gap-4 mb-3 ml-12">
+                <span className="flex items-center gap-1.5 text-xs text-green-400">
+                  <DollarSign className="w-3 h-3" />
+                  <span className="font-semibold">${project.budget.toLocaleString()}</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <Users className="w-3 h-3" />
+                  {project.applicationsCount} applicants
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" />
+                  Due: {fmt(project.deadline)}
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                  Posted: {fmt(project.createdAt)}
+                </span>
+              </div>
 
-            {/* Assigned / submitted info */}
-            {project.assignedTo && (
-              <p className="text-xs text-slate-500 mb-3 ml-12">
-                Assigned to: <span className="text-blue-400 font-medium">{project.assignedTo}</span>
-                {project.submittedDate && (
-                  <span className="ml-2 text-purple-400">· Submitted {fmt(project.submittedDate)}</span>
-                )}
-              </p>
-            )}
-
-            {/* Divider + actions */}
-            <div className="border-t border-slate-800 pt-4 flex items-center gap-2 ml-12">
-              <button onClick={() => navigate(`/apply-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
-                <Eye className="w-3.5 h-3.5" /> View
-              </button>
-
-              {project.status !== 'submitted' ? (
-                <>
-                  <button onClick={() => navigate(`/owner-dashboard/all-applicants/${project._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
-                    <Users className="w-3.5 h-3.5" /> Applicants ({project.applicationsCount})
-                  </button>
-                  <button onClick={() => navigate(`/owner-dashboard/create-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
-                    <Edit className="w-3.5 h-3.5" /> Edit
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => navigate(`/owner-dashboard/review-submission/${project.assignedTo}`)}
-                  className="flex items-center gap-1.5 text-xs text-white bg-purple-600/80 hover:bg-purple-600 border border-purple-500/30 px-3 py-2 rounded-xl transition-colors cursor-pointer"
-                >
-                  <CheckCircle className="w-3.5 h-3.5" /> Review Work
-                </button>
+              {/* Assigned / submitted info */}
+              {project.assignedTo && (
+                <p className="text-xs text-slate-500 mb-3 ml-12">
+                  Assigned to: <span className="text-blue-400 font-medium">{project.assignedTo}</span>
+                  {project.submittedDate && (
+                    <span className="ml-2 text-purple-400">· Submitted {fmt(project.submittedDate)}</span>
+                  )}
+                </p>
               )}
 
-              <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-3 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer ml-auto">
-                <Trash2 className="w-3.5 h-3.5" /> Delete
-              </button>
-            </div>
+              {/* Divider + actions */}
+              <div className="border-t border-slate-800 pt-4 flex items-center gap-2 ml-12">
+                <button onClick={() => navigate(`/apply-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+                  <Eye className="w-3.5 h-3.5" /> View
+                </button>
+
+                {project.status !== 'submitted' ? (
+                  <>
+                    <button onClick={() => navigate(`/owner-dashboard/all-applicants/${project._id}`)} className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+                      <Users className="w-3.5 h-3.5" /> Applicants ({project.applicationsCount})
+                    </button>
+                    <button onClick={() => navigate(`/owner-dashboard/create-project/${project._id}`)} className="flex items-center gap-1.5 text-xs text-slate-400 border border-slate-700/50 px-3 py-2 rounded-xl hover:text-white hover:border-slate-600 transition-all cursor-pointer">
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate(`/owner-dashboard/review-submission/${project.assignedTo}`)}
+                    className="flex items-center gap-1.5 text-xs text-white bg-purple-600/80 hover:bg-purple-600 border border-purple-500/30 px-3 py-2 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" /> Review Work
+                  </button>
+                )}
+
+                <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-3 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer ml-auto">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              </div>
             </div>
           ))
         )}

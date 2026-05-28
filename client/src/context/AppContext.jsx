@@ -23,11 +23,11 @@ const AppContextProvider = ({ children }) => {
         let endpoint = '';
 
         if (role === 'student') {
-            endpoint = 'http://localhost:5000/api/student/profile';
+            endpoint = `${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/profile`;
         } else if (role === 'recruiter') {
-            endpoint = 'http://localhost:5000/api/recruiter/profile';
+            endpoint = `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/profile`;
         } else if (role === 'admin') {
-            endpoint = 'http://localhost:5000/api/admin/profile';
+            endpoint = `${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/profile`;
         }
 
         try {
@@ -93,7 +93,7 @@ const AppContextProvider = ({ children }) => {
     //Get All projects
     const fetchAllProjects = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/projects');
+            const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/projects`);
             const data = await response.json();
             setProjects(data.projects);
         } catch (error) {
@@ -104,7 +104,7 @@ const AppContextProvider = ({ children }) => {
     //Get All companies
     const fetchAllCompanies = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/companies');
+            const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/companies`);
             const data = await response.json();
 
             if (data.success) {
@@ -127,7 +127,7 @@ const AppContextProvider = ({ children }) => {
         if (!token) return;
 
         try {
-            const response = await fetch('http://localhost:5000/api/recruiter/project-applicants', {
+            const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/project-applicants`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -160,7 +160,7 @@ const AppContextProvider = ({ children }) => {
         setFetchingRecommendations(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/student/recommendations', {
+            const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/recommendations`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`

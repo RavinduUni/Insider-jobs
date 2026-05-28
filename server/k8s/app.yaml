@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freelancing-platform-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: freelancing-platform-server
+  template:
+    metadata:
+      labels:
+        app: freelancing-platform-server
+    spec:
+      containers:
+        - name: freelancing-platform-server
+          image: ravindusd/freelancing-platform-server:latest
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: freelancing-platform-server
+spec:
+  selector:
+    app: freelancing-platform-server
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30001

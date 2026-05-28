@@ -98,7 +98,7 @@ const Settings = () => {
     { id: 'security', label: 'Security', icon: Shield },
   ]
 
-  const {token, user, setUser} = useContext(AppContext);
+  const { token, user, setUser } = useContext(AppContext);
 
   const [activeTab, setActiveTab] = useState('profile')
   const [isEditingProfile, setIsEditingProfile] = useState(false)
@@ -241,7 +241,7 @@ const Settings = () => {
         formData.append('resume', selectedResumeFile);
       }
 
-      const res = await fetch('http://localhost:5000/api/student/update-profile', {
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
