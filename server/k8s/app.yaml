@@ -17,6 +17,9 @@ spec:
           image: ravindusd/freelancing-platform-server:latest
           ports:
             - containerPort: 5000
+          envFrom:
+            - secretRef:
+              name: freelancing-platform-server-secrets
 ---
 apiVersion: v1
 kind: Service

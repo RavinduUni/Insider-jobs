@@ -73,6 +73,24 @@ jobs:
 
             - name: Verify connection
               run: kubectl get nodes
+
+            - name: Create Kubernetes Secrets
+              run: |
+                kubectl create secret generic freelancing-platform-server-secrets \
+                  --from-literal=PORT="${{ secrets.PORT }}" \
+                  --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+                  --from-literal=MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+                  --from-literal=CLOUDINARY_NAME="${{ secrets.CLOUDINARY_NAME }}" \
+                  --from-literal=CLOUDINARY_API_KEY="${{ secrets.CLOUDINARY_API_KEY }}" \
+                  --from-literal=CLOUDINARY_API_SECRET="${{ secrets.CLOUDINARY_API_SECRET }}" \
+                  --from-literal=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+                  --from-literal=GEMINI_BASE_URL="${{ secrets.GEMINI_BASE_URL }}" \
+                  --from-literal=GEMINI_MODEL="${{ secrets.GEMINI_MODEL }}" \
+                  --from-literal=SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+                  --from-literal=SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+                  --from-literal=SMTP_USER="${{ secrets.SMTP_USER }}" \
+                  --from-literal=SMTP_PASS="${{ secrets.SMTP_PASS }}" \
+                  --dry-run=client -o yaml | kubectl apply -f -
               
             - name: Deploy to AWS
               run: kubectl apply -f server/k8s/app.yaml
