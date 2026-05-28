@@ -1,4 +1,4 @@
-name: Hello Node App to Docker
+name: Deploy to AWS
 
 on:
     push:
