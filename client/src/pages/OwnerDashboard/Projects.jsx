@@ -2,10 +2,11 @@ import React, { useContext, useEffect, useState } from 'react'
 import {
   Briefcase, CheckCircle, Clock, DollarSign,
   Edit, Eye, Trash2, Users, ArrowRight,
-  ArrowLeft
+  ArrowLeft, X, AlertTriangle
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -81,6 +82,44 @@ const ProjectCardSkeleton = () => (
   </div>
 )
 
+const DeleteProjectModal = ({ project, onClose, onDelete, isDeleting }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 z-10">
+        <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <p className="text-xs text-red-400 font-semibold uppercase tracking-widest mb-1">Warning</p>
+            <h2 className="text-xl font-bold text-white">Delete Project</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 mb-4">
+          <p className="text-sm font-medium text-white mb-1">{project?.title}</p>
+          <span className="text-xs text-slate-400">This will permanently delete the project and all associated applications.</span>
+        </div>
+
+        <div className="flex gap-2 bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 mb-5">
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-400 leading-relaxed">This action cannot be undone. Are you sure you want to proceed?</p>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} disabled={isDeleting} className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm transition-all cursor-pointer">
+            Cancel
+          </button>
+          <button onClick={onDelete} disabled={isDeleting} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors cursor-pointer ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <Trash2 className="w-4 h-4" /> {isDeleting ? 'Deleting...' : 'Delete Project'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const Projects = () => {
   const { token, user } = useContext(AppContext);
@@ -91,6 +130,37 @@ const Projects = () => {
   const navigate = useNavigate()
   const [projectFilter, setProjectFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/delete-project/${projectToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success(data.message || 'Project deleted successfully');
+        setProjects(prev => prev.filter(p => p._id !== projectToDelete._id));
+        setShowDeleteModal(false);
+        setProjectToDelete(null);
+      } else {
+        toast.error(data.message || 'Error deleting project');
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Error deleting project');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const fetchProjectsById = async () => {
 
@@ -279,7 +349,10 @@ const Projects = () => {
                   </button>
                 )}
 
-                <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-3 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer ml-auto">
+                <button 
+                  onClick={() => { setProjectToDelete(project); setShowDeleteModal(true); }}
+                  className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-3 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer ml-auto"
+                >
                   <Trash2 className="w-3.5 h-3.5" /> Delete
                 </button>
               </div>
@@ -330,6 +403,15 @@ const Projects = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {showDeleteModal && (
+        <DeleteProjectModal 
+          project={projectToDelete} 
+          onClose={() => { setShowDeleteModal(false); setProjectToDelete(null); }} 
+          onDelete={handleDeleteProject} 
+          isDeleting={isDeleting} 
+        />
       )}
     </div>
   )

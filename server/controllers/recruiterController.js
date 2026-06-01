@@ -506,6 +506,11 @@ export const assignProject = async (req, res) => {
         application.status = 'assigned';
         await application.save();
 
+        //update project status
+        const project = await Project.findById(projectId);
+        project.status = 'in progress';
+        await project.save();
+
 
         //Reject other applicants
         const applications = await Application.find({ projectId });
@@ -522,3 +527,42 @@ export const assignProject = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error while assigning project' });
     }
 }   
+
+export const deleteProject = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { projectId } = req.params;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        if (!projectId) {
+            return res.status(400).json({ success: false, message: 'Project ID is required' });
+        }
+
+        const project = await Project.findById(projectId);
+
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (String(project.recruiter) !== String(recruiter._id)) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to delete this project' });
+        }
+
+        await Project.findByIdAndDelete(projectId);
+        
+        // Delete related applications and NDAs
+        const applications = await Application.find({ projectId });
+        const appIds = applications.map(app => app._id);
+        await Application.deleteMany({ projectId });
+        await NDA.deleteMany({ applicationId: { $in: appIds } });
+
+        return res.status(200).json({ success: true, message: 'Project deleted successfully' });
+
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        return res.status(500).json({ success: false, message: 'Server error while deleting project' });
+    }
+}
