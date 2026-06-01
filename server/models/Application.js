@@ -25,7 +25,7 @@ const applicationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["applied","selected","rejected"], 
+        enum: ["applied","selected","rejected", "assigned"], 
         default: "applied" 
     },
     ndaId: {

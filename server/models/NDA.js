@@ -12,7 +12,7 @@ const ndaSchema = new mongoose.Schema({
     },
     ndaStatus: { 
         type: String, 
-        enum: ["nda_sent","accepted","rejected","assigned"], 
+        enum: ["nda_sent","accepted","rejected"], 
         default: "nda_sent" 
     },
 }, { timestamps: true });

@@ -496,15 +496,13 @@ export const uploadSignedNDA = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Application ID and signed NDA file are required' });
         }
 
-        const nda = await NDA.findOne({ _id: applicationId });
+        const application = await Application.findById(applicationId);
 
-        if (!nda) {
-            return res.status(404).json({ success: false, message: 'NDA not found for the given application ID' });
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found' });
         }
 
-        if (nda.ndaStatus !== 'nda_sent') {
-            return res.status(400).json({ success: false, message: 'NDA has already been processed' });
-        }
+        const nda = await NDA.findOne({ applicationId: applicationId });
 
         const uploadResult = await cloudinary.uploader.upload(ndaFile.path, {
             folder: 'ndas/signed',

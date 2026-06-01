@@ -12,6 +12,7 @@ import { useContext } from 'react'
 import { useEffect } from 'react'
 import { useState } from 'react'
 import { useCallback } from 'react'
+import toast from 'react-hot-toast'
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -238,20 +239,23 @@ const ViewStudentDetails = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ studentId, projectId })
+        body: JSON.stringify({ studentId: studentId, projectId: projectId })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         console.error('Failed to assign project:', data.message);
+        toast.error(data.message);
         return;
       }
 
+      toast.success(data.message);
       setShowAssignModal(false);
       fetchStudentProfile(); // Refresh profile after assigning
     } catch (error) {
       console.error('Error assigning project:', error);
+      toast.error('Error assigning project');
     } finally {
       setAssigning(false);
     }
@@ -376,6 +380,7 @@ const ViewStudentDetails = () => {
     }
   }, [token, studentId, projectId])
 
+
   useEffect(() => {
     if (token && studentId && projectId) {
       fetchStudentProfile();
@@ -444,21 +449,34 @@ const ViewStudentDetails = () => {
         <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3">
           <StatusBadge status={applicant.ndaStatus} />
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowNDAModal(true)}
-              className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" /> View NDA
-            </button>
-            <button
-              onClick={() => setShowAssignModal(true)}
-              className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
-            >
-              <UserCheck className="w-3.5 h-3.5" /> Assign Project
-            </button>
-            <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer">
-              <X className="w-3.5 h-3.5" /> Reject Application
-            </button>
+            {applicant.ndaStatus === 'rejected' ? (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-xl">
+                <X className="w-3.5 h-3.5 text-red-400" />
+                <span className="text-xs text-red-400 font-medium">Application Rejected</span>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowNDAModal(true)}
+                  className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" /> View NDA
+                </button>
+                {applicant.ndaStatus !== 'assigned' && (
+                  <button
+                    onClick={() => setShowAssignModal(true)}
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" /> Assign Project
+                  </button>
+                )}
+                {applicant.ndaStatus !== 'assigned' && (
+                  <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer">
+                    <X className="w-3.5 h-3.5" /> Reject Application
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

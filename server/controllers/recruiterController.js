@@ -252,6 +252,8 @@ export const sendNDA = async (req, res) => {
         const ndaDocument = req.file ? req.file.path : null;
         const { applicationId } = req.body;
 
+        console.log(ndaDocument);
+
         if (!recruiter) {
             return res.status(404).json({ success: false, message: 'Unauthorized' });
         }
@@ -278,7 +280,7 @@ export const sendNDA = async (req, res) => {
 
         const result = await cloudinary.uploader.upload(ndaDocument, {
             folder: 'ndas',
-            allowed_formats: ['pdf', 'doc', 'docx'],
+            resource_type: 'raw',
             use_filename: true,
             unique_filename: true
         });
@@ -292,7 +294,7 @@ export const sendNDA = async (req, res) => {
         await newNDA.save();
 
         application.ndaId = newNDA._id;
-        application.status = 'nda_sent';
+        application.status = 'selected';
         await application.save();
 
         return res.status(200).json({ success: true, message: 'NDA sent successfully', application, nda: newNDA });
@@ -301,7 +303,7 @@ export const sendNDA = async (req, res) => {
         console.error('Error sending NDA:', error);
         if (ndaPublicId) {
             try {
-                await cloudinary.uploader.destroy(ndaPublicId);
+                await cloudinary.uploader.destroy(ndaPublicId, { resource_type: 'raw' });
             }
             catch (cleanupError) {
                 console.error('Error cleaning up NDA document from Cloudinary:', cleanupError);
@@ -310,6 +312,7 @@ export const sendNDA = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error while sending NDA' });
     }
 }
+
 
 export const getAllNDAs = async (req, res) => {
     try {
@@ -326,7 +329,7 @@ export const getAllNDAs = async (req, res) => {
         const ndaList = await NDA.find({ applicationId: { $in: applications } })
             .populate({ path: 'applicationId', populate: { path: 'studentId', select: 'name email university' } })
             .populate({ path: 'applicationId', populate: { path: 'projectId', select: 'title' } });
-        
+
         return res.status(200).json({ success: true, ndas: ndaList });
     } catch (error) {
         console.error('Error fetching NDAs:', error);
@@ -336,7 +339,7 @@ export const getAllNDAs = async (req, res) => {
 
 export const getApplicantDetails = async (req, res) => {
     try {
-        
+
         const recruiter = req.user;
 
         if (!recruiter) {
@@ -344,16 +347,16 @@ export const getApplicantDetails = async (req, res) => {
         }
         console.log('Received request to fetch applicant details with body:', req.body);
 
-        const {studentId, projectId} = req.body || {};
+        const { studentId, projectId } = req.body || {};
 
         if (!studentId) {
             return res.status(400).json({ success: false, message: 'Student ID is required' });
         }
 
         const applicantDetails = await Application.findOne({ studentId, projectId })
-        .populate('studentId', 'name bio email skills university major graduationYear profilePicture resume github linkedin portfolio appliedProjects')
-        .populate('projectId', 'title budget deadline createdAt recruiter')
-        .populate('ndaId', 'documentUrl ndaStatus createdAt');
+            .populate('studentId', 'name bio email skills university major graduationYear profilePicture resume github linkedin portfolio appliedProjects')
+            .populate('projectId', 'title budget deadline createdAt recruiter')
+            .populate('ndaId', 'documentUrl ndaStatus createdAt');
 
         if (!applicantDetails) {
             return res.status(404).json({ success: false, message: 'No application found for this student and project' });
@@ -415,13 +418,13 @@ export const updateProject = async (req, res) => {
         await project.save();
 
         return res.status(200).json({ success: true, message: 'Project updated successfully', project });
-        
+
     } catch (error) {
         console.error('Error updating project:', error);
         return res.status(500).json({ success: false, message: 'Server error while updating project' });
     }
 }
-   
+
 
 export const getStats = async (req, res) => {
     try {
@@ -465,5 +468,57 @@ export const getStats = async (req, res) => {
     } catch (error) {
         console.error('Error fetching stats:', error);
         return res.status(500).json({ success: false, message: 'Server error while fetching stats' });
+    }
+}   
+
+
+export const assignProject = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { studentId, projectId } = req.body;
+
+        if (!recruiter) {
+            return res.status(404).json({ success: false, message: 'Recruiter not found' });
+        }
+
+        if (!studentId || !projectId) {
+            return res.status(400).json({ success: false, message: 'Student ID and Project ID are required' });
+        }
+
+        const application = await Application.findOne({ studentId, projectId });
+        if (!application) {
+            return res.status(404).json({ success: false, message: 'Application not found'});
+        }
+
+        const existingAssignment = await Application.findOne({ projectId, status: 'assigned' });
+        if (existingAssignment) {
+            return res.status(400).json({ success: false, message: 'Project is already assigned'});
+        }
+
+        if (application.projectId.toString() !== projectId) {
+            return res.status(400).json({ success: false, message: 'Application is not for the given project' });
+        }
+
+        if (application.status !== 'selected') {
+            return res.status(400).json({ success: false, message: 'Application is not selected for the project' });
+        }
+
+        application.status = 'assigned';
+        await application.save();
+
+
+        //Reject other applicants
+        const applications = await Application.find({ projectId });
+        applications.forEach(async (app) => {
+            if (app.status !== 'assigned') {
+                app.status = 'rejected';
+                await app.save();
+            }
+        });
+
+        return res.status(200).json({ success: true, message: 'Project assigned successfully', application });
+    } catch (error) {
+        console.error('Error assigning project:', error);
+        return res.status(500).json({ success: false, message: 'Server error while assigning project' });
     }
 }   

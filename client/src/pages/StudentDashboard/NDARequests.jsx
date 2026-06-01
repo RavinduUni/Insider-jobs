@@ -1,6 +1,7 @@
 import { CheckCircle, Eye, FileText, Shield, X, XCircle, Clock, DollarSign, Building2, AlertTriangle, Download, Upload } from 'lucide-react'
 import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext';
+import { toast } from 'react-hot-toast';
 
 // ── Inline StatusBadge ────────────────────────────────────────────────────────
 const statusConfig = {
@@ -98,9 +99,11 @@ const NDARequests = () => {
       setNdaFile(null);
       await fetchNDAs();
       closeModal();
+      toast.success(data.message || 'Signed NDA uploaded successfully');
 
     } catch (error) {
       console.error('Error uploading signed NDA:', error);
+      toast.error(data.message || 'Failed to upload signed NDA');
     } finally {
       setUploadingNDA(false);
     }

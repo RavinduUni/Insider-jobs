@@ -267,15 +267,15 @@ const AllApplicant = () => {
                         )}
 
                         <button
-                          disabled={applicant.status !== 'accepted'}
+                          disabled={applicant.status !== 'selected'}
                           onClick={() => { closeAllModals(); setSelectedApplicant(applicant); setSelectedProject(project); setShowAssignProjectModel(true) }}
                           className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border transition-all flex-1
-                            ${applicant.status === 'accepted'
+                            ${applicant.status === 'selected'
                               ? 'text-green-400 border-green-500/30 hover:bg-green-500/10 cursor-pointer'
-                              : 'text-slate-600 border-slate-700/50 cursor-not-allowed opacity-40'
+                              : 'text-slate-600 border-slate-700/50 cursor-not-allowed'
                             }`}
                         >
-                          <UserCheck className="w-3 h-3" /> Assign
+                          <UserCheck className="w-3 h-3" /> {applicant.status === 'assigned' ? 'Assigned' : applicant.status}
                         </button>
                       </div>
                     </div>
@@ -468,7 +468,7 @@ const AllApplicant = () => {
                 <UploadIcon className="w-8 h-8 text-slate-600" />
                 <p className="text-sm text-slate-400">Click to upload or drag and drop</p>
                 <p className="text-xs text-slate-600">.pdf (max 5MB)</p>
-                <input type="file" ref={inputRef} accept=".pdf" onChange={handleFileChange} className="hidden" />
+                <input type="file" ref={inputRef} accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
               </div>
             ) : (
               <div className="flex items-center justify-between bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-3 mb-5">
