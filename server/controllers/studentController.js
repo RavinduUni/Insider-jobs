@@ -545,15 +545,21 @@ export const getStats = async (req, res) => {
             total: 0,
             applied: 0,
             selected: 0,
-            rejected: 0
+            rejected: 0,
         };
 
         applications.forEach(application => {
             applicationStats.total++;
-            applicationStats[application.status]++;
+            if (applicationStats[application.status] !== undefined) {
+                applicationStats[application.status]++;
+            } else {
+                applicationStats[application.status] = 1;
+            }
         });
 
-        const projects = await Project.find({ studentId });
+        const assignedApplications = applications.filter(app => app.status === 'assigned');
+        const projectIds = assignedApplications.map(app => app.projectId);
+        const projects = await Project.find({ _id: { $in: projectIds } });
 
         let projectStats = {
             total: 0,
@@ -563,10 +569,15 @@ export const getStats = async (req, res) => {
 
         projects.forEach(project => {
             projectStats.total++;
-            projectStats[project.status]++;
+            const statusKey = project.status === 'in progress' ? 'in_progress' : project.status;
+            if (projectStats[statusKey] !== undefined) {
+                projectStats[statusKey]++;
+            } else {
+                projectStats[statusKey] = 1;
+            }
         });
 
-        const ndas = await NDA.find({ applicationId: { $in: applications.map(app => app.ndaId) } });
+        const ndas = await NDA.find({ applicationId: { $in: applications.map(app => app._id) } });
 
         let ndaStats = {
             total: 0,
@@ -577,8 +588,14 @@ export const getStats = async (req, res) => {
 
         ndas.forEach(nda => {
             ndaStats.total++;
-            ndaStats[nda.ndaStatus]++;
+            if (ndaStats[nda.ndaStatus] !== undefined) {
+                ndaStats[nda.ndaStatus]++;
+            } else {
+                ndaStats[nda.ndaStatus] = 1;
+            }
         });
+
+
 
         return res.status(200).json({
             success: true,

@@ -356,7 +356,7 @@ export const getApplicantDetails = async (req, res) => {
         const applicantDetails = await Application.findOne({ studentId, projectId })
             .populate('studentId', 'name bio email skills university major graduationYear profilePicture resume github linkedin portfolio appliedProjects')
             .populate('projectId', 'title budget deadline createdAt recruiter')
-            .populate('ndaId', 'documentUrl ndaStatus createdAt');
+            .populate('ndaId', 'documentUrl ndaStatus createdAt updatedAt');
 
         if (!applicantDetails) {
             return res.status(404).json({ success: false, message: 'No application found for this student and project' });

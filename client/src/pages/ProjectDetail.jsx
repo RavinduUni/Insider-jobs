@@ -1,7 +1,7 @@
 import { ArrowLeft, Briefcase, CheckCircle, Clock, DollarSign, MapPin } from 'lucide-react';
 import React, { useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
-import ApplyModal from '../components/ApplyModel';
+import Footer from '../components/Footer';
 import ApplyModel from '../components/ApplyModel';
 import Navbar2 from '../components/Navbar2';
 import { AppContext } from '../context/AppContext';
@@ -40,7 +40,7 @@ const ProjectDetail = () => {
     return (
         <>
             <Navbar2 />
-            <div className='container px-20 mx-auto py-10 bg-background min-h-screen'>
+            <div className='container px-20 mx-auto pt-20 pb-30 bg-background min-h-screen'>
                 <h3 onClick={() => navigate('/')} className='flex items-center gap-2 text-text-secondary cursor-pointer mb-8'>
                     <ArrowLeft className='w-5 h-5' />
                     Back to projects
@@ -173,6 +173,7 @@ const ProjectDetail = () => {
                     token={token}
                 />
             )}
+            <Footer />
         </>
     )
 }

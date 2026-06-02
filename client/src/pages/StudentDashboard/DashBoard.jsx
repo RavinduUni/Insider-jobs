@@ -1,5 +1,5 @@
 import {
-  ArrowRight, Briefcase, CheckCircle, Clock,
+  ArrowLeft, ArrowRight, Briefcase, CheckCircle, Clock,
   FileText, Shield, TrendingUp, Upload, Wallet
 } from 'lucide-react'
 import React, { useContext, useEffect, useState } from 'react'
@@ -61,6 +61,12 @@ const Dashboard = () => {
   const [myApplications, setMyApplications] = useState([]);
   const [stats, setStats] = useState(null);
 
+  // ── Pagination ─────────────────────────────────────────────────────────────
+  const ITEMS_PER_PAGE = 3;
+
+  const [activeProjectsPage, setActiveProjectsPage] = useState(1);
+  const [recentAppsPage, setRecentAppsPage] = useState(1);
+
 
   const formatDate = (value) => {
     if (!value) return 'N/A';
@@ -76,8 +82,18 @@ const Dashboard = () => {
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
   const recentApplications = myApplications
-    .filter(application => application?.status === 'applied')
+    .filter(application => application?.status === 'applied' || application?.status === 'rejected')
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // Active projects pagination
+  const activeTotalPages = Math.ceil(activeApplications.length / ITEMS_PER_PAGE);
+  const activeStart = (activeProjectsPage - 1) * ITEMS_PER_PAGE;
+  const currentActiveApplications = activeApplications.slice(activeStart, activeStart + ITEMS_PER_PAGE);
+
+  // Recent applications pagination
+  const recentTotalPages = Math.ceil(recentApplications.length / ITEMS_PER_PAGE);
+  const recentStart = (recentAppsPage - 1) * ITEMS_PER_PAGE;
+  const currentRecentApplications = recentApplications.slice(recentStart, recentStart + ITEMS_PER_PAGE);
 
   const getMyApplications = async () => {
 
@@ -212,7 +228,7 @@ const Dashboard = () => {
         <div className='xl:col-span-2 space-y-6'>
 
           {/* Active Projects */}
-          <div className='bg-slate-900 border h-[50%] border-slate-800 rounded-2xl p-5 overflow-y-scroll'>
+          <div className='bg-slate-900 border border-slate-800 h-[50%] rounded-2xl p-5'>
             <SectionHeader title='Active Projects' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-4'>
               {activeApplications.length === 0 && (
@@ -220,8 +236,8 @@ const Dashboard = () => {
                   <p className='text-sm text-slate-400'>No active projects in progress.</p>
                 </div>
               )}
-              {activeApplications.map(application => (
-                <div key={application._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer' onClick={() => navigate(`projects/${application.projectId._id}`)}>
+              {currentActiveApplications.map(application => (
+                <div key={application._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer' onClick={() => navigate('applied-projects') }>
                   <div className='flex items-start justify-between mb-3'>
                     <div>
                       <p className='text-sm font-medium text-white mb-0.5'>{application?.projectId?.title || 'Untitled Project'}</p>
@@ -235,14 +251,39 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </div>
-
                 </div>
               ))}
             </div>
+            {activeTotalPages > 1 && (
+              <div className='grid grid-cols-4 mt-4'>
+                <div className='flex items-center justify-center gap-1 col-span-3 col-start-2'>
+                  <button
+                    onClick={() => setActiveProjectsPage(prev => Math.max(prev - 1, 1))}
+                    disabled={activeProjectsPage === 1}
+                    className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${activeProjectsPage === 1 && 'opacity-40 cursor-not-allowed'}`}>
+                    <ArrowLeft className='w-4 h-4' />
+                  </button>
+                  {Array.from({ length: activeTotalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setActiveProjectsPage(page)}
+                      className={`border text-primary w-8 h-8 rounded cursor-pointer ${activeProjectsPage === page && 'bg-primary border-primary text-white'}`}>
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setActiveProjectsPage(prev => Math.min(prev + 1, activeTotalPages))}
+                    disabled={activeProjectsPage === activeTotalPages}
+                    className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${activeProjectsPage === activeTotalPages && 'opacity-40 cursor-not-allowed'}`}>
+                    <ArrowRight className='w-4 h-4' />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recent Applications */}
-          <div className='bg-slate-900 border h-[46%] border-slate-800 rounded-2xl p-5 overflow-y-scroll'>
+          <div className='bg-slate-900 border border-slate-800 h-[46%] rounded-2xl p-5'>
             <SectionHeader title='Recent Applications' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-2'>
               {recentApplications.length === 0 && (
@@ -250,8 +291,8 @@ const Dashboard = () => {
                   <p className='text-sm text-slate-400'>No recently applied projects.</p>
                 </div>
               )}
-              {recentApplications.map(application => (
-                <div key={application._id} className='flex items-center justify-between py-3 border-b border-slate-800 last:border-0 '>
+              {currentRecentApplications.map(application => (
+                <div key={application._id} className='flex items-center justify-between py-3 border-b border-slate-800 last:border-0'>
                   <div className='flex items-center gap-3'>
                     <div className='w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center shrink-0'>
                       <Briefcase className='w-3.5 h-3.5 text-slate-400' />
@@ -266,11 +307,37 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <span className='text-xs font-medium px-3 py-1 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/20'>
-                    Applied
+                    {application?.status}
                   </span>
                 </div>
               ))}
             </div>
+            {recentTotalPages > 1 && (
+              <div className='grid grid-cols-4 mt-4'>
+                <div className='flex items-center justify-center gap-1 col-span-3 col-start-2'>
+                  <button
+                    onClick={() => setRecentAppsPage(prev => Math.max(prev - 1, 1))}
+                    disabled={recentAppsPage === 1}
+                    className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${recentAppsPage === 1 && 'opacity-40 cursor-not-allowed'}`}>
+                    <ArrowLeft className='w-4 h-4' />
+                  </button>
+                  {Array.from({ length: recentTotalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setRecentAppsPage(page)}
+                      className={`border text-primary w-8 h-8 rounded cursor-pointer ${recentAppsPage === page && 'bg-primary border-primary text-white'}`}>
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setRecentAppsPage(prev => Math.min(prev + 1, recentTotalPages))}
+                    disabled={recentAppsPage === recentTotalPages}
+                    className={`border text-primary w-8 h-8 rounded flex items-center justify-center cursor-pointer ${recentAppsPage === recentTotalPages && 'opacity-40 cursor-not-allowed'}`}>
+                    <ArrowRight className='w-4 h-4' />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -47,7 +47,7 @@ const NDAModal = ({ applicant, onClose }) => {
       const objectUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = `${applicant.project || 'nda-document'}.pdf`;
+      link.download = `${applicant.project || 'nda-document'}.${applicant.ndaDocumentUrl.split('.').pop()}`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -87,7 +87,7 @@ const NDAModal = ({ applicant, onClose }) => {
                 <span className="text-slate-500 text-xs">{applicant.email || 'No email provided'}</span>
               </div>
             </div>
-            <StatusBadge status={applicant.ndaStatus} />
+            <StatusBadge status={applicant.status} />
           </div>
         </div>
 
@@ -340,8 +340,10 @@ const ViewStudentDetails = () => {
         bio: data?.applicantDetails.studentId.bio || data?.applicantDetails.notes || 'No bio provided.',
         projectPlan: data?.applicantDetails.projectPlanUrl,
         cv: data?.applicantDetails.cvUrl || data?.applicantDetails.studentId.resume,
-        ndaStatus: data?.applicantDetails.status,
+        status: data?.applicantDetails.status,
         ndaDocumentUrl: data?.applicantDetails.ndaId?.documentUrl,
+        ndaStatus: data?.applicantDetails.ndaId?.ndaStatus,
+        ndaAcceptedDate: data?.applicantDetails.ndaId?.updatedAt,
         portfolio: data?.applicantDetails.studentId.portfolio,
         linkedin: data?.applicantDetails.studentId.linkedin,
         github: data?.applicantDetails.studentId.github,
@@ -416,7 +418,7 @@ const ViewStudentDetails = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-bold text-white">{applicant.name}</h1>
-              <StatusBadge status={applicant.ndaStatus} />
+              <StatusBadge status={applicant.status} />
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mb-1.5">
               {applicant.university && <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 text-blue-400" />{applicant.university}</span>}
@@ -447,9 +449,9 @@ const ViewStudentDetails = () => {
 
         {/* Action bar */}
         <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3">
-          <StatusBadge status={applicant.ndaStatus} />
+          <StatusBadge status={applicant.status} />
           <div className="flex items-center gap-2">
-            {applicant.ndaStatus === 'rejected' ? (
+            {applicant.status === 'rejected' ? (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-xl">
                 <X className="w-3.5 h-3.5 text-red-400" />
                 <span className="text-xs text-red-400 font-medium">Application Rejected</span>
@@ -458,19 +460,21 @@ const ViewStudentDetails = () => {
               <>
                 <button
                   onClick={() => setShowNDAModal(true)}
-                  className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
+                  disabled={applicant.ndaStatus !== 'accepted'}
+                  className="flex items-center gap-1.5 text-xs text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   <Eye className="w-3.5 h-3.5" /> View NDA
                 </button>
-                {applicant.ndaStatus !== 'assigned' && (
+                {applicant.status !== 'assigned' && (
                   <button
                     onClick={() => setShowAssignModal(true)}
-                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                    disabled={applicant.ndaStatus !== 'accepted'}
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 border border-blue-500/30 px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
                   >
                     <UserCheck className="w-3.5 h-3.5" /> Assign Project
                   </button>
                 )}
-                {applicant.ndaStatus !== 'assigned' && (
+                {applicant.status !== 'assigned' && (
                   <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer">
                     <X className="w-3.5 h-3.5" /> Reject Application
                   </button>

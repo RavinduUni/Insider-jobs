@@ -338,6 +338,7 @@ const NDARequests = () => {
                     accept='.pdf,.doc,.docx'
                     className='hidden'
                     onChange={(e) => setNdaFile(e.target.files?.[0] || null)}
+                    disabled={selectedNDAModal?.ndaId?.ndaStatus === 'accepted' || selectedNDAModal?.ndaId?.ndaStatus === 'rejected'}
                   />
                 </label>
               </div>
@@ -353,7 +354,7 @@ const NDARequests = () => {
               </button>
               <button
                 onClick={() => uploadSignedNDA(selectedNDAModal?._id, ndaFile)}
-                disabled={!ndaFile || uploadingNDA}
+                disabled={!ndaFile || uploadingNDA || selectedNDAModal?.ndaId?.ndaStatus === 'accepted'}
                 className='flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600/80 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors border border-green-500/30'
               >
                 <Upload className='w-4 h-4' />
