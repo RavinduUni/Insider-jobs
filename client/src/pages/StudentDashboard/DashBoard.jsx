@@ -78,7 +78,7 @@ const Dashboard = () => {
   };
 
   const activeApplications = myApplications
-    .filter(application => application?.projectId?.status?.toLowerCase() === 'in progress')
+    .filter(application => application?.projectId?.status?.toLowerCase() === 'in progress' || application?.projectId?.status?.toLowerCase() === 'completed')
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
   const recentApplications = myApplications
@@ -292,7 +292,7 @@ const Dashboard = () => {
                 </div>
               )}
               {currentRecentApplications.map(application => (
-                <div key={application._id} className='flex items-center justify-between py-3 border-b border-slate-800 last:border-0'>
+                <div key={application._id} className='flex items-center justify-between py-3 border-b last:border-0 bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer'>
                   <div className='flex items-center gap-3'>
                     <div className='w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center shrink-0'>
                       <Briefcase className='w-3.5 h-3.5 text-slate-400' />

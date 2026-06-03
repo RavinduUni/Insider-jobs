@@ -609,3 +609,85 @@ export const getStats = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message || 'Error fetching stats' });
     }
 }
+
+
+export const getWalletData = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+
+        // Find all applications where this student was assigned
+        const assignedApplications = await Application.find({
+            studentId,
+            status: 'assigned'
+        });
+
+        if (!assignedApplications.length) {
+            return res.status(200).json({
+                success: true,
+                totalEarned: 0,
+                thisMonth: 0,
+                pending: 0,
+                transactions: []
+            });
+        }
+
+        const projectIds = assignedApplications.map(app => app.projectId);
+
+        // Fetch projects, populating the recruiter name
+        const projects = await Project.find({ _id: { $in: projectIds } })
+            .populate('recruiter', 'companyName name')
+            .lean();
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        let totalEarned = 0;
+        let thisMonth = 0;
+        let pending = 0;
+        const transactions = [];
+
+        for (const project of projects) {
+            const isPaid = project.paymentStatus === 'paid' && project.status === 'completed';
+            const isInProgress = project.status === 'in progress';
+
+            if (isPaid) {
+                const paidDate = project.updatedAt ? new Date(project.updatedAt) : new Date(project.deadline);
+                totalEarned += project.budget;
+
+                if (paidDate >= startOfMonth) {
+                    thisMonth += project.budget;
+                }
+
+                const recruiterName = project.recruiter?.companyName || project.recruiter?.name || 'Client';
+
+                transactions.push({
+                    _id: project._id,
+                    type: 'credit',
+                    description: `Payment received - ${project.title}`,
+                    amount: project.budget,
+                    date: paidDate.toISOString(),
+                    status: 'Completed',
+                    category: project.category,
+                    client: recruiterName,
+                });
+            } else if (isInProgress) {
+                pending += project.budget;
+            }
+        }
+
+        // Sort transactions: newest first
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        return res.status(200).json({
+            success: true,
+            totalEarned,
+            thisMonth,
+            pending,
+            transactions
+        });
+
+    } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error fetching wallet data' });
+    }
+}

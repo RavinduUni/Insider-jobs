@@ -566,3 +566,225 @@ export const deleteProject = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error while deleting project' });
     }
 }
+
+// ── Payments ──────────────────────────────────────────────────────────────────
+
+export const getAssignedProjects = async (req, res) => {
+    try {
+        const recruiter = req.user;
+
+        if (!recruiter) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // Find projects belonging to this recruiter that are in progress or completed
+        const projects = await Project.find({
+            recruiter: recruiter._id,
+            status: { $in: ['in progress', 'completed'] }
+        }).sort({ updatedAt: -1 });
+
+        // For each project, find the assigned application and populate the student
+        const projectsWithStudent = await Promise.all(
+            projects.map(async (project) => {
+                const assignedApplication = await Application.findOne({
+                    projectId: project._id,
+                    status: 'assigned'
+                }).populate('studentId', 'name email university degree major profilePicture rating completedProjects');
+
+                return {
+                    _id: project._id,
+                    title: project.title,
+                    category: project.category,
+                    budget: project.budget,
+                    deadline: project.deadline,
+                    submittedDate: project.submittedDate || project.updatedAt,
+                    status: project.status,
+                    paymentStatus: project.paymentStatus || 'unpaid',
+                    assignedStudent: assignedApplication?.studentId || null,
+                };
+            })
+        );
+
+        // Filter out any projects where no assigned student was found
+        const result = projectsWithStudent.filter(p => p.assignedStudent !== null);
+
+        return res.status(200).json({ success: true, projects: result });
+    } catch (error) {
+        console.error('Error fetching assigned projects:', error);
+        return res.status(500).json({ success: false, message: 'Server error while fetching assigned projects' });
+    }
+};
+
+
+export const processPayment = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { projectId, amount } = req.body;
+
+        if (!recruiter) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!projectId) {
+            return res.status(400).json({ success: false, message: 'Project ID is required' });
+        }
+
+        const project = await Project.findById(projectId);
+
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (String(project.recruiter) !== String(recruiter._id)) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to process payment for this project' });
+        }
+
+        if (project.paymentStatus === 'paid') {
+            return res.status(400).json({ success: false, message: 'Payment has already been processed for this project' });
+        }
+
+        // Mark the project as completed and paid
+        project.status = 'completed';
+        project.paymentStatus = 'paid';
+        project.submittedDate = project.submittedDate || new Date();
+        await project.save();
+
+        const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+        return res.status(200).json({
+            success: true,
+            message: 'Payment processed successfully',
+            transactionId,
+            project: {
+                _id: project._id,
+                status: project.status,
+                paymentStatus: project.paymentStatus,
+            }
+        });
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        return res.status(500).json({ success: false, message: 'Server error while processing payment' });
+    }
+};
+
+
+export const submitReview = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { projectId, studentId, rating, comment } = req.body;
+
+        if (!recruiter) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!projectId || !studentId || !rating) {
+            return res.status(400).json({ success: false, message: 'Project ID, student ID and rating are required' });
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+        }
+
+        // Verify the recruiter owns the project
+        const project = await Project.findById(projectId);
+        if (!project || String(project.recruiter) !== String(recruiter._id)) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to review for this project' });
+        }
+
+        // Import Review model dynamically to avoid circular deps at top
+        const { default: Review } = await import('../models/Review.js');
+        const { default: Student } = await import('../models/Student.js');
+
+        // Upsert: one review per recruiter per student per project
+        let review = await Review.findOne({ recruiterId: recruiter._id, studentId });
+
+        if (review) {
+            review.rating = rating;
+            review.comment = comment || review.comment;
+            await review.save();
+        } else {
+            review = new Review({
+                recruiterId: recruiter._id,
+                studentId,
+                rating,
+                comment: comment || '',
+            });
+            await review.save();
+        }
+
+        // Recalculate the student's average rating
+        const allReviews = await Review.find({ studentId });
+        const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+
+        await Student.findByIdAndUpdate(studentId, {
+            rating: Math.round(avgRating * 10) / 10,
+        });
+
+        return res.status(200).json({ success: true, message: 'Review submitted successfully', review });
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        return res.status(500).json({ success: false, message: 'Server error while submitting review' });
+    }
+};
+
+
+export const getStudentReviews = async (req, res) => {
+    try {
+        const recruiter = req.user;
+        const { studentId } = req.params;
+
+        if (!recruiter) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
+        const { default: Review } = await import('../models/Review.js');
+
+        const reviews = await Review.find({ studentId })
+            .populate('recruiterId', 'name companyName companyLogo')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Enrich each review with the project that was completed between this recruiter & student
+        const enriched = await Promise.all(
+            reviews.map(async (review) => {
+                // Find an assigned application for this recruiter's projects & this student
+                const assignedApp = await Application.findOne({ studentId })
+                    .populate({
+                        path: 'projectId',
+                        match: { recruiter: review.recruiterId._id, status: 'completed' },
+                        select: 'title budget deadline updatedAt'
+                    })
+                    .lean();
+
+                const project = assignedApp?.projectId || null;
+
+                return {
+                    id: review._id,
+                    rating: review.rating,
+                    comment: review.comment || '',
+                    date: new Date(review.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    companyName: review.recruiterId?.companyName || review.recruiterId?.name || 'Client',
+                    companyLogo: review.recruiterId?.companyLogo || null,
+                    clientName: review.recruiterId?.name || 'Client',
+                    budget: project?.budget || null,
+                };
+            })
+        );
+
+        // Calculate average rating
+        const avg = enriched.length
+            ? Math.round((enriched.reduce((s, r) => s + r.rating, 0) / enriched.length) * 10) / 10
+            : 0;
+
+        return res.status(200).json({ success: true, reviews: enriched, averageRating: avg });
+    } catch (error) {
+        console.error('Error fetching student reviews:', error);
+        return res.status(500).json({ success: false, message: 'Server error while fetching student reviews' });
+    }
+};
+
+

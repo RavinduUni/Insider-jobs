@@ -60,8 +60,8 @@ const Navbar2 = () => {
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="text-sm px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Recruiter Login</button>
-                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium cursor-pointer">Student Login</button>
+                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="text-sm px-4 py-2 rounded-xl border-2 border-slate-400 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Recruiter Login</button>
+                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="text-sm px-4 py-2 rounded-xl border-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium cursor-pointer">Student Login</button>
                     </div>
                 )}
             </div>

@@ -38,6 +38,14 @@ const projectSchema = new mongoose.Schema({
         enum: ['open','has applicants','in progress', 'completed'],
         default: 'open',
     },
+    paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'paid'],
+        default: 'unpaid',
+    },
+    submittedDate: {
+        type: Date,
+    },
     recruiter: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Recruiter',

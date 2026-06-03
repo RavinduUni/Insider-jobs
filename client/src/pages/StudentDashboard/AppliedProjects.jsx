@@ -183,7 +183,7 @@ const AppliedProjects = () => {
                   </div>
                 </div>
               </div>
-              <StatusBadge status={project.status} />
+              <StatusBadge status={project.projectId.status} />
             </div>
 
             {/* Meta row */}
@@ -313,7 +313,7 @@ const AppliedProjects = () => {
                 </div>
                 <div className='bg-slate-800/60 border border-blue-500/10 rounded-xl p-4'>
                   <p className='text-xs text-slate-500 mb-1.5'>Applied On</p>
-                  <p className='text-sm font-semibold text-white'>{fmt(selectedProject.appliedDate)}</p>
+                  <p className='text-sm font-semibold text-white'>{fmt(selectedProject.createdAt)}</p>
                 </div>
                 <div className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4'>
                   <p className='text-xs text-slate-500 mb-2'>Status</p>

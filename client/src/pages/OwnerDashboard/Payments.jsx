@@ -5,10 +5,9 @@ import {
 } from 'lucide-react'
 import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext'
+import { toast } from 'react-hot-toast'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inline StatusBadge (matches rest of OwnerDashboard)
-// ─────────────────────────────────────────────────────────────────────────────
+
 const statusConfig = {
   'submitted': { label: 'Submitted', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   'completed': { label: 'Completed', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
@@ -20,150 +19,61 @@ const StatusBadge = ({ status }) => {
   return <span className={`text-xs font-medium px-3 py-1 rounded-full border ${cfg.color}`}>{cfg.label}</span>
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Backdrop
-// ─────────────────────────────────────────────────────────────────────────────
 const Backdrop = ({ onClick }) => (
   <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClick} />
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dummy data — replace with real API calls in the functions below
-// ─────────────────────────────────────────────────────────────────────────────
-const DUMMY_COMPLETED_PROJECTS = [
-  {
-    _id: 'proj_1',
-    title: 'React Dashboard Development',
-    category: 'Web Development',
-    budget: 800,
-    deadline: '2024-12-31',
-    submittedDate: '2024-12-27',
-    status: 'submitted',
-    paymentStatus: 'unpaid',
-    assignedStudent: {
-      _id: 'stu_1',
-      name: 'Alex Johnson',
-      university: 'MIT',
-      degree: 'Computer Science',
-      rating: 4.9,
-      completedProjects: 12,
-      profilePicture: null,
-    },
-  },
-  {
-    _id: 'proj_2',
-    title: 'Node.js API Development',
-    category: 'API Development',
-    budget: 950,
-    deadline: '2024-12-28',
-    submittedDate: '2024-12-25',
-    status: 'submitted',
-    paymentStatus: 'unpaid',
-    assignedStudent: {
-      _id: 'stu_2',
-      name: 'Mike Wilson',
-      university: 'UCLA',
-      degree: 'Information Technology',
-      rating: 4.7,
-      completedProjects: 8,
-      profilePicture: null,
-    },
-  },
-  {
-    _id: 'proj_3',
-    title: 'Database Optimization Project',
-    category: 'Data Analysis',
-    budget: 700,
-    deadline: '2024-12-30',
-    submittedDate: '2024-12-26',
-    status: 'completed',
-    paymentStatus: 'paid',
-    assignedStudent: {
-      _id: 'stu_3',
-      name: 'Emily Davis',
-      university: 'Harvard',
-      degree: 'Computer Science',
-      rating: 4.8,
-      completedProjects: 16,
-      profilePicture: null,
-    },
-  },
-  {
-    _id: 'proj_4',
-    title: 'Social Media Marketing Campaign',
-    category: 'Marketing',
-    budget: 350,
-    deadline: '2024-11-20',
-    submittedDate: '2024-11-18',
-    status: 'completed',
-    paymentStatus: 'paid',
-    assignedStudent: {
-      _id: 'stu_4',
-      name: 'Sarah Chen',
-      university: 'Stanford',
-      degree: 'Software Engineering',
-      rating: 4.8,
-      completedProjects: 15,
-      profilePicture: null,
-    },
-  },
-]
-
-const DUMMY_PAYMENT_HISTORY = [
-  { _id: 'pay_1', project: 'Database Optimization Project', student: 'Emily Davis', amount: 700, date: '2024-12-28', method: 'Credit Card', status: 'completed' },
-  { _id: 'pay_2', project: 'Social Media Marketing Campaign', student: 'Sarah Chen', amount: 350, date: '2024-11-20', method: 'Bank Transfer', status: 'completed' },
-]
 
 // ─────────────────────────────────────────────────────────────────────────────
-// API function stubs — implement these with real backend calls
+// API functions — wired to real backend
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch all completed / submitted projects for the current owner
- * that require payment or have been paid.
- * Replace with: GET /api/owner/projects?status=submitted,completed
+ * Fetch all projects in-progress or completed for this recruiter.
+ * GET /api/recruiter/assigned-projects
  */
-const fetchCompletedProjects = async (ownerId) => {
-  // TODO: implement real API call
-  // const res = await axios.get(`/api/owner/${ownerId}/completed-projects`)
-  // return res.data
-  return DUMMY_COMPLETED_PROJECTS
+const fetchCompletedProjects = async (token) => {
+  const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/assigned-projects`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  const data = await res.json()
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load projects')
+  return data.projects
 }
 
 /**
- * Fetch payment history for the current owner.
- * Replace with: GET /api/owner/payments
+ * Process a payment for a completed project.
+ * POST /api/recruiter/process-payment
  */
-const fetchPaymentHistory = async (ownerId) => {
-  // TODO: implement real API call
-  // const res = await axios.get(`/api/owner/${ownerId}/payment-history`)
-  // return res.data
-  return DUMMY_PAYMENT_HISTORY
-}
-
-/**
- * Process payment for a completed project.
- * Replace with: POST /api/payments/process
- * @param {Object} payload - { projectId, studentId, amount, cardDetails }
- */
-const processPayment = async (payload) => {
-  // TODO: implement real payment API call
-  // const res = await axios.post('/api/payments/process', payload)
-  // return res.data
-  await new Promise(resolve => setTimeout(resolve, 1500)) // simulate network delay
-  return { success: true, transactionId: `TXN_${Date.now()}` }
+const processPayment = async (token, payload) => {
+  const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/process-payment`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ projectId: payload.projectId, amount: payload.amount })
+  })
+  const data = await res.json()
+  if (!res.ok || !data.success) throw new Error(data.message || 'Payment failed')
+  return { success: true, transactionId: data.transactionId }
 }
 
 /**
  * Submit a review for a student after payment.
- * Replace with: POST /api/reviews
- * @param {Object} payload - { projectId, studentId, rating, comment }
+ * POST /api/recruiter/submit-review
  */
-const submitStudentReview = async (payload) => {
-  // TODO: implement real review submission
-  // const res = await axios.post('/api/reviews', payload)
-  // return res.data
-  await new Promise(resolve => setTimeout(resolve, 800))
+const submitStudentReview = async (token, payload) => {
+  const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/submit-review`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+  const data = await res.json()
+  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to submit review')
   return { success: true }
 }
 
@@ -205,7 +115,7 @@ const StarPicker = ({ value, onChange }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 const MODAL_STEPS = { PAYMENT: 1, PROCESSING: 2, REVIEW: 3, DONE: 4 }
 
-const PaymentModal = ({ project, onClose, onSuccess }) => {
+const PaymentModal = ({ project, token, onClose, onSuccess }) => {
   const [step, setStep] = useState(MODAL_STEPS.PAYMENT)
   const [cardNumber, setCardNumber] = useState('')
   const [expiry, setExpiry] = useState('')
@@ -241,19 +151,20 @@ const PaymentModal = ({ project, onClose, onSuccess }) => {
     setError('')
     setStep(MODAL_STEPS.PROCESSING)
     try {
-      const result = await processPayment({
+      const result = await processPayment(token, {
         projectId: project._id,
         studentId: student._id,
         amount: total,
-        cardDetails: { cardName, cardNumber, expiry, cvv },
       })
       if (result.success) {
         setTxnId(result.transactionId)
+        toast.success('Payment processed successfully!')
         setStep(MODAL_STEPS.REVIEW)
       }
-    } catch {
+    } catch (err) {
       setStep(MODAL_STEPS.PAYMENT)
-      setError('Payment failed. Please try again.')
+      setError(err.message || 'Payment failed. Please try again.')
+      toast.error(err.message || 'Payment failed.')
     }
   }
 
@@ -262,16 +173,17 @@ const PaymentModal = ({ project, onClose, onSuccess }) => {
     setError('')
     setReviewLoading(true)
     try {
-      await submitStudentReview({
+      await submitStudentReview(token, {
         projectId: project._id,
         studentId: student._id,
         rating,
         comment,
       })
+      toast.success('Review submitted!')
       setStep(MODAL_STEPS.DONE)
       onSuccess(project._id)
-    } catch {
-      setError('Failed to submit review. Please try again.')
+    } catch (err) {
+      setError(err.message || 'Failed to submit review. Please try again.')
     } finally {
       setReviewLoading(false)
     }
@@ -298,8 +210,8 @@ const PaymentModal = ({ project, onClose, onSuccess }) => {
             <React.Fragment key={s}>
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step >= s
-                    ? step === MODAL_STEPS.PROCESSING && s === MODAL_STEPS.PAYMENT ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'
-                    : 'bg-slate-700 text-slate-500'
+                  ? step === MODAL_STEPS.PROCESSING && s === MODAL_STEPS.PAYMENT ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'
+                  : 'bg-slate-700 text-slate-500'
                   }`}>
                   {step > s && s !== MODAL_STEPS.PROCESSING ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
@@ -371,7 +283,7 @@ const PaymentModal = ({ project, onClose, onSuccess }) => {
                         <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                         <input
                           value={cvv}
-                          onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
                           placeholder="•••"
                           className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
@@ -531,31 +443,29 @@ const PaymentModal = ({ project, onClose, onSuccess }) => {
 // Main Payments Component
 // ─────────────────────────────────────────────────────────────────────────────
 const Payments = () => {
-  const { user } = useContext(AppContext)
+  const { user, token } = useContext(AppContext)
 
   const [completedProjects, setCompletedProjects] = useState([])
-  const [paymentHistory, setPaymentHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
   const [payingProject, setPayingProject] = useState(null) // project selected for payment modal
 
   // ── Load data on mount ──
   useEffect(() => {
+    if (!token) return
     const load = async () => {
       setLoading(true)
       try {
-        const [projects, history] = await Promise.all([
-          fetchCompletedProjects(user?._id),
-          fetchPaymentHistory(user?._id),
-        ])
+        const projects = await fetchCompletedProjects(token)
         setCompletedProjects(projects)
-        setPaymentHistory(history)
+      } catch (err) {
+        toast.error(err.message || 'Failed to load payment data')
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [user?._id])
+  }, [token])
 
   // ── Mark project as paid after successful payment ──
   const handlePaymentSuccess = (projectId) => {
@@ -626,8 +536,8 @@ const Payments = () => {
               key={f.value}
               onClick={() => setActiveFilter(f.value)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${activeFilter === f.value
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-slate-800 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-slate-800 text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
                 }`}
             >
               {f.label}
@@ -745,28 +655,28 @@ const Payments = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-5">
           <h2 className="text-base font-semibold text-white">Transaction History</h2>
-          <span className="text-xs bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-full">{paymentHistory.length} records</span>
+          <span className="text-xs bg-slate-800 text-slate-400 border border-slate-700 px-2.5 py-1 rounded-full">{paid.length} records</span>
         </div>
 
-        {paymentHistory.length === 0 ? (
+        {paid.length === 0 ? (
           <p className="text-slate-500 text-sm py-8 text-center">No transactions yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {paymentHistory.map(txn => (
-              <div key={txn._id} className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3.5 hover:border-slate-600 transition-all">
+            {paid.map(p => (
+              <div key={p._id} className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3.5 hover:border-slate-600 transition-all">
                 <div className="flex items-center gap-4">
                   <div className="w-9 h-9 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
                     <TrendingUp className="w-4 h-4 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{txn.project}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">To: {txn.student} · {txn.method} · {new Date(txn.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="text-sm font-medium text-white">{p.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">To: {p.assignedStudent?.name} · Credit Card · {new Date(p.submittedDate || p.deadline).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-sm font-bold text-green-400">+${txn.amount.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-green-400">+${p.budget.toLocaleString()}</span>
                   <span className="flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
-                    <CheckCircle className="w-3 h-3" /> {txn.status}
+                    <CheckCircle className="w-3 h-3" /> completed
                   </span>
                 </div>
               </div>
@@ -779,6 +689,7 @@ const Payments = () => {
       {payingProject && (
         <PaymentModal
           project={payingProject}
+          token={token}
           onClose={() => setPayingProject(null)}
           onSuccess={(id) => {
             handlePaymentSuccess(id)

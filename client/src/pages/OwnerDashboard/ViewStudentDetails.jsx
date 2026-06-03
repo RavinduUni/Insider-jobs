@@ -277,13 +277,15 @@ const ViewStudentDetails = () => {
   const onMouseMove = (e) => {
     if (!isDragging.current) return
     e.preventDefault()
-    const x = e.pageX - feedbackRef.current.offsetLeft
+const x = e.pageX - feedbackRef.current.offsetLeft
     const walk = (x - startX.current) * 1.2
     feedbackRef.current.scrollLeft = scrollLeft.current - walk
   }
 
-  // ── Applicant data ────────────────────────────────────────────────────────────
+  // ── Applicant data ─────────────────────────────────────────────────────────────────────────────────────
   const [applicant, setApplicant] = useState({});
+  const [reviews, setReviews] = useState([]);
+  const [avgRating, setAvgRating] = useState(0);
 
   const statCards = [
     { icon: Briefcase, label: 'Projects Completed', value: applicant.completedProjects || 0, color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
@@ -358,37 +360,37 @@ const ViewStudentDetails = () => {
     }
   }, [token, studentId, projectId])
 
-  const getAllFeedbacks = useCallback(async () => {
+  const getAllFeedbacks = useCallback(async (sid) => {
     try {
-
-      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/applicant-feedbacks`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ studentId, projectId })
-      });
-
-      const feedbacks = await response.json();
-
-      if (!response.ok) {
-        console.error('Error fetching feedbacks:', feedbacks.message || 'Failed to fetch feedbacks');
+      const response = await fetch(
+        `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter/student-reviews/${sid}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        console.error('Error fetching reviews:', data.message);
         return;
       }
-
-      console.log('Feedbacks:', feedbacks);
+      setReviews(data.reviews || []);
+      setAvgRating(data.averageRating || 0);
     } catch (error) {
-      console.error('Error fetching feedbacks:', error);
+      console.error('Error fetching reviews:', error);
     }
-  }, [token, studentId, projectId])
+  }, [token])
 
 
   useEffect(() => {
     if (token && studentId && projectId) {
       fetchStudentProfile();
-      getAllFeedbacks();
     }
-  }, [fetchStudentProfile, getAllFeedbacks]);
+  }, [fetchStudentProfile]);
+
+  // Fetch reviews separately once studentId is known
+  useEffect(() => {
+    if (token && studentId) {
+      getAllFeedbacks(studentId);
+    }
+  }, [getAllFeedbacks, studentId]);
 
 
   return (
@@ -555,7 +557,7 @@ const ViewStudentDetails = () => {
             <div className="border-t border-slate-800" />
 
             {/* Client Feedbacks */}
-            {applicant.feedbacks && applicant.feedbacks.length > 0 && (
+            {reviews.length > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-9 h-9 bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center rounded-xl">
@@ -563,7 +565,13 @@ const ViewStudentDetails = () => {
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-white">Client Feedbacks</h3>
-                    <p className="text-xs text-slate-500">4.9 average rating</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} className={`w-3 h-3 ${n <= Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-700'}`} />
+                      ))}
+                      <span className="text-xs text-yellow-400 font-semibold ml-1">{avgRating} avg</span>
+                      <span className="text-xs text-slate-500 ml-1">· {reviews.length} review{reviews.length !== 1 ? 's' : ''}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -577,17 +585,21 @@ const ViewStudentDetails = () => {
                   onMouseUp={onMouseUp}
                   onMouseMove={onMouseMove}
                 >
-                  {applicant.feedbacks.map((fb) => (
-                    <li key={fb.id} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl max-w-[400px] shrink-0">
+                  {reviews.map((fb) => (
+                    <li key={fb.id} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl min-w-[370px] max-w-[400px] shrink-0">
                       {/* Card header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-xl text-xs font-bold shrink-0">
-                            {fb.clientName?.slice(0, 2).toUpperCase()}
-                          </div>
+                          {fb.companyLogo ? (
+                            <img src={fb.companyLogo} alt={fb.clientName} className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-xl text-xs font-bold shrink-0">
+                              {fb.clientName?.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
                           <div>
-                            <p className="text-sm font-semibold text-white leading-snug">{fb.projectTitle}</p>
-                            <p className="text-xs text-slate-500">{fb.clientName}</p>
+                            <p className="text-sm font-semibold text-white leading-snug">{fb.clientName}</p>
+                            <p className="text-xs text-slate-500">{fb.companyName}</p>
                           </div>
                         </div>
                         <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full shrink-0">
@@ -595,8 +607,19 @@ const ViewStudentDetails = () => {
                         </span>
                       </div>
 
+                      {/* Star row */}
+                      <div className="flex items-center gap-0.5 mb-3">
+                        {[1,2,3,4,5].map(n => (
+                          <Star key={n} className={`w-3.5 h-3.5 ${n <= fb.rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-700'}`} />
+                        ))}
+                      </div>
+
                       {/* Comment */}
-                      <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-3">{fb.comment}</p>
+                      {fb.comment ? (
+                        <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-3">{fb.comment}</p>
+                      ) : (
+                        <p className="text-xs text-slate-600 italic mb-4">No comment provided.</p>
+                      )}
 
                       {/* Footer */}
                       <div className="flex items-center gap-5 pt-3 border-t border-slate-700/50">
@@ -604,36 +627,37 @@ const ViewStudentDetails = () => {
                           <p className="text-xs font-semibold text-white">{fb.date}</p>
                           <p className="text-xs text-slate-600">Date</p>
                         </div>
-                        <div className="w-px h-6 bg-slate-700" />
-                        <div>
-                          <p className="text-xs font-semibold text-green-400">${fb.budget}</p>
-                          <p className="text-xs text-slate-600">Budget</p>
-                        </div>
-                        <div className="w-px h-6 bg-slate-700" />
-                        <div>
-                          <p className="text-xs font-semibold text-white">{fb.duration}</p>
-                          <p className="text-xs text-slate-600">Duration</p>
-                        </div>
+                        {fb.budget && (
+                          <>
+                            <div className="w-px h-6 bg-slate-700" />
+                            <div>
+                              <p className="text-xs font-semibold text-green-400">${fb.budget.toLocaleString()}</p>
+                              <p className="text-xs text-slate-600">Budget</p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </li>
                   ))}
                 </ul>
 
                 {/* Scroll nav */}
-                <div className="flex justify-center gap-4 mt-4">
-                  <button
-                    onClick={() => feedbackRef.current.scrollBy({ left: -400, behavior: 'smooth' })}
-                    className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
-                  >
-                    ← Previous
-                  </button>
-                  <button
-                    onClick={() => feedbackRef.current.scrollBy({ left: 400, behavior: 'smooth' })}
-                    className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
-                  >
-                    Next →
-                  </button>
-                </div>
+                {reviews.length > 1 && (
+                  <div className="flex justify-center gap-4 mt-4">
+                    <button
+                      onClick={() => feedbackRef.current.scrollBy({ left: -360, behavior: 'smooth' })}
+                      className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      onClick={() => feedbackRef.current.scrollBy({ left: 360, behavior: 'smooth' })}
+                      className="text-xs text-slate-400 hover:text-blue-400 transition-colors cursor-pointer px-3 py-1.5 border border-slate-700 rounded-lg hover:border-blue-500/30"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
