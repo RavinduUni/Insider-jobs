@@ -135,7 +135,7 @@ const AdminDashboard = () => {
     }
 
     const renderSidebar = () => (
-        <aside className="w-64 bg-white border-r h-screen fixed top-0 left-0 flex flex-col pt-5 shadow-sm z-10">
+        <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed top-0 left-0 flex flex-col pt-5 shadow-sm z-10">
             <div className="p-6 flex-1 flex flex-col h-full">
                 <h2 className="text-xl font-bold text-blue-600 mb-6 flex items-center gap-2">
                     <LayoutDashboard className="w-6 h-6" />
