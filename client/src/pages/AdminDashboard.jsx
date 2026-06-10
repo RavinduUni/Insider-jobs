@@ -345,7 +345,7 @@ const AdminDashboard = () => {
                                 <th className="p-4 font-semibold text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-200">
                             {list.map(item => (
                                 <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                                     <td className="p-4">
