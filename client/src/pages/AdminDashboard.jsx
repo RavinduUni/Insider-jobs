@@ -3,7 +3,8 @@ import { AppContext } from '../context/AppContext';
 import {
     LayoutDashboard, Users, Building2, Briefcase, FileText,
     FileSignature, Trash2, Search, Activity, ChevronRight,
-    Loader2, LogOut
+    Loader2, LogOut,
+    ChevronLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,7 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState(null); // For view details
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, title: '' });
 
     // Protect Route
     useEffect(() => {
@@ -89,9 +91,16 @@ const AdminDashboard = () => {
         }
     }, [token, role]);
 
-    const handleDelete = async (type, id) => {
-        if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+    const openDeleteConfirm = (type, id, name) => {
+        setDeleteConfirm({ open: true, type, id, name });
+    };
 
+    const closeDeleteConfirm = () => {
+        setDeleteConfirm({ open: false, type: null, id: null, name: '' });
+    };
+
+    const handleDelete = async () => {
+        const { type, id } = deleteConfirm;
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
             const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/admin/${type}s/${id}`, {
@@ -106,13 +115,14 @@ const AdminDashboard = () => {
                     ...prev,
                     [`${type}s`]: prev[`${type}s`].filter(item => item._id !== id)
                 }));
-                // Update stats
                 fetchDashboardData();
             } else {
                 toast.error(result.message || 'Deletion failed');
             }
         } catch (error) {
             toast.error('An error occurred during deletion');
+        } finally {
+            closeDeleteConfirm();
         }
     };
 
@@ -365,7 +375,11 @@ const AdminDashboard = () => {
                                                     <ChevronRight className="w-5 h-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(type.slice(0, -1), item._id)}
+                                                    onClick={() => openDeleteConfirm(
+                                                        type.slice(0, -1),
+                                                        item._id,
+                                                        item.name || item.title || 'this item'
+                                                    )}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Delete"
                                                 >
@@ -377,6 +391,7 @@ const AdminDashboard = () => {
                                 </tr>
                             ))}
                         </tbody>
+                        
                     </table>
                 </div>
             </div>
@@ -392,8 +407,9 @@ const AdminDashboard = () => {
                     <h3 className="text-xl font-bold text-gray-800">Details</h3>
                     <button
                         onClick={() => setSelectedUser(null)}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200"
+                        className="px-4 py-2 flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200"
                     >
+                        <ChevronLeft className="w-5 h-5" />
                         Back to List
                     </button>
                 </div>
@@ -402,9 +418,9 @@ const AdminDashboard = () => {
                         if (['password', '_id', '__v'].includes(key)) return null;
                         if (typeof value === 'object') return null; // simplify viewing
                         return (
-                            <div key={key} className="border-b border-gray-100 pb-3">
+                            <div key={key} className="border-b border-gray-200 pb-3">
                                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">{key}</p>
-                                <p className="text-gray-800 font-medium">{String(value) || 'N/A'}</p>
+                                <p className="text-gray-800 font-medium break-all">{String(value) || 'N/A'}</p>
                             </div>
                         )
                     })}
@@ -422,9 +438,46 @@ const AdminDashboard = () => {
         </div>
     );
 
+    const DeleteConfirmModal = () => {
+        if (!deleteConfirm.open) return null;
+        return (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+            >
+                <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 w-full max-w-sm mx-4 text-center">
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Trash2 className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Confirm Deletion</h3>
+                    <p className="text-gray-500 text-sm mb-1">You are about to permanently delete:</p>
+                    <p className="text-gray-800 font-semibold mb-6 break-all">"{deleteConfirm.name}"</p>
+                    <p className="text-xs text-red-500 mb-6">This action cannot be undone.</p>
+                    <div className="flex gap-3 justify-center">
+                        <button
+                            onClick={closeDeleteConfirm}
+                            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {renderSidebar()}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal />
 
             <main className="flex-1 ml-64 p-8 pt-10">
                 {loading ? (
