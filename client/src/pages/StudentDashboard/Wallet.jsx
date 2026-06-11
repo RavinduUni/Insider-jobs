@@ -106,7 +106,7 @@ const Wallet = () => {
       <div className="grid grid-cols-3 gap-5 mb-6">
 
         {/* Balance card — spans 2 cols */}
-        <div className="col-span-2 relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 p-6">
+        <div className="col-span-2 relative rounded-2xl overflow-hidden bg-linear-to-br from-blue-600 to-blue-800 p-6">
           {/* Texture overlay */}
           <div className="absolute inset-0 opacity-10"
             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.2) 1px,transparent 1px)', backgroundSize: '32px 32px' }} />

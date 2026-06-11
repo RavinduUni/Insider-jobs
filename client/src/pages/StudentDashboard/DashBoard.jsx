@@ -5,7 +5,7 @@ import {
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, XAxis, YAxis, BarChart, Bar } from 'recharts'
 
 // ── Static data ─────────────────────────────────────────────────────────────
 
@@ -60,6 +60,7 @@ const Dashboard = () => {
 
   const [myApplications, setMyApplications] = useState([]);
   const [stats, setStats] = useState(null);
+  const [walletData, setWalletData] = useState(null);
 
   // ── Pagination ─────────────────────────────────────────────────────────────
   const ITEMS_PER_PAGE = 3;
@@ -136,14 +137,34 @@ const Dashboard = () => {
     }
   };
 
+  const getWalletData = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/wallet`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setWalletData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching wallet data:', error);
+    }
+  };
+
 
   useEffect(() => {
     if (token && role === 'student') {
       getMyApplications();
       getStats();
+      getWalletData();
     }
   }, [token, role]);
 
+  
 
 
 
@@ -283,7 +304,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Applications */}
-          <div className='bg-slate-900 border border-slate-800 h-[46%] rounded-2xl p-5'>
+          <div className='bg-slate-900 border border-slate-800 h-[47%] rounded-2xl p-5'>
             <SectionHeader title='Recent Applications' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-2'>
               {recentApplications.length === 0 && (
@@ -394,21 +415,52 @@ const Dashboard = () => {
               <h2 className='text-base font-semibold text-white'>Earnings</h2>
               <TrendingUp className='w-4 h-4 text-green-400' />
             </div>
-            <p className='text-2xl font-bold text-white mb-0.5'>$1,240</p>
-            <p className='text-xs text-green-400 mb-4'>↑ 24% vs last month</p>
+            <p className='text-2xl font-bold text-white mb-0.5'>${walletData?.thisMonth || 0}</p>
+            <p className='text-xs text-green-400 mb-4'>↑ {walletData?.totalEarning || 0}% vs last month</p>
             {/* Mini bar chart */}
-            <div className='flex items-end gap-1.5 h-14'>
-              {[30, 55, 40, 70, 50, 85, 65].map((h, i) => (
-                <div key={i} className='flex-1 rounded-t-sm bg-blue-500/20 hover:bg-blue-500/40 transition-colors relative'>
-                  <div className='absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm transition-all' style={{ height: `${h}%` }} />
-                </div>
-              ))}
-            </div>
-            <div className='flex justify-between mt-1'>
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-                <span key={i} className='flex-1 text-center text-xs text-slate-600'>{d}</span>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={100}>
+              {/* Bar Chart */}
+              <BarChart width={150} height={40} data={walletData?.transactions || []}>
+                <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(str) => {
+                    try {
+                      return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    } catch {
+                      return str;
+                    }
+                  }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(val) => `$${val}`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl shadow-xl text-xs">
+                          <p className="text-slate-400 font-medium text-[10px] mb-0.5">
+                            {new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                          <p className="text-white font-bold text-sm mb-0.5">${data.amount}</p>
+                          <p className="text-blue-400 text-[10px] truncate max-w-[150px]">{data.description || data.category}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
