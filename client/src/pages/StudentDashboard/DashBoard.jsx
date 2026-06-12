@@ -164,7 +164,7 @@ const Dashboard = () => {
     }
   }, [token, role]);
 
-  
+
 
 
 
@@ -258,14 +258,20 @@ const Dashboard = () => {
                 </div>
               )}
               {currentActiveApplications.map(application => (
-                <div key={application._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer' onClick={() => navigate('applied-projects') }>
+                <div key={application._id} className='bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all cursor-pointer' onClick={() => navigate('applied-projects')}>
                   <div className='flex items-start justify-between mb-3'>
                     <div>
                       <p className='text-sm font-medium text-white mb-0.5'>{application?.projectId?.title || 'Untitled Project'}</p>
                       <p className='text-xs text-slate-500'>{application?.projectId?.recruiter?.companyName || 'Unknown company'}</p>
                     </div>
-                    <div className='text-right'>
-                      <p className='text-sm font-bold text-blue-400'>${application?.projectId?.budget || 0}</p>
+                    <div className='text-right flex flex-col items-end gap-1'>
+                      <span className={`text-xs font-medium px-3 py-1 rounded-full border 
+                        ${application?.projectId?.status === 'in progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                          application?.projectId?.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                            'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                        }`}>
+                        {application?.projectId?.status}
+                      </span>
                       <div className='flex items-center gap-1 justify-end mt-1'>
                         <Clock className='w-3 h-3 text-slate-500' />
                         <p className='text-xs text-slate-500'>{formatDate(application?.projectId?.deadline)}</p>
@@ -422,11 +428,11 @@ const Dashboard = () => {
               {/* Bar Chart */}
               <BarChart width={150} height={40} data={walletData?.transactions || []}>
                 <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(str) => {
                     try {
                       return new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -435,13 +441,13 @@ const Dashboard = () => {
                     }
                   }}
                 />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: '#94a3b8' }} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(val) => `$${val}`}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
