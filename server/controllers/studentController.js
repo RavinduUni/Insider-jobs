@@ -284,6 +284,14 @@ export const applyProject = async (req, res) => {
             return res.status(400).json({ success: false, message: 'You have already applied for this project' });
         }
 
+        const project = await Project.findById(projectId);
+
+        if (project.status === 'in progress' || project.status === 'completed') {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: 'Project is already assigned' });
+        }
+
         const cvUploadResult = await cloudinary.uploader.upload(cvFile.path, {
             folder: 'applications/cvs',
             resource_type: 'raw',

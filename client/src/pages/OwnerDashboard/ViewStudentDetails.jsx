@@ -476,11 +476,7 @@ const x = e.pageX - feedbackRef.current.offsetLeft
                     <UserCheck className="w-3.5 h-3.5" /> Assign Project
                   </button>
                 )}
-                {applicant.status !== 'assigned' && (
-                  <button className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer">
-                    <X className="w-3.5 h-3.5" /> Reject Application
-                  </button>
-                )}
+              
               </>
             )}
           </div>
