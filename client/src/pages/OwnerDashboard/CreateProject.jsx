@@ -38,6 +38,21 @@ const SectionCard = ({ icon: Icon, title, children }) => (
 
 const fmt = dateStr => new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 
+const isValidBudget = (budget) => {
+  const amount = Number(budget);
+  return !isNaN(amount) && amount >= 0;
+}
+
+const isFutureDate = (date) => {
+  const selectedDate = new Date(date);
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  return selectedDate >= today;
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const CreateProject = () => {
   const { projectId } = useParams()
@@ -146,6 +161,16 @@ const CreateProject = () => {
       technologies: cleanTechnologies,
       requirements: formData.requirements.map(r => r.trim()).filter(Boolean),
       deliverables: formData.deliverables.map(d => d.trim()).filter(Boolean)
+    }
+
+    if (!isValidBudget(payload.budget)) {
+      toast.error('Please enter a valid budget.');
+      return;
+    }
+
+    if (!isFutureDate(payload.deadline)) {
+      toast.error('Please select a future date.');
+      return;
     }
 
     if (!payload.title || !payload.category || !payload.description || !payload.budget || !payload.deadline || payload.technologies.length === 0) {
