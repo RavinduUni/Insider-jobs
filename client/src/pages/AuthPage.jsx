@@ -120,19 +120,13 @@ const AuthPage = () => {
         setSuccess('')
 
         //client side input sanitization
-        if (!isRegister && !formData.name?.trim()) {
-            setError('Name is required');
-            setLoading(false);
-            return;
-        }
-
-        if (!validateEmail(formData.email)) {
+        if (isRegister && !validateEmail(formData.email)) {
             setError('Invalid email');
             setLoading(false);
             return;
         }
 
-        if (!validatePassword(formData.password)) {
+        if (isRegister && !validatePassword(formData.password)) {
             setError('Password must be at least 8 characters long and contain at least one uppercase letter and one number');
             setLoading(false);
             return;
