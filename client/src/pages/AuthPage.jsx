@@ -41,6 +41,30 @@ const AuthInput = ({ label, icon: Icon, type = 'text', placeholder, value, onCha
     </div>
 )
 
+const validatePassword = (password) => {
+    const strongPasswordRegex =
+        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
+
+    return strongPasswordRegex.test(password);
+};
+
+const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+const getPasswordStrength = (password) => {
+    let score = 0;
+
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+
+    if (score <= 1) return 'Weak';
+    if (score <= 3) return 'Medium';
+    return 'Strong';
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 const AuthPage = () => {
     const [searchParams] = useSearchParams()
@@ -82,8 +106,8 @@ const AuthPage = () => {
     }, [type, mode])
 
     const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
-        setError('')
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setError('');
     }
 
     const BASE_URL = isStudent ? `${import.meta.env.VITE_REACT_BACKEND_URL}/api/student` : `${import.meta.env.VITE_REACT_BACKEND_URL}/api/recruiter`
@@ -94,6 +118,26 @@ const AuthPage = () => {
         e.preventDefault()
         setError('')
         setSuccess('')
+
+        //client side input sanitization
+        if (!isRegister && !formData.name?.trim()) {
+            setError('Name is required');
+            setLoading(false);
+            return;
+        }
+
+        if (!validateEmail(formData.email)) {
+            setError('Invalid email');
+            setLoading(false);
+            return;
+        }
+
+        if (!validatePassword(formData.password)) {
+            setError('Password must be at least 8 characters long and contain at least one uppercase letter and one number');
+            setLoading(false);
+            return;
+        }
+
         setLoading(true)
 
         try {
@@ -348,6 +392,15 @@ const AuthPage = () => {
                                 name="password" value={formData.password} onChange={handleChange}
                             />
 
+                            {/* Show password strength if password field is not empty */}
+                            {isRegister && formData.password.trim() && (
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-20 h-2 rounded ${getPasswordStrength(formData.password) === 'Weak' ? 'bg-red-500' : getPasswordStrength(formData.password) === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                                    <span className="text-xs text-slate-400">{getPasswordStrength(formData.password)}</span>
+                                </div>
+                            )}
+
+
                             {/* Forgot password (login only) */}
                             {!isRegister && (
                                 <div className="flex justify-end -mt-2">
@@ -374,7 +427,25 @@ const AuthPage = () => {
                                                 type="file"
                                                 accept={fileAccept}
                                                 className="hidden"
-                                                onChange={e => setFile(e.target.files[0])}
+                                                onChange={(e) => {
+                                                    setError('');
+                                                    
+                                                    const selectedFile = e.target.files[0];
+
+                                                    if (!selectedFile) return;
+
+                                                    if (selectedFile.size > 5 * 1024 * 1024) {
+                                                        setError('File size must be less than 5MB');
+                                                        return;
+                                                    }
+
+                                                    if (!fileAccept.includes(selectedFile.type)) {
+                                                        setError('Invalid file type');
+                                                        return;
+                                                    }
+
+                                                    setFile(selectedFile);
+                                                }}
                                             />
                                         </div>
                                     ) : (
