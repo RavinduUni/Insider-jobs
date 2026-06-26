@@ -138,6 +138,16 @@ const Settings = () => {
   const [selectedResumeFile, setSelectedResumeFile] = useState(null)
   const [isDownloadingResume, setIsDownloadingResume] = useState(false)
 
+  // ── Security / Change Password state ─────────────────────────────────────
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMismatch, setPasswordMismatch] = useState(false)
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpValue, setOtpValue] = useState('')
+  const [serverOtp, setServerOtp] = useState('')
+  const [securityLoading, setSecurityLoading] = useState(false)
+
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -542,13 +552,207 @@ const Settings = () => {
     )
   }
 
+  const handleChangePasswordClick = async () => {
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      setPasswordMismatch(true)
+      return
+    }
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    setPasswordMismatch(false)
+
+    try {
+      setSecurityLoading(true)
+      // Send OTP to student's email
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, name: user?.name })
+      })
+      const data = await res.json()
+      if (!data.success) {
+        toast.error(data.message || 'Failed to send OTP')
+        return
+      }
+      setServerOtp(data.otp)
+      setOtpSent(true)
+      toast.success(`OTP sent to ${user?.email}`)
+    } catch (err) {
+      toast.error('Failed to send OTP')
+    } finally {
+      setSecurityLoading(false)
+    }
+  }
+
+  const handleConfirmNewPassword = async () => {
+    if (otpValue.trim() !== String(serverOtp).trim()) {
+      toast.error('Incorrect OTP. Please try again.')
+      return
+    }
+    try {
+      setSecurityLoading(true)
+      const res = await fetch(`${import.meta.env.VITE_REACT_BACKEND_URL}/api/student/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPassword })
+      })
+      const data = await res.json()
+      if (!data.success) {
+        toast.error(data.message || 'Failed to change password')
+        return
+      }
+      toast.success('Password changed successfully!')
+      // Reset all security state
+      setIsChangingPassword(false)
+      setNewPassword('')
+      setConfirmPassword('')
+      setOtpSent(false)
+      setOtpValue('')
+      setServerOtp('')
+      setPasswordMismatch(false)
+    } catch (err) {
+      toast.error('Failed to change password')
+    } finally {
+      setSecurityLoading(false)
+    }
+  }
+
+  const handleCancelPasswordChange = () => {
+    setIsChangingPassword(false)
+    setNewPassword('')
+    setConfirmPassword('')
+    setOtpSent(false)
+    setOtpValue('')
+    setServerOtp('')
+    setPasswordMismatch(false)
+  }
+
   const renderSecurityTab = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center mb-4">
-        <Shield className="w-6 h-6 text-slate-500" />
+    <div>
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center shrink-0">
+          <Shield className="w-6 h-6 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold text-white">Change Password</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Update your account password with OTP verification</p>
+        </div>
       </div>
-      <h3 className="text-white font-semibold mb-2">Security Settings</h3>
-      <p className="text-slate-500 text-sm">Password, two-factor auth, and active sessions — coming soon.</p>
+
+      <Divider />
+
+      <div className="flex flex-col gap-4 max-w-md">
+        {/* New Password */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">New Password</label>
+          <input
+            id="security-new-password"
+            type="password"
+            value={newPassword}
+            onChange={e => { setNewPassword(e.target.value); setPasswordMismatch(false) }}
+            disabled={!isChangingPassword || otpSent}
+            placeholder={isChangingPassword ? 'Enter new password' : '••••••••'}
+            className={`w-full px-4 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${(!isChangingPassword || otpSent)
+                ? 'bg-slate-800/40 border-slate-700/50 text-slate-500 cursor-not-allowed'
+                : 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-600'}`}
+          />
+        </div>
+
+        {/* Confirm New Password */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Confirm New Password</label>
+          <input
+            id="security-confirm-password"
+            type="password"
+            value={confirmPassword}
+            onChange={e => { setConfirmPassword(e.target.value); setPasswordMismatch(false) }}
+            disabled={!isChangingPassword || otpSent}
+            placeholder={isChangingPassword ? 'Confirm new password' : '••••••••'}
+            className={`w-full px-4 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${(!isChangingPassword || otpSent)
+                ? 'bg-slate-800/40 border-slate-700/50 text-slate-500 cursor-not-allowed'
+                : passwordMismatch
+                  ? 'bg-slate-800 border-red-500/60 text-slate-200 placeholder-slate-600'
+                  : 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-600'}`}
+          />
+          {passwordMismatch && (
+            <p className="text-xs text-red-400 flex items-center gap-1 mt-0.5">
+              <span className="inline-block w-3.5 h-3.5 rounded-full bg-red-500/20 text-red-400 text-center leading-3.5 font-bold">!</span>
+              Passwords don't match
+            </p>
+          )}
+        </div>
+
+        {/* OTP field — shown after OTP is sent */}
+        {otpSent && (
+          <div className="flex flex-col gap-1.5 mt-2 p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+            <label className="text-xs font-medium text-blue-400 uppercase tracking-wide">Enter OTP</label>
+            <p className="text-xs text-slate-400 mb-2">A 6-digit code was sent to <span className="text-white font-medium">{user?.email}</span></p>
+            <input
+              id="security-otp"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otpValue}
+              onChange={e => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="w-full px-4 py-3 rounded-xl text-lg font-mono tracking-[0.5em] text-center border bg-slate-800 border-blue-500/40 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center justify-end gap-3 pt-6 mt-4 border-t border-slate-800">
+        {!isChangingPassword ? (
+          <button
+            id="security-change-password-btn"
+            onClick={() => setIsChangingPassword(true)}
+            className="flex items-center gap-2 text-sm text-blue-400 border border-blue-500/30 px-5 py-2.5 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer"
+          >
+            <Shield className="w-4 h-4" /> Change Password
+          </button>
+        ) : (
+          <>
+            <button
+              id="security-cancel-btn"
+              onClick={handleCancelPasswordChange}
+              disabled={securityLoading}
+              className="flex items-center gap-2 text-sm text-slate-400 border border-slate-700 px-5 py-2.5 rounded-xl hover:border-slate-600 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+            >
+              <X className="w-4 h-4" /> Cancel
+            </button>
+
+            {!otpSent ? (
+              <button
+                id="security-send-otp-btn"
+                onClick={handleChangePasswordClick}
+                disabled={securityLoading || !newPassword || !confirmPassword}
+                className="flex items-center gap-2 text-sm text-white bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {securityLoading ? 'Sending OTP...' : 'Change Password'}
+              </button>
+            ) : (
+              <button
+                id="security-confirm-btn"
+                onClick={handleConfirmNewPassword}
+                disabled={securityLoading || otpValue.length !== 6}
+                className="flex items-center gap-2 text-sm text-white bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <SaveIcon className="w-4 h-4" />
+                {securityLoading ? 'Updating...' : 'Confirm New Password'}
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 

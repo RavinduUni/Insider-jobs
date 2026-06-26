@@ -216,6 +216,31 @@ export const updateStudent = async (req, res) => {
     }
 }
 
+export const changePassword = async (req, res) => {
+    try {
+        const student = req.user;
+
+        if (!student) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const { newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        student.password = hashedPassword;
+        await student.save();
+
+        return res.status(200).json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error changing password' });
+    }
+}
+
 export const enhanceResumeText = async (req, res) => {
     try {
 

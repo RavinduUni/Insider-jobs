@@ -221,6 +221,19 @@ const CreateProject = () => {
 
   }
 
+  const handleCancel = () => {
+    setFormData({
+      title: '',
+      category: '',
+      description: '',
+      budget: '',
+      deadline: '',
+      technologies: [],
+      requirements: [],
+      deliverables: []
+    })
+  }
+
   return (
     <div className="min-h-screen">
 
@@ -482,7 +495,7 @@ const CreateProject = () => {
         {/* ── Actions ── */}
         <div className="flex gap-3 pb-4">
           <button type="button"
-            className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm font-medium transition-all cursor-pointer"
+            onClick={handleCancel} className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm font-medium transition-all cursor-pointer"
           >
             Cancel
           </button>
