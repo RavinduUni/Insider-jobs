@@ -175,6 +175,31 @@ export const updateRecruiter = async (req, res) => {
     }
 }
 
+export const changePassword = async (req, res) => {
+    try {
+        const recruiter = req.user;
+
+        if (!recruiter) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const { newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        recruiter.password = hashedPassword;
+        await recruiter.save();
+
+        return res.status(200).json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Error changing password' });
+    }
+}
+
 
 export const createProject = async (req, res) => {
     try {

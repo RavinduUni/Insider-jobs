@@ -3,7 +3,8 @@ import {
     assignProject, createProject, deleteProject, getAllApplicationsForProject,
     getAllNDAs, getApplicantDetails, getRecruiter, getStats, loginRecruiter,
     registerRecruiter, sendEmailVerificationOtp, sendNDA, updateProject,
-    updateRecruiter, getAssignedProjects, processPayment, submitReview, getStudentReviews
+    updateRecruiter, getAssignedProjects, processPayment, submitReview, getStudentReviews,
+    changePassword
 } from "../controllers/recruiterController.js";
 import upload from "../configs/multer.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -17,6 +18,7 @@ recruiterRouter.post('/create-project', verifyToken, createProject);
 recruiterRouter.put('/update-project/:projectId', verifyToken, updateProject);
 recruiterRouter.get('/profile', verifyToken, getRecruiter);
 recruiterRouter.put('/update-profile', verifyToken, upload.single('companyLogo'), updateRecruiter);
+recruiterRouter.post('/change-password', verifyToken, changePassword);
 recruiterRouter.get('/project-applicants', verifyToken, getAllApplicationsForProject);
 recruiterRouter.post('/send-nda', verifyToken, upload.single('ndaDocument'), sendNDA);
 recruiterRouter.get('/ndas', verifyToken, getAllNDAs);
