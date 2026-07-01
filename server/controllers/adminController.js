@@ -7,6 +7,33 @@ import Admin from '../models/Admin.js';
 import Review from '../models/Review.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { v2 as cloudinary } from 'cloudinary';
+
+const deleteCloudinaryFile = async (url) => {
+    if (!url) return;
+    try {
+        const parts = url.split('/');
+        const uploadIndex = parts.indexOf('upload');
+        if (uploadIndex === -1) return;
+
+        // Determine resource_type from the URL segment before 'upload'
+        // e.g. /image/upload, /raw/upload, /video/upload
+        const resourceType = parts[uploadIndex - 1] || 'image';
+
+        // Skip optional version segment (v123456)
+        let startIndex = uploadIndex + 1;
+        if (/^v\d+$/.test(parts[startIndex])) startIndex++;
+
+        // Join remaining segments and strip file extension to get public_id
+        const withExt = parts.slice(startIndex).join('/');
+        const publicId = withExt.replace(/\.[^/.]+$/, '');
+
+        if (!publicId) return;
+        await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    } catch (error) {
+        console.error('Cloudinary delete error for URL', url, ':', error.message);
+    }
+};
 
 // Register admin
 export const registerAdmin = async (req, res) => {
@@ -112,23 +139,29 @@ export const getAllStudents = async (req, res) => {
 export const deleteStudent = async (req, res) => {
     try {
         const { id } = req.params;
+        const student = await Student.findById(id);
+        if (!student) return res.json({ success: false, message: 'Student not found' });
+
+        await deleteCloudinaryFile(student.profilePicture);
+        await deleteCloudinaryFile(student.resume);
         
-        // Find all applications by this student
         const applications = await Application.find({ studentId: id });
-        const appIds = applications.map(app => app._id);
         
-        // Delete associated NDAs
-        if (appIds.length > 0) {
-            await NDA.deleteMany({ applicationId: { $in: appIds } });
+        for (const app of applications) {
+            await deleteCloudinaryFile(app.cvUrl);
+            await deleteCloudinaryFile(app.projectPlanUrl);
+
+            const ndas = await NDA.find({ applicationId: app._id });
+            for (const nda of ndas) {
+                await deleteCloudinaryFile(nda.documentUrl);
+            }
+            await NDA.deleteMany({ applicationId: app._id });
         }
         
-        // Delete the applications
         await Application.deleteMany({ studentId: id });
         
-        // Delete reviews associated with this student
         await Review.deleteMany({ studentId: id });
 
-        // Delete the student
         await Student.findByIdAndDelete(id);
 
         res.json({ success: true, message: 'Student and related records deleted successfully' });
