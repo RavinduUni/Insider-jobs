@@ -312,7 +312,7 @@ export default function HomePage() {
                                 ))}
                             </ul>
                         </div>
-                        <button className="relative z-10 self-start flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors">
+                        <button onClick={() => navigate('/auth?type=student&mode=register')} className="relative z-10 self-start flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-colors">
                             Get Started <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
@@ -334,7 +334,7 @@ export default function HomePage() {
                                 ))}
                             </ul>
                         </div>
-                        <button className="relative z-10 self-start flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors">
+                        <button onClick={() => navigate('/auth?type=recruiter&mode=register')} className="relative z-10 self-start flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors">
                             Post a Project <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>

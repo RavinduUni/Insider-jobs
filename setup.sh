@@ -1,0 +1,224 @@
+﻿#!/usr/bin/env bash
+# ================================================================
+#  setup.sh  —  InsiderJobs Local Development Setup
+#
+#  Run this ONCE after cloning the repository.
+#  It will:
+#    1. Check system requirements (Node, npm, Git)
+#    2. Create server/.env  from server/.env.example
+#    3. Create client/.env  from client/.env.example
+#    4. Prompt you to enter every required variable value
+#    5. Install npm dependencies for both server and client
+#
+#  Usage (Git Bash / WSL):
+#    chmod +x setup.sh   (first time only)
+#    ./setup.sh
+#
+#  After setup, start the app with:
+#    ./start-local.sh
+# ================================================================
+
+set -euo pipefail
+
+# ── Colours ──────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_ENV="$ROOT_DIR/server/.env"
+CLIENT_ENV="$ROOT_DIR/client/.env"
+SERVER_EXAMPLE="$ROOT_DIR/server/.env.example"
+CLIENT_EXAMPLE="$ROOT_DIR/client/.env.example"
+
+# ── Helpers ───────────────────────────────────────────────────
+print_banner() {
+  echo ""
+  echo -e "${CYAN}${BOLD}╔══════════════════════════════════════════════════╗${RESET}"
+  echo -e "${CYAN}${BOLD}║   🚀  InsiderJobs  —  Local Setup Wizard         ║${RESET}"
+  echo -e "${CYAN}${BOLD}╚══════════════════════════════════════════════════╝${RESET}"
+  echo ""
+}
+
+ok()   { echo -e "  ${GREEN}✔${RESET}  $*"; }
+warn() { echo -e "  ${YELLOW}⚠${RESET}  $*"; }
+info() { echo -e "  ${BLUE}ℹ${RESET}  $*"; }
+err()  { echo -e "  ${RED}✖${RESET}  $*" >&2; }
+step() { echo -e "\n${BOLD}${CYAN}▶  $*${RESET}"; }
+
+# Prompt for a value; if user just hits Enter, use default
+# Usage: prompt_value "Description" "KEY" "default"
+prompt_value() {
+  local desc="$1"
+  local key="$2"
+  local default="$3"
+  local value
+
+  if [ -n "$default" ]; then
+    printf "  ${BOLD}%-35s${RESET} ${DIM}[%s]${RESET} : " "$desc" "$default"
+  else
+    printf "  ${BOLD}%-35s${RESET} : " "$desc"
+  fi
+
+  read -r value
+  if [ -z "$value" ] && [ -n "$default" ]; then
+    value="$default"
+  fi
+  echo "$value"
+}
+
+# ── 1. Banner ─────────────────────────────────────────────────
+print_banner
+
+# ── 2. System requirements ────────────────────────────────────
+step "Checking system requirements"
+
+check_cmd() {
+  if command -v "$1" &>/dev/null; then
+    ok "$1 found  $(command -v "$1")"
+  else
+    err "$1 is NOT installed. Please install it and re-run setup."
+    exit 1
+  fi
+}
+
+check_cmd node
+check_cmd npm
+check_cmd git
+
+NODE_VERSION=$(node --version)
+NPM_VERSION=$(npm --version)
+ok "Node $NODE_VERSION  |  npm v$NPM_VERSION"
+
+# ── 3. Guard: already configured? ────────────────────────────
+step "Checking for existing .env files"
+
+SKIP_SERVER_ENV=false
+SKIP_CLIENT_ENV=false
+
+if [ -f "$SERVER_ENV" ]; then
+  warn "server/.env already exists."
+  printf "  Overwrite it? (y/N) : "
+  read -r overwrite
+  [[ "$overwrite" =~ ^[Yy]$ ]] || SKIP_SERVER_ENV=true
+fi
+
+if [ -f "$CLIENT_ENV" ]; then
+  warn "client/.env already exists."
+  printf "  Overwrite it? (y/N) : "
+  read -r overwrite
+  [[ "$overwrite" =~ ^[Yy]$ ]] || SKIP_CLIENT_ENV=true
+fi
+
+# ── 4. Server .env ────────────────────────────────────────────
+if [ "$SKIP_SERVER_ENV" = false ]; then
+  step "Configure  server/.env"
+  echo -e "  ${DIM}Press Enter to keep the shown default value.${RESET}"
+  echo -e "  ${DIM}Leave blank for values you do not have yet (you can edit the file later).${RESET}\n"
+
+  PORT=$(prompt_value        "Express port"                "PORT"                 "5000")
+  JWT_SECRET=$(prompt_value  "JWT secret (random string)"  "JWT_SECRET"           "")
+  PROJECT_NAME=$(prompt_value "Project display name"       "PROJECT_NAME"         "Insider Jobs")
+  MONGODB_URI=$(prompt_value  "MongoDB URI"                "MONGODB_URI"          "")
+  CLOUDINARY_NAME=$(prompt_value "Cloudinary cloud name"  "CLOUDINARY_NAME"      "")
+  CLOUDINARY_API_KEY=$(prompt_value "Cloudinary API key"  "CLOUDINARY_API_KEY"   "")
+  CLOUDINARY_API_SECRET=$(prompt_value "Cloudinary secret" "CLOUDINARY_API_SECRET" "")
+  GEMINI_API_KEY=$(prompt_value "Gemini API key"           "GEMINI_API_KEY"       "")
+  GEMINI_BASE_URL=$(prompt_value "Gemini base URL"         "GEMINI_BASE_URL"      "https://generativelanguage.googleapis.com/v1beta/openai/")
+  GEMINI_MODEL=$(prompt_value   "Gemini model name"        "GEMINI_MODEL"         "gemini-2.5-flash")
+  SMTP_HOST=$(prompt_value      "SMTP host"                "SMTP_HOST"            "smtp.gmail.com")
+  SMTP_PORT=$(prompt_value      "SMTP port"                "SMTP_PORT"            "587")
+  SMTP_USER=$(prompt_value      "SMTP email address"       "SMTP_USER"            "")
+  SMTP_PASS=$(prompt_value      "SMTP app password"        "SMTP_PASS"            "")
+
+  cat > "$SERVER_ENV" <<EOF
+# Auto-generated by setup.sh — $(date)
+# Edit this file directly if you need to change any values.
+
+PORT=$PORT
+JWT_SECRET="$JWT_SECRET"
+
+PROJECT_NAME="$PROJECT_NAME"
+MONGODB_URI=$MONGODB_URI
+
+CLOUDINARY_NAME="$CLOUDINARY_NAME"
+CLOUDINARY_API_KEY="$CLOUDINARY_API_KEY"
+CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET"
+
+GEMINI_API_KEY="$GEMINI_API_KEY"
+GEMINI_BASE_URL="$GEMINI_BASE_URL"
+GEMINI_MODEL="$GEMINI_MODEL"
+
+SMTP_HOST=$SMTP_HOST
+SMTP_PORT=$SMTP_PORT
+SMTP_USER=$SMTP_USER
+SMTP_PASS=$SMTP_PASS
+EOF
+
+  ok "server/.env created successfully."
+else
+  info "Skipped server/.env (existing file kept)."
+fi
+
+# ── 5. Client .env ────────────────────────────────────────────
+if [ "$SKIP_CLIENT_ENV" = false ]; then
+  step "Configure  client/.env"
+  echo -e "  ${DIM}Press Enter to use the local dev default (http://localhost:5000).${RESET}\n"
+
+  VITE_BACKEND=$(prompt_value \
+    "Backend API URL" \
+    "VITE_REACT_BACKEND_URL" \
+    "http://localhost:5000")
+
+  cat > "$CLIENT_ENV" <<EOF
+# Auto-generated by setup.sh — $(date)
+VITE_REACT_BACKEND_URL=$VITE_BACKEND
+EOF
+
+  ok "client/.env created successfully."
+else
+  info "Skipped client/.env (existing file kept)."
+fi
+
+# ── 6. Install dependencies ───────────────────────────────────
+step "Installing server dependencies"
+npm install --prefix "$ROOT_DIR/server"
+ok "server node_modules ready."
+
+step "Installing client dependencies"
+npm install --prefix "$ROOT_DIR/client"
+ok "client node_modules ready."
+
+# ── 7. Verify .env files ──────────────────────────────────────
+step "Verifying created files"
+
+verify_env() {
+  local file="$1"
+  local label="$2"
+  if [ -f "$file" ]; then
+    ok "$label exists  $(wc -l < "$file") lines written"
+  else
+    err "$label was NOT created. Please check for errors above."
+  fi
+}
+
+verify_env "$SERVER_ENV" "server/.env"
+verify_env "$CLIENT_ENV" "client/.env"
+
+# ── 8. Done ───────────────────────────────────────────────────
+echo ""
+echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════╗${RESET}"
+echo -e "${GREEN}${BOLD}║   ✅  Setup complete!                             ║${RESET}"
+echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════╝${RESET}"
+echo ""
+echo -e "  ${BOLD}Start both servers with:${RESET}"
+echo -e "  ${CYAN}  ./start-local.sh${RESET}"
+echo ""
+echo -e "  ${DIM}To edit your environment variables later:${RESET}"
+echo -e "  ${DIM}  server/.env  |  client/.env${RESET}"
+echo ""
