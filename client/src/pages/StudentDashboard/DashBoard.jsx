@@ -249,7 +249,7 @@ const Dashboard = () => {
         <div className='xl:col-span-2 space-y-6'>
 
           {/* Active Projects */}
-          <div className='bg-slate-900 border border-slate-800 h-[50%] rounded-2xl p-5'>
+          <div className='bg-slate-900 border border-slate-800 min-h-[50%] rounded-2xl p-5'>
             <SectionHeader title='Active Projects' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-4'>
               {activeApplications.length === 0 && (
@@ -310,7 +310,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Applications */}
-          <div className='bg-slate-900 border border-slate-800 h-[47%] rounded-2xl p-5'>
+          <div className='bg-slate-900 border border-slate-800 min-h-[47%] rounded-2xl p-5 mb-45'>
             <SectionHeader title='Recent Applications' action='View All' onAction={() => navigate('applied-projects')} />
             <div className='space-y-2'>
               {recentApplications.length === 0 && (

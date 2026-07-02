@@ -186,7 +186,7 @@ const AppContextProvider = ({ children }) => {
 
     useEffect(() => {
         if (token && user && role === 'student' && !recommendationFetchRef.current) {
-            //fetchRecommendedProjects();
+            fetchRecommendedProjects();
         }
     }, [token, user, role]);
 
