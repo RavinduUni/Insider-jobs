@@ -34,6 +34,7 @@ import AboutPage from './pages/AboutPage'
 import ViewStudentDetails2 from './pages/OwnerDashboard/ViewStudentDetails2'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminLogin from './pages/AdminLogin'
+import PricingPage from './pages/PricingPage'
 
 
 const App = () => {
@@ -56,6 +57,7 @@ const App = () => {
         <Route path='/projects' element={<AllProjects />} />
         <Route path='/companies' element={<Companies />} />
         <Route path='/about' element={<AboutPage />} />
+        <Route path='/pricing' element={<PricingPage />} />
 
         <Route element={<StudentRoutesProtector />}>
           <Route path="/student-dashboard" element={<StudentDashBoard />}>
