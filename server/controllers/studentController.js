@@ -245,6 +245,7 @@ export const enhanceResumeText = async (req, res) => {
     try {
 
         const { currentValue } = req.body;
+        console.log(currentValue);
 
         if (!currentValue) {
             return res.status(400).json({ success: false, message: 'Current value is required' });
