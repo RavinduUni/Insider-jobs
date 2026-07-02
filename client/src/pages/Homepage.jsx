@@ -107,10 +107,10 @@ export default function HomePage() {
                             </p>
 
                             <div className="flex flex-wrap gap-3 mb-10">
-                                <button className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
+                                <button onClick={() => navigate('/auth?type=student&mode=login')} className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
                                     Find Projects <ArrowRight className="w-4 h-4" />
                                 </button>
-                                <button className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
+                                <button onClick={() => navigate('/auth?type=recruiter&mode=register')} className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
                                     Post a Project
                                 </button>
                             </div>
@@ -391,10 +391,10 @@ export default function HomePage() {
                     <h2 className="text-5xl font-extrabold text-white mb-5 leading-tight">Start earning while you learn</h2>
                     <p className="text-slate-400 text-lg mb-10">Join thousands of students and project owners already using InsiderJobs.</p>
                     <div className="flex gap-4 justify-center">
-                        <button className="flex items-center gap-2 px-7 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
+                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="flex items-center gap-2 px-7 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
                             I'm a Student <ArrowRight className="w-4 h-4" />
                         </button>
-                        <button className="flex items-center gap-2 px-7 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
+                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="flex items-center gap-2 px-7 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
                             I'm a Project Owner
                         </button>
                     </div>

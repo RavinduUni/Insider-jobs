@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Navbar2 from '../components/Navbar2';
 import Footer from '../components/Footer';
+import { useNavigate } from 'react-router-dom';
 
 // ── Unsplash images ─────────────────────────────────────────────────────────
 const TEAM_1 = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80'; // founder male
@@ -107,6 +108,9 @@ const perks = [
 
 // ── Component ────────────────────────────────────────────────────────────────
 export default function AboutPage() {
+
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white text-gray-900 font-sans">
             <Navbar2 />
@@ -146,10 +150,10 @@ export default function AboutPage() {
                                 connecting ambitious students with real paid projects from day one.
                             </p>
                             <div className="flex flex-wrap gap-3">
-                                <button className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
+                                <button onClick={() => navigate('/auth?type=student&mode=register')} className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
                                     Join as a Student <ArrowRight className="w-4 h-4" />
                                 </button>
-                                <button className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
+                                <button onClick={() => navigate('/auth?type=recruiter&mode=register')} className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
                                     Post a Project
                                 </button>
                             </div>
@@ -441,10 +445,10 @@ export default function AboutPage() {
                         Join thousands of students and companies already shaping the future of work together.
                     </p>
                     <div className="flex gap-4 justify-center flex-wrap">
-                        <button className="flex items-center gap-2 px-7 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
+                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="flex items-center gap-2 px-7 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all text-sm">
                             I'm a Student <ArrowRight className="w-4 h-4" />
                         </button>
-                        <button className="flex items-center gap-2 px-7 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
+                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="flex items-center gap-2 px-7 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl font-medium transition-all text-sm">
                             I'm a Project Owner
                         </button>
                     </div>
