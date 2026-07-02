@@ -25,10 +25,10 @@ const Navbar = () => {
                     <h2 className='text-3xl font-bold'><span className='text-primary'>Insider</span><span className='text-white'>jobs</span></h2>
                 </NavLink>
                 <div className="hidden md:flex items-center gap-8 text-sm text-white">
-                    <NavLink to="/projects">Projects</NavLink>
-                    <NavLink to="/companies">Companies</NavLink>
-                    <NavLink to="/about">About</NavLink>
-                    <NavLink to="/pricing">Pricing</NavLink>
+                    <NavLink to="/projects" className={({ isActive }) => isActive ? "text-primary underline underline-offset-4 font-semibold transition-all" : "text-white/80 hover:text-white transition-colors"}>Projects</NavLink>
+                    <NavLink to="/companies" className={({ isActive }) => isActive ? "text-primary underline underline-offset-4 font-semibold transition-all" : "text-white/80 hover:text-white transition-colors"}>Companies</NavLink>
+                    <NavLink to="/about" className={({ isActive }) => isActive ? "text-primary underline underline-offset-4 font-semibold transition-all" : "text-white/80 hover:text-white transition-colors"}>About</NavLink>
+                    <NavLink to="/pricing" className={({ isActive }) => isActive ? "text-primary underline underline-offset-4 font-semibold transition-all" : "text-white/80 hover:text-white transition-colors"}>Pricing</NavLink>
                 </div>
                 {token ? (
                     <div className='w-10 h-10 relative bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer' onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -46,8 +46,8 @@ const Navbar = () => {
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="text-sm px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Recruiter Login</button>
-                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium cursor-pointer">Student Login</button>
+                        <button onClick={() => navigate('/auth?type=recruiter&mode=login')} className="text-sm px-4 py-2 rounded-xl border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">Recruiter Login</button>
+                        <button onClick={() => navigate('/auth?type=student&mode=login')} className="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-light cursor-pointer">Student Login</button>
                     </div>
                 )}
             </div>
