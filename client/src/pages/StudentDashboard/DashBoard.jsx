@@ -502,7 +502,7 @@ const Dashboard = () => {
                 </div>
                 <div className='flex items-center justify-between pt-3 border-t border-slate-700/50'>
                   <span className='text-sm font-bold text-blue-400'>{proj.project.budget}</span>
-                  <button className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'>
+                  <button onClick={() => navigate(`/apply-project/${proj.project._id}`)} className='text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors'>
                     Apply <ArrowRight className='w-3 h-3' />
                   </button>
                 </div>
