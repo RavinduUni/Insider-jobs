@@ -1,116 +1,114 @@
-﻿#!/usr/bin/env bash
-# ================================================================
-#  setup.sh  -  InsiderJobs Local Development Setup
-#
-#  Run this ONCE after cloning the repository.
-#  It will:
-#    1. Check system requirements (Node, npm, Git)
-#    2. Prompt you for all required secret values
-#    3. Create server/.env and client/.env automatically
-#    4. Install npm dependencies for both server and client
-#
-#  Usage (Git Bash / WSL):
-#    chmod +x setup.sh start-local.sh   (first time only)
-#    ./setup.sh
-#
-#  After setup, start the app with:
-#    ./start-local.sh
-# ================================================================
-
+﻿#!/bin/bash
 set -euo pipefail
 
-# ── Colours ──────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-BOLD='\033[1m'
-DIM='\033[2m'
-RESET='\033[0m'
+echo "================================="
+echo " InsiderJobs  -  Local Dev Setup "
+echo "================================="
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_ENV="$ROOT_DIR/server/.env"
-CLIENT_ENV="$ROOT_DIR/client/.env"
+# ── Verify project directories ────────────────────────────────
+if [ ! -d "server" ]; then
+    echo "Error: server directory not found!"
+    exit 1
+fi
 
-# ── Helpers ───────────────────────────────────────────────────
-ok()   { echo -e "  ${GREEN}+${RESET}  $*"; }
-warn() { echo -e "  ${YELLOW}!${RESET}  $*"; }
-info() { echo -e "  ${CYAN}>${RESET}  $*"; }
-err()  { echo -e "  ${RED}x${RESET}  $*" >&2; }
-step() { echo -e "\n${BOLD}${CYAN}==  $*${RESET}"; }
+if [ ! -d "client" ]; then
+    echo "Error: client directory not found!"
+    exit 1
+fi
 
-# Ask for a required value — re-prompts if left blank
-# Usage: ask_required "DISPLAY_NAME" "ENV_KEY"  -> echoes value
-ask_required() {
-  local label="$1"
-  local key="$2"
-  local value=""
-  while [ -z "$value" ]; do
-    printf "  Enter %-30s : " "$key"
-    read -r value
-    if [ -z "$value" ]; then
-      echo -e "  ${YELLOW}!${RESET}  $key cannot be empty. Please enter a value."
-    fi
-  done
-  echo "$value"
-}
-
-# ── Banner ────────────────────────────────────────────────────
+# ── Check required tools ──────────────────────────────────────
 echo ""
-echo -e "${CYAN}${BOLD}================================================================${RESET}"
-echo -e "${CYAN}${BOLD}   InsiderJobs  -  Local Development Setup                     ${RESET}"
-echo -e "${CYAN}${BOLD}================================================================${RESET}"
-echo ""
-
-# ── Step 1: System requirements ──────────────────────────────
-step "Step 1/4 : Checking system requirements"
+echo "Checking system requirements..."
 
 for cmd in node npm git; do
-  if command -v "$cmd" &>/dev/null; then
-    ok "$cmd   $(command -v $cmd)"
-  else
-    err "$cmd is NOT installed. Install it and re-run setup."
-    exit 1
-  fi
+    if command -v "$cmd" &>/dev/null; then
+        echo "  OK  $cmd $(command -v $cmd)"
+    else
+        echo "  ERROR  $cmd is not installed. Please install it and re-run setup."
+        exit 1
+    fi
 done
-ok "Node $(node --version)   npm v$(npm --version)"
 
-# ── Step 2: Guard existing .env files ────────────────────────
-step "Step 2/4 : Configuring environment variables"
+echo ""
 
+# ── Guard: existing .env files ───────────────────────────────
 SKIP_SERVER=false
 SKIP_CLIENT=false
 
-if [ -f "$SERVER_ENV" ]; then
-  warn "server/.env already exists."
-  printf "  Overwrite it? (y/N) : "
-  read -r ow_server
-  [[ "$ow_server" =~ ^[Yy]$ ]] || SKIP_SERVER=true
+if [ -f "server/.env" ]; then
+    echo "Warning: server/.env already exists."
+    read -rp "  Overwrite it? (y/N): " ow_server
+    [[ "$ow_server" =~ ^[Yy]$ ]] || SKIP_SERVER=true
 fi
 
-if [ -f "$CLIENT_ENV" ]; then
-  warn "client/.env already exists."
-  printf "  Overwrite it? (y/N) : "
-  read -r ow_client
-  [[ "$ow_client" =~ ^[Yy]$ ]] || SKIP_CLIENT=true
+if [ -f "client/.env" ]; then
+    echo "Warning: client/.env already exists."
+    read -rp "  Overwrite it? (y/N): " ow_client
+    [[ "$ow_client" =~ ^[Yy]$ ]] || SKIP_CLIENT=true
 fi
 
 # ── Server .env ───────────────────────────────────────────────
 if [ "$SKIP_SERVER" = false ]; then
-  echo ""
-  echo -e "  ${DIM}--- Server credentials (all fields required) ---${RESET}"
-  echo ""
+    echo ""
+    echo "--- Configure server/.env ---"
+    echo ""
 
-  MONGODB_URI=$(ask_required   "MongoDB Atlas URI"       "MONGODB_URI")
-  JWT_SECRET=$(ask_required    "JWT secret string"       "JWT_SECRET")
-  CLOUDINARY_NAME=$(ask_required   "Cloudinary cloud name"   "CLOUDINARY_NAME")
-  CLOUDINARY_API_KEY=$(ask_required "Cloudinary API key"     "CLOUDINARY_API_KEY")
-  CLOUDINARY_API_SECRET=$(ask_required "Cloudinary API secret" "CLOUDINARY_API_SECRET")
-  GEMINI_API_KEY=$(ask_required "Gemini API key"           "GEMINI_API_KEY")
-  SMTP_USER=$(ask_required     "Gmail address (SMTP)"    "SMTP_USER")
-  SMTP_PASS=$(ask_required     "Gmail app password"      "SMTP_PASS")
+    read -rp "Enter MONGODB_URI: " MONGODB_URI
+    while [ -z "$MONGODB_URI" ]; do
+        echo "  MONGODB_URI cannot be empty."
+        read -rp "Enter MONGODB_URI: " MONGODB_URI
+    done
 
-  cat > "$SERVER_ENV" <<EOF
+    read -rp "Enter CLOUDINARY_NAME: " CLOUDINARY_NAME
+    while [ -z "$CLOUDINARY_NAME" ]; do
+        echo "  CLOUDINARY_NAME cannot be empty."
+        read -rp "Enter CLOUDINARY_NAME: " CLOUDINARY_NAME
+    done
+
+    read -rp "Enter CLOUDINARY_API_KEY: " CLOUDINARY_API_KEY
+    while [ -z "$CLOUDINARY_API_KEY" ]; do
+        echo "  CLOUDINARY_API_KEY cannot be empty."
+        read -rp "Enter CLOUDINARY_API_KEY: " CLOUDINARY_API_KEY
+    done
+
+    read -rp "Enter CLOUDINARY_API_SECRET: " CLOUDINARY_API_SECRET
+    while [ -z "$CLOUDINARY_API_SECRET" ]; do
+        echo "  CLOUDINARY_API_SECRET cannot be empty."
+        read -rp "Enter CLOUDINARY_API_SECRET: " CLOUDINARY_API_SECRET
+    done
+
+    read -rp "Enter GEMINI_API_KEY: " GEMINI_API_KEY
+    while [ -z "$GEMINI_API_KEY" ]; do
+        echo "  GEMINI_API_KEY cannot be empty."
+        read -rp "Enter GEMINI_API_KEY: " GEMINI_API_KEY
+    done
+
+    read -rp "Enter SMTP_USER (Gmail address): " SMTP_USER
+    while [ -z "$SMTP_USER" ]; do
+        echo "  SMTP_USER cannot be empty."
+        read -rp "Enter SMTP_USER (Gmail address): " SMTP_USER
+    done
+
+    read -rp "Enter SMTP_PASS (Gmail app password): " SMTP_PASS
+    while [ -z "$SMTP_PASS" ]; do
+        echo "  SMTP_PASS cannot be empty."
+        read -rp "Enter SMTP_PASS (Gmail app password): " SMTP_PASS
+    done
+
+    # Auto-generate a cryptographically secure JWT secret
+    if command -v node &>/dev/null; then
+        JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
+    elif command -v openssl &>/dev/null; then
+        JWT_SECRET=$(openssl rand -hex 64)
+    else
+        echo "Warning: Could not auto-generate JWT_SECRET. Using a timestamp-based fallback."
+        JWT_SECRET="CHANGE_ME_$(date +%s)"
+    fi
+
+    echo ""
+    echo "OK  Generated a cryptographically secure JWT_SECRET automatically."
+
+    cat > server/.env << EOF
 # Auto-generated by setup.sh
 # Edit this file directly to change any value.
 
@@ -134,69 +132,54 @@ SMTP_USER=$SMTP_USER
 SMTP_PASS=$SMTP_PASS
 EOF
 
-  ok "server/.env created."
+    echo "OK  server/.env created."
 else
-  info "Skipped server/.env — existing file kept."
+    echo "Skipped server/.env — existing file kept."
 fi
 
 # ── Client .env ───────────────────────────────────────────────
 if [ "$SKIP_CLIENT" = false ]; then
-  echo ""
-  echo -e "  ${DIM}--- Client / Frontend (press Enter for local default) ---${RESET}"
-  echo ""
+    echo ""
+    echo "--- Configure client/.env ---"
+    echo ""
 
-  printf "  Enter VITE_REACT_BACKEND_URL [http://localhost:5000] : "
-  read -r VITE_BACKEND
-  [ -z "$VITE_BACKEND" ] && VITE_BACKEND="http://localhost:5000"
+    read -rp "Enter VITE_REACT_BACKEND_URL [http://localhost:5000]: " VITE_BACKEND
+    [ -z "$VITE_BACKEND" ] && VITE_BACKEND="http://localhost:5000"
 
-  cat > "$CLIENT_ENV" <<EOF
+    cat > client/.env << EOF
 # Auto-generated by setup.sh
 VITE_REACT_BACKEND_URL=$VITE_BACKEND
 EOF
 
-  ok "client/.env created."
+    echo "OK  client/.env created."
 else
-  info "Skipped client/.env — existing file kept."
+    echo "Skipped client/.env — existing file kept."
 fi
 
-# ── Step 3: Install dependencies ─────────────────────────────
-step "Step 3/4 : Installing npm dependencies"
+# ── Install dependencies ──────────────────────────────────────
+echo ""
+echo "--- Installing dependencies ---"
+echo ""
+
+echo "Installing server packages..."
+npm install --prefix server
+echo "OK  server/node_modules ready."
 
 echo ""
-info "Installing server packages..."
-npm install --prefix "$ROOT_DIR/server" --silent
-ok "server/node_modules ready."
-
-echo ""
-info "Installing client packages..."
-npm install --prefix "$ROOT_DIR/client" --silent
-ok "client/node_modules ready."
-
-# ── Step 4: Verify ────────────────────────────────────────────
-step "Step 4/4 : Verifying setup"
-
-for f in "$SERVER_ENV" "$CLIENT_ENV"; do
-  label="${f#$ROOT_DIR/}"
-  if [ -f "$f" ]; then
-    ok "$label  ($(wc -l < "$f") lines)"
-  else
-    err "$label was NOT created — check for errors above."
-    exit 1
-  fi
-done
+echo "Installing client packages..."
+npm install --prefix client
+echo "OK  client/node_modules ready."
 
 # ── Done ──────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}${BOLD}================================================================${RESET}"
-echo -e "${GREEN}${BOLD}   Setup complete! You are ready to go.                        ${RESET}"
-echo -e "${GREEN}${BOLD}================================================================${RESET}"
+echo "OK  Environment files created successfully!"
+echo "   server/.env  ->  PORT, JWT_SECRET (auto), MONGODB_URI, CLOUDINARY_*, GEMINI_*, SMTP_*"
+echo "   client/.env  ->  VITE_REACT_BACKEND_URL"
 echo ""
-echo -e "  Run the app:"
-echo -e "    ${CYAN}./start-local.sh${RESET}"
+echo "Next steps:"
+echo "  ./start-local.sh"
 echo ""
-echo -e "  Backend  ->  http://localhost:5000"
-echo -e "  Frontend ->  http://localhost:5173"
+echo "  Backend  ->  http://localhost:5000"
+echo "  Frontend ->  http://localhost:5173"
 echo ""
-echo -e "  ${DIM}To change env values later, edit:${RESET}"
-echo -e "  ${DIM}  server/.env   |   client/.env${RESET}"
-echo ""
+echo "Setup complete!"
