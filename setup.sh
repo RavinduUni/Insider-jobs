@@ -58,6 +58,12 @@ if [ "$SKIP_SERVER" = false ]; then
     echo "--- Configure server/.env ---"
     echo ""
 
+    read -rp "Enter PROJECT_NAME: " PROJECT_NAME
+    while [ -z "$PROJECT_NAME" ]; do
+        echo "  PROJECT_NAME cannot be empty."
+        read -rp "Enter PROJECT_NAME: " PROJECT_NAME
+    done
+
     read -rp "Enter MONGODB_URI: " MONGODB_URI
     while [ -z "$MONGODB_URI" ]; do
         echo "  MONGODB_URI cannot be empty."
@@ -118,16 +124,16 @@ if [ "$SKIP_SERVER" = false ]; then
 # Edit this file directly to change any value.
 
 PORT=5000
-PROJECT_NAME="Insider Jobs"
-JWT_SECRET="$JWT_SECRET"
+PROJECT_NAME=$PROJECT_NAME
+JWT_SECRET=$JWT_SECRET
 
 MONGODB_URI=$MONGODB_URI
 
-CLOUDINARY_NAME="$CLOUDINARY_NAME"
-CLOUDINARY_API_KEY="$CLOUDINARY_API_KEY"
-CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET"
+CLOUDINARY_NAME=$CLOUDINARY_NAME
+CLOUDINARY_API_KEY=$CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET=$CLOUDINARY_API_SECRET
 
-GEMINI_API_KEY="$GEMINI_API_KEY"
+GEMINI_API_KEY=$GEMINI_API_KEY
 GEMINI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
 GEMINI_MODEL="gemini-2.5-flash"
 
@@ -167,13 +173,18 @@ echo "--- Installing dependencies ---"
 echo ""
 
 echo "Installing server packages..."
-npm install --prefix "$SERVER_DIR"
-echo "OK  server/node_modules ready."
+(
+    cd "$SERVER_DIR"
+    npm install
+)
+echo "OK server packages installed."
 
-echo ""
 echo "Installing client packages..."
-npm install --prefix "$CLIENT_DIR"
-echo "OK  client/node_modules ready."
+(
+    cd "$CLIENT_DIR"
+    npm install
+)
+echo "OK client packages installed."
 
 # ── Done ──────────────────────────────────────────────────────
 echo ""

@@ -111,7 +111,7 @@ export default function AllProjects() {
             .replace(/\s+/g, ' ')
             .trim();
 
-    const filteredProjects = projects.filter(p => {
+    const filteredProjects = projects?.filter(p => {
         if (selectedCategory !== 'all' && p.category.toLowerCase() !== selectedCategory) return false;
 
         if (searchQuery.trim()) {
@@ -147,8 +147,8 @@ export default function AllProjects() {
         return true;
     });
 
-    const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
-    const currentProjects = filteredProjects.slice(
+    const totalPages = Math.ceil(filteredProjects?.length / ITEMS_PER_PAGE);
+    const currentProjects = filteredProjects?.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
@@ -297,7 +297,7 @@ export default function AllProjects() {
                 <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
                     <div className="inline-flex items-center gap-2 bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-medium px-4 py-2 rounded-full mb-6">
                         <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                        {projects.length} projects open right now
+                        {projects?.length} projects open right now
                     </div>
                     <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight">
                         Browse{' '}
@@ -392,9 +392,9 @@ export default function AllProjects() {
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <p className="text-gray-900 font-semibold">
-                                    {filteredProjects.length}{' '}
+                                    {filteredProjects?.length}{' '}
                                     <span className="text-gray-400 font-normal">
-                                        project{filteredProjects.length !== 1 ? 's' : ''} found
+                                        project{filteredProjects?.length !== 1 ? 's' : ''} found
                                     </span>
                                 </p>
                                 {activeFilterCount > 0 && (
@@ -437,9 +437,9 @@ export default function AllProjects() {
                         </div>
 
                         {/* Cards */}
-                        {currentProjects.length > 0 ? (
+                        {currentProjects?.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                {currentProjects.map(project => (
+                                {currentProjects?.map(project => (
                                     <ProjectCard key={project.id} project={project} />
                                 ))}
                             </div>
