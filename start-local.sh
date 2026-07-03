@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ============================================================
 #  start-local.sh  -  Freelancing Platform Dev Launcher
 #  Starts the Express backend (port 5000) and the Vite/React
@@ -60,14 +60,12 @@ trap cleanup SIGINT SIGTERM
 
 # --- Start Express backend -----------------------------------
 echo -e "${GREEN}[server]${RESET} Starting Express backend on http://localhost:5000 ..."
-cd "$SERVER_DIR"
-npm start 2>&1 | sed "s/^/$(printf '\033[0;32m')[server]$(printf '\033[0m') /" &
+npm --prefix "$SERVER_DIR" start 2>&1 | sed "s/^/$(printf '\033[0;32m')[server]$(printf '\033[0m') /" &
 SERVER_PID=$!
 
 # --- Start Vite / React frontend -----------------------------
 echo -e "${CYAN}[client]${RESET} Starting Vite/React frontend on http://localhost:5173 ..."
-cd "$CLIENT_DIR"
-npm run dev 2>&1 | sed "s/^/$(printf '\033[0;36m')[client]$(printf '\033[0m') /" &
+npm --prefix "$CLIENT_DIR" run dev 2>&1 | sed "s/^/$(printf '\033[0;36m')[client]$(printf '\033[0m') /" &
 CLIENT_PID=$!
 
 echo ""
